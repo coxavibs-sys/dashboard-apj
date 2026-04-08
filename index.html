@@ -1833,7 +1833,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
         style="padding:8px 4px;border-radius:8px;font-size:10px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s;background:var(--card2);border:1px solid var(--border2);color:var(--muted)">
         + Aluno
       </button>
-      <button id="ag-tab-turma" onclick="agSetTab('turma')"
+      <button id="ag-tab-turma" onclick="openNewGroupFromSlot()"
         style="padding:8px 4px;border-radius:8px;font-size:10px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s;background:var(--card2);border:1px solid var(--border2);color:var(--muted)">
         + Turma
       </button>
@@ -4026,6 +4026,39 @@ function ngSincNivel() {
 // Estado temporário dos membros da turma sendo criada
 let ngMembrosTemp = []; // [{id, nome, nivel, isNew}]
 
+function openNewGroupFromSlot() {
+  // Salva contexto do slot atual antes de fechar
+  const slotCtx = agSlotAtivo ? { ...agSlotAtivo } : null;
+  closeAllModals();
+  // Abre modal completo de nova turma
+  ngMembrosTemp = [];
+  tempHorarios['ng'] = [];
+  // Se veio de um slot, pré-adiciona o horário
+  if (slotCtx) {
+    const dur = parseInt(document.getElementById('ag-sel-dur')?.value || 60);
+    const profId = parseInt(document.getElementById('ag-sel-prof')?.value) || null;
+    const prof = professores.find(p=>p.id===profId);
+    tempHorarios['ng'] = [{
+      dia: slotCtx.d,
+      hora: snapTo15(slotCtx.hora),
+      quadra: slotCtx.q,
+      profId: profId || (professores[0]?.id || null),
+      durMin: dur || 60
+    }];
+    // Guarda slot para alocar depois de salvar
+    window._pendingSlotCtx = slotCtx;
+  }
+  renderHorariosList('ng');
+  document.getElementById('ng-horario-form').style.display = 'none';
+  populateProfSelect('ng-h-prof');
+  document.getElementById('ng-busca-aluno').value = '';
+  document.getElementById('ng-busca-lista').style.display = 'none';
+  document.getElementById('ng-novo-nome').value = '';
+  ngRenderMembros();
+  document.getElementById('newGroupModal').classList.add('open');
+  setTimeout(()=>document.getElementById('ng-nome').focus(),80);
+}
+
 function openNewGroupModal() {
   closeAllModals();
   ngMembrosTemp = [];
@@ -4226,13 +4259,24 @@ function saveNewGroup() {
 
   saveStudents();
   applyHorariosToAgenda(id, hs);
+
+  // Se veio do slot modal, aloca o slot diretamente
+  if (window._pendingSlotCtx) {
+    const ctx = window._pendingSlotCtx;
+    const key = `q${ctx.q}_d${ctx.d}_${ctx.hora}`;
+    const profId = hs.length ? hs[0].profId : null;
+    const durMin = hs.length ? hs[0].durMin : 60;
+    agendaData[key] = { entityId: String(id), profId, durMin, obs: '' };
+    saveAgenda();
+    window._pendingSlotCtx = null;
+  }
+
   renderStudentGrid();
   renderAgendaInline();
   closeModal('newGroupModal');
   document.getElementById('ng-nome').value='';
   tempHorarios['ng']=[];
   ngMembrosTemp=[];
-  const novos = ngMembrosTemp.filter ? 0 : 0; // já zerado
   showToast(`✓ Turma "${nome}" criada · ${membros.length} aluno${membros.length!==1?'s':''}`);
 }
 
