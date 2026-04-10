@@ -3210,18 +3210,14 @@ function addExFromCascade(bloco) {
   const ex = exercises.find(e=>e.id===id);
   if(!ex) return;
 
-  if(selectedExPerBloco[bloco].find(e=>e.id===id)) {
-    showToast('Exercício já adicionado a este bloco', true);
-    return;
-  }
   selectedExPerBloco[bloco].push(ex);
   renderExTags(bloco);
   appendExToTextarea(bloco, ex);
-  // Reset picker & preview
+  // Reset picker para permitir adicionar mais exercícios
   sel.value = '';
   const prev = document.getElementById('ep-preview-'+bloco);
   if(prev) prev.style.display = 'none';
-  showToast(`✓ "${ex.nome}" adicionado ao ${bloco.toUpperCase()}`);
+  showToast(`✓ "${ex.nome}" adicionado ao Bloco ${bloco.toUpperCase()}`);
 }
 
 function renderExTags(bloco) {
@@ -3245,8 +3241,8 @@ function appendExToTextarea(bloco, ex) {
   if(!ta) return;
   const line = `· ${ex.nome}${ex.duracao?' ('+ex.duracao+')':''}${ex.objetivo?' — '+ex.objetivo:''}`;
   ta.value = ta.value.trim() ? ta.value.trim()+'\n'+line : line;
-  refreshPostLesson();
-  refreshPreLesson();
+  // Disparar oninput manualmente para garantir que o valor já está no DOM
+  ta.dispatchEvent(new Event('input'));
 }
 
 // ─── TIME CONTROLS ────────────────────
