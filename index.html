@@ -2702,9 +2702,10 @@ function backToList() {
 }
 function backToPlan() {
   document.getElementById('d2-history-view').style.display = 'none';
-  document.getElementById('d2-trim-view').style.display = 'none';
-  document.getElementById('d2-aval-view').style.display = 'none';
-  document.getElementById('d2-plan-view').style.display = 'block';
+  document.getElementById('d2-trim-view').style.display   = 'none';
+  document.getElementById('d2-aval-view').style.display   = 'none';
+  document.getElementById('d2-freq-view').style.display   = 'none';
+  document.getElementById('d2-plan-view').style.display   = 'block';
 }
 
 // ─── TRIMESTRE POR ENTIDADE ───────────
@@ -4379,6 +4380,660 @@ document.addEventListener('click', function(e){
   if(e.target.classList.contains('modal-bg')) e.target.classList.remove('open');
 });
 
+
+// ═══════════════════════════════════════
+// FREQUÊNCIA DO ALUNO — d2-freq-view
+// ═══════════════════════════════════════
+
+let _freqEntity      = null;  // entidade ativa no painel de freq
+let _freqCalMonth    = null;  // Date do mês visível no calendário
+let _freqDetalhId    = null;  // id do registro aberto no detalhe
+let _repTabAtiva     = 'livre';
+let _repQuadraAtiva  = 0;
+let _repSlotSel      = null;  // { q, d, hora, diaLabel }
+let _repTurmaSel     = null;  // { entityId, nome, horario }
+
+// ── NAVEGAÇÃO ──────────────────────────────────────────────────────
+function showFreqView() {
+  if(!activeEntity) return;
+  _freqEntity = activeEntity;
+  _freqCalMonth = new Date();
+  _freqCalMonth.setDate(1);
+
+  document.getElementById('d2-plan-view').style.display  = 'none';
+  document.getElementById('d2-freq-view').style.display  = 'block';
+  document.getElementById('d2-freq-title').textContent   = `📊 ${_freqEntity.nome.split(' ')[0]} · Frequência`;
+  document.getElementById('d2-freq-subtitle').textContent = `${(_freqEntity.nivel||'').split(' — ')[0]} · Constância · Presenças · Reposições`;
+
+  _renderFreqAll();
+}
+
+
+function _renderFreqAll() {
+  _renderFreqKpis();
+  _renderFreqSemanas();
+  _renderFreqCal();
+  _renderFreqRep();
+  renderFreqHistory();
+}
+
+// ── KPIs ───────────────────────────────────────────────────────────
+function _renderFreqKpis() {
+  if(!_freqEntity) return;
+  const freq = _freqEntity.frequencia || [];
+
+  const presentes   = freq.filter(r => r.tipo === 'presente').length;
+  const faltaS      = freq.filter(r => r.tipo === 'falta_simples').length;
+  const faltaJ      = freq.filter(r => r.tipo === 'falta_justificada').length;
+  const reposPend   = freq.filter(r => r.tipo === 'reposicao' && r.status === 'pendente').length;
+  const total       = presentes + faltaS + faltaJ;
+  const constancia  = total > 0 ? Math.round((presentes / total) * 100) : null;
+
+  // Previstas: contar aulas do trimestre (horários recorrentes × semanas)
+  const hs = (_freqEntity.horarios||[]).length;
+  const previstas = hs * 13; // 13 semanas por trimestre
+
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  set('fkpi-previstas', previstas);
+  set('fkpi-aulas',     presentes);
+  set('fkpi-constancia', constancia !== null ? constancia + '%' : '—');
+  set('fkpi-falta-s',   faltaS);
+  set('fkpi-repos',     reposPend);
+
+  const corConst = constancia === null ? 'var(--muted)' : constancia >= 80 ? 'var(--green2)' : constancia >= 60 ? 'var(--amber)' : 'var(--red)';
+  const kpiConst = document.getElementById('fkpi-constancia');
+  if(kpiConst) kpiConst.style.color = corConst;
+
+  // Barra de constância
+  const bar = document.getElementById('freq-const-bar');
+  const lbl = document.getElementById('freq-const-pct-lbl');
+  if(bar) bar.style.width = (constancia ?? 0) + '%';
+  if(lbl){ lbl.textContent = constancia !== null ? constancia + '%' : '—'; lbl.style.color = corConst; }
+}
+
+// ── GRÁFICO DE SEMANAS ─────────────────────────────────────────────
+function _renderFreqSemanas() {
+  if(!_freqEntity) return;
+  const el = document.getElementById('freq-semanas-chart');
+  if(!el) return;
+
+  // Agrupar por semana do trimestre (via campo semana de aulas ou por data)
+  const semMap = {};
+  for(let i = 1; i <= 13; i++) semMap['Sem ' + i] = { p: 0, fj: 0, fs: 0, total: 0 };
+
+  (_freqEntity.frequencia||[]).forEach(r => {
+    if(r.tipo === 'reposicao') return;
+    // Tentar obter semana da aula relacionada
+    const aula = (_freqEntity.aulas||[]).find(a => a.data === r.data);
+    const sem  = aula?.semana || null;
+    if(!sem || !semMap[sem]) return;
+    if(r.tipo === 'presente')           semMap[sem].p++;
+    else if(r.tipo === 'falta_justificada') semMap[sem].fj++;
+    else if(r.tipo === 'falta_simples') semMap[sem].fs++;
+    semMap[sem].total++;
+  });
+
+  const semKeys = Object.keys(semMap);
+  if(semKeys.every(k => semMap[k].total === 0)) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:12px 0">Registre aulas com semana do trimestre para visualizar.</div>';
+    return;
+  }
+
+  el.innerHTML = semKeys.map(sem => {
+    const d = semMap[sem];
+    const tot = Math.max(1, d.p + d.fj + d.fs);
+    const pPct = Math.round((d.p  / tot) * 100);
+    const fjPct= Math.round((d.fj / tot) * 100);
+    const fsPct= Math.round((d.fs / tot) * 100);
+    return `<div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:9px;color:var(--muted);min-width:34px">${sem}</span>
+      <div style="flex:1;height:8px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;display:flex">
+        ${d.p  ? `<div style="width:${pPct}%;background:var(--green);"></div>` : ''}
+        ${d.fj ? `<div style="width:${fjPct}%;background:var(--amber);"></div>` : ''}
+        ${d.fs ? `<div style="width:${fsPct}%;background:var(--red);"></div>` : ''}
+      </div>
+      <span style="font-size:9px;color:var(--muted);min-width:20px;text-align:right">${d.total}</span>
+    </div>`;
+  }).join('');
+
+  // Streak: sequência de presentes mais recente
+  const presOrdenados = (_freqEntity.frequencia||[])
+    .filter(r => r.tipo === 'presente' && r.data)
+    .sort((a,b) => b.data.localeCompare(a.data));
+  const streakBox = document.getElementById('freq-streak-box');
+  const streakTxt = document.getElementById('freq-streak-txt');
+  if(streakBox && streakTxt) {
+    if(presOrdenados.length >= 3) {
+      streakBox.style.display = 'block';
+      streakTxt.textContent = `🔥 ${presOrdenados.length} presenças registradas no histórico`;
+    } else {
+      streakBox.style.display = 'none';
+    }
+  }
+}
+
+// ── CALENDÁRIO ─────────────────────────────────────────────────────
+function _renderFreqCal() {
+  if(!_freqEntity) return;
+  const el = document.getElementById('freq-cal-grid');
+  const lblEl = document.getElementById('freq-cal-month');
+  if(!el || !_freqCalMonth) return;
+
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  if(lblEl) lblEl.textContent = `${meses[_freqCalMonth.getMonth()]} ${_freqCalMonth.getFullYear()}`;
+
+  const ano = _freqCalMonth.getFullYear();
+  const mes = _freqCalMonth.getMonth();
+  const primeiro = new Date(ano, mes, 1);
+  const ultimo   = new Date(ano, mes + 1, 0);
+  const inicioGrid = primeiro.getDay(); // 0=Dom
+  const hoje = new Date().toISOString().slice(0,10);
+
+  // Mapear datas com registro
+  const freqMap = {};
+  (_freqEntity.frequencia||[]).forEach(r => {
+    if(r.data) freqMap[r.data] = r.tipo;
+  });
+
+  // Dias de aula previstos (horários recorrentes)
+  const diasAula = new Set((_freqEntity.horarios||[]).map(h => h.dia)); // 0=Seg...5=Sab
+
+  let html = '';
+  // Células vazias iniciais
+  for(let i = 0; i < inicioGrid; i++) html += '<div></div>';
+
+  for(let dia = 1; dia <= ultimo.getDate(); dia++) {
+    const dateStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+    const dow = new Date(dateStr + 'T12:00:00').getDay(); // 0=Dom
+    const diaIdx = dow === 0 ? -1 : dow - 1; // -1=Dom, 0=Seg...5=Sab
+    const tipo  = freqMap[dateStr];
+    const ehPrevisto = diaIdx >= 0 && diasAula.has(diaIdx);
+    const ehHoje = dateStr === hoje;
+
+    let bg = 'transparent', border = '1px solid transparent', color = 'var(--muted)';
+    if(tipo === 'presente')           { bg = 'var(--green)';               color = '#fff'; border = 'none'; }
+    else if(tipo === 'falta_justificada') { bg = 'rgba(232,160,48,0.9)';   color = '#fff'; border = 'none'; }
+    else if(tipo === 'falta_simples') { bg = 'var(--red)';                 color = '#fff'; border = 'none'; }
+    else if(ehPrevisto)               { bg = 'rgba(91,155,213,0.15)';      color = 'var(--blue)'; border = '1px dashed rgba(91,155,213,0.4)'; }
+    if(ehHoje && !tipo)               { border = '1px solid var(--green2)'; color = 'var(--green2)'; }
+
+    const cursor = tipo ? 'cursor:pointer' : '';
+    const onclick = tipo ? `onclick="openFreqDetail('${dateStr}')"` : '';
+    html += `<div style="width:28px;height:28px;border-radius:5px;background:${bg};border:${border};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:${tipo?'700':'400'};color:${color};${cursor}" ${onclick} title="${dateStr}">${dia}</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function prevFreqMonth() {
+  if(!_freqCalMonth) return;
+  _freqCalMonth.setMonth(_freqCalMonth.getMonth() - 1);
+  _renderFreqCal();
+}
+
+function nextFreqMonth() {
+  if(!_freqCalMonth) return;
+  _freqCalMonth.setMonth(_freqCalMonth.getMonth() + 1);
+  _renderFreqCal();
+}
+
+// ── REPOSIÇÕES PENDENTES ───────────────────────────────────────────
+function _renderFreqRep() {
+  if(!_freqEntity) return;
+  const el    = document.getElementById('freq-rep-list');
+  const cntEl = document.getElementById('freq-rep-count');
+  if(!el) return;
+
+  const repos = (_freqEntity.frequencia||[]).filter(r => r.tipo === 'reposicao' && r.status === 'pendente');
+  if(cntEl) cntEl.textContent = `${repos.length} crédito${repos.length !== 1 ? 's' : ''}`;
+
+  if(!repos.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhuma reposição pendente. ✅</div>';
+    return;
+  }
+
+  const hoje = new Date();
+  el.innerHTML = repos.map((r, i) => {
+    const venc = r.vencimento ? new Date(r.vencimento + 'T12:00:00') : null;
+    const diff = venc ? Math.ceil((venc - hoje) / (1000*60*60*24)) : null;
+    const urgente = diff !== null && diff <= 7 && diff >= 0;
+    const vencida = diff !== null && diff < 0;
+    const corVenc = vencida ? 'var(--red)' : urgente ? 'var(--amber)' : 'var(--muted)';
+    const vencTxt = diff === null ? '—' : vencida ? `Venceu há ${Math.abs(diff)} dia${Math.abs(diff)!==1?'s':''}` : diff === 0 ? 'Vence hoje' : `Vence em ${diff} dia${diff!==1?'s':''}`;
+
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border:1px solid ${urgente||vencida?'rgba(232,160,48,0.3)':'var(--border2)'};border-radius:9px;margin-bottom:8px;flex-wrap:wrap">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:var(--text)">🔄 Falta de ${r.data ? fmtDate(r.data) : '—'}</div>
+        <div style="font-size:10px;color:${corVenc};margin-top:2px">${vencTxt}</div>
+      </div>
+      <button onclick="openRepModal('${r.data||''}','${r.vencimento||''}')"
+        style="background:rgba(29,158,117,0.15);border:1px solid rgba(29,158,117,0.35);color:var(--green2);font-size:10px;font-weight:600;padding:5px 10px;border-radius:7px;cursor:pointer;font-family:inherit;white-space:nowrap">
+        📅 Agendar
+      </button>
+    </div>`;
+  }).join('');
+}
+
+// ── HISTÓRICO ──────────────────────────────────────────────────────
+function renderFreqHistory() {
+  if(!_freqEntity) return;
+  const el     = document.getElementById('freq-hist-list');
+  const filtro = document.getElementById('freq-hist-filter')?.value || '';
+  if(!el) return;
+
+  let registros = (_freqEntity.frequencia||[]).filter(r => r.data);
+  if(filtro) registros = registros.filter(r => r.tipo === filtro);
+  registros = registros.sort((a,b) => b.data.localeCompare(a.data));
+
+  if(!registros.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhum registro encontrado.</div>';
+    return;
+  }
+
+  const tipoLabel = { presente:'✅ Presente', falta_simples:'❌ Falta Simples', falta_justificada:'⚠️ Justificada', reposicao:'🔄 Reposição' };
+  const tipoCor   = { presente:'var(--green2)', falta_simples:'var(--red)', falta_justificada:'var(--amber)', reposicao:'var(--blue)' };
+  const tipoBg    = { presente:'rgba(29,158,117,0.07)', falta_simples:'rgba(224,92,92,0.07)', falta_justificada:'rgba(232,160,48,0.07)', reposicao:'rgba(91,155,213,0.07)' };
+
+  el.innerHTML = registros.slice(0, 50).map(r => {
+    const cor = tipoCor[r.tipo] || 'var(--muted)';
+    const bg  = tipoBg[r.tipo]  || 'var(--card2)';
+    const statusRepo = r.tipo === 'reposicao' ? ` · <span style="color:${r.status==='pendente'?'var(--amber)':'var(--green2)'}">
+      ${r.status==='pendente'?'Pendente':'Agendada'}</span>` : '';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:${bg};border-radius:8px;margin-bottom:6px;cursor:pointer"
+      onclick="openFreqDetail('${r.data}','${r.tipo}')">
+      <div style="font-size:12px;font-weight:700;color:${cor};min-width:90px">${tipoLabel[r.tipo]||r.tipo}</div>
+      <div style="flex:1;font-size:11px;color:var(--text)">${fmtDate(r.data)}${r.obs?` · <span style="color:var(--muted)">${r.obs}</span>`:''}${statusRepo}</div>
+      <div style="font-size:10px;color:var(--muted)">›</div>
+    </div>`;
+  }).join('');
+}
+
+// ── DETALHES DE UM REGISTRO ────────────────────────────────────────
+function openFreqDetail(data, tipo) {
+  if(!_freqEntity) return;
+  const idx = (_freqEntity.frequencia||[]).findIndex(r => r.data === data && (!tipo || r.tipo === tipo));
+  if(idx === -1) return;
+  _freqDetalhId = { data, tipo };
+  const r = _freqEntity.frequencia[idx];
+  const tipoLabel = { presente:'✅ Presente', falta_simples:'❌ Falta Simples', falta_justificada:'⚠️ Falta Justificada', reposicao:'🔄 Reposição' };
+  const body = document.getElementById('freq-detail-body');
+  if(body) body.innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:700;color:var(--green2);margin-bottom:8px">${tipoLabel[r.tipo]||r.tipo}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px">Data: <span style="color:var(--text)">${fmtDate(r.data)}</span></div>
+      ${r.obs ? `<div style="font-size:12px;color:var(--muted)">Obs: <span style="color:var(--text)">${r.obs}</span></div>` : ''}
+      ${r.tipo==='reposicao' ? `<div style="font-size:12px;color:var(--muted);margin-top:4px">Status: <span style="color:${r.status==='pendente'?'var(--amber)':'var(--green2)'}">${r.status==='pendente'?'Pendente':'Agendada'}</span></div>` : ''}
+      ${r.vencimento ? `<div style="font-size:12px;color:var(--muted)">Vencimento: <span style="color:var(--text)">${fmtDate(r.vencimento)}</span></div>` : ''}
+    </div>`;
+  document.getElementById('freqDetailModal').classList.add('open');
+}
+
+function deleteFreqRecord() {
+  if(!_freqEntity || !_freqDetalhId) return;
+  const { data, tipo } = _freqDetalhId;
+  const idx = (_freqEntity.frequencia||[]).findIndex(r => r.data === data && (!tipo || r.tipo === tipo));
+  if(idx === -1) return;
+  if(!confirm(`Excluir este registro de frequência?\n${tipo} · ${fmtDate(data)}`)) return;
+  _freqEntity.frequencia.splice(idx, 1);
+  saveStudents();
+  closeModal('freqDetailModal');
+  _renderFreqAll();
+  showToast('✓ Registro excluído');
+}
+
+// ── REGISTRAR PRESENÇA / FALTA MANUAL ─────────────────────────────
+function openFreqModal() {
+  const el = document.getElementById('fm-data');
+  if(el) el.value = new Date().toISOString().slice(0,10);
+  const tipo = document.getElementById('fm-tipo');
+  if(tipo) tipo.value = 'presente';
+  const obs = document.getElementById('fm-obs');
+  if(obs) obs.value = '';
+  onFreqTipoChange();
+  document.getElementById('freqModal').classList.add('open');
+}
+
+function onFreqTipoChange() {
+  const tipo = document.getElementById('fm-tipo')?.value;
+  const info = document.getElementById('fm-justif-info');
+  const vencEl = document.getElementById('fm-vencimento-info');
+  if(!info) return;
+  if(tipo === 'falta_justificada') {
+    info.style.display = 'block';
+    const dataEl = document.getElementById('fm-data');
+    if(dataEl && dataEl.value && vencEl) {
+      const venc = new Date(dataEl.value + 'T12:00:00');
+      venc.setDate(venc.getDate() + 30);
+      vencEl.textContent = `Vencimento: ${fmtDate(venc.toISOString().slice(0,10))}`;
+    }
+  } else {
+    info.style.display = 'none';
+  }
+}
+
+function saveFreqRecord() {
+  if(!_freqEntity) return;
+  const data = document.getElementById('fm-data')?.value;
+  const tipo = document.getElementById('fm-tipo')?.value;
+  const obs  = document.getElementById('fm-obs')?.value?.trim() || '';
+  if(!data || !tipo) { showToast('⚠ Preencha data e tipo', true); return; }
+
+  if(!_freqEntity.frequencia) _freqEntity.frequencia = [];
+  // Remover registro anterior do mesmo dia e tipo (exceto reposição)
+  _freqEntity.frequencia = _freqEntity.frequencia.filter(r =>
+    !(r.data === data && r.tipo === tipo && r.tipo !== 'reposicao')
+  );
+  const reg = { tipo, data, obs };
+  _freqEntity.frequencia.push(reg);
+
+  // Falta justificada → crédito de reposição
+  if(tipo === 'falta_justificada') {
+    const venc = new Date(data + 'T12:00:00');
+    venc.setDate(venc.getDate() + 30);
+    _freqEntity.frequencia.push({
+      tipo: 'reposicao', status: 'pendente', data,
+      vencimento: venc.toISOString().slice(0,10),
+    });
+  }
+
+  saveStudents();
+  closeModal('freqModal');
+  _renderFreqAll();
+
+  // Atualizar badge no botão de frequência
+  _atualizarFreqBadge();
+  showToast(`✓ ${tipo === 'presente' ? 'Presença' : 'Falta'} registrada`);
+}
+
+function _atualizarFreqBadge() {
+  if(!_freqEntity) return;
+  const btn = document.getElementById('freq-nav-btn');
+  if(!btn) return;
+  const repos = (_freqEntity.frequencia||[]).filter(r => r.tipo === 'reposicao' && r.status === 'pendente').length;
+  // Remover badge anterior
+  const old = btn.querySelector('.freq-badge');
+  if(old) old.remove();
+  if(repos > 0) {
+    const badge = document.createElement('span');
+    badge.className = 'freq-badge';
+    badge.style.cssText = 'position:absolute;top:-4px;right:-4px;background:var(--amber);color:#fff;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;';
+    badge.textContent = repos;
+    btn.appendChild(badge);
+  }
+}
+
+// ── MODAL DE REPOSIÇÃO ─────────────────────────────────────────────
+function openRepModal(dataFalta, vencimento) {
+  _repSlotSel  = null;
+  _repTurmaSel = null;
+  document.getElementById('frm-credito-id').value = dataFalta;
+  document.getElementById('frm-sub').textContent  = `Falta de ${fmtDate(dataFalta)}${vencimento?' · Vence '+fmtDate(vencimento):''}`;
+
+  // Limpar campos
+  const dtEl = document.getElementById('frm-data');
+  if(dtEl) dtEl.value = '';
+  const hrEl = document.getElementById('frm-hora');
+  if(hrEl) hrEl.value = '08:00';
+  const obsEl = document.getElementById('frm-obs');
+  if(obsEl) obsEl.value = '';
+
+  // Limpar slot selecionado
+  const slotDiv = document.getElementById('frm-slot-selecionado');
+  if(slotDiv) slotDiv.style.display = 'none';
+
+  setRepTab('livre');
+  _renderRepGrade();
+  _renderRepTurmas();
+  updateRepWAMsg();
+
+  document.getElementById('freqRepModal').classList.add('open');
+}
+
+function setRepTab(tab) {
+  _repTabAtiva = tab;
+  const btnLivre = document.getElementById('frm-tab-livre');
+  const btnTurma = document.getElementById('frm-tab-turma');
+  const panLivre = document.getElementById('frm-panel-livre');
+  const panTurma = document.getElementById('frm-panel-turma');
+  if(btnLivre) { btnLivre.style.background = tab==='livre' ? 'var(--green3)' : 'var(--card2)'; btnLivre.style.borderColor = tab==='livre' ? 'var(--green)' : 'var(--border2)'; btnLivre.style.color = tab==='livre' ? 'var(--green2)' : 'var(--muted)'; }
+  if(btnTurma) { btnTurma.style.background = tab==='turma' ? 'rgba(155,114,208,0.15)' : 'var(--card2)'; btnTurma.style.borderColor = tab==='turma' ? 'var(--purple)' : 'var(--border2)'; btnTurma.style.color = tab==='turma' ? 'var(--purple)' : 'var(--muted)'; }
+  if(panLivre) panLivre.style.display = tab==='livre' ? 'block' : 'none';
+  if(panTurma) panTurma.style.display = tab==='turma' ? 'block' : 'none';
+}
+
+function switchRepQuadra(q) {
+  _repQuadraAtiva = q;
+  for(let i = 0; i < 4; i++) {
+    const btn = document.getElementById(`frm-qtab-${i}`);
+    if(btn) btn.classList.toggle('on', i === q);
+  }
+  _renderRepGrade();
+}
+
+function _renderRepGrade() {
+  loadAgenda();
+  const el = document.getElementById('frm-ag-grade');
+  if(!el) return;
+  const q = _repQuadraAtiva;
+  const AG_DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const ROW_H = 18, BASE = 15, START_MIN = 6*60, END_MIN = 22*60;
+  const totalRows = (END_MIN - START_MIN) / BASE;
+
+  // Mapa de slots ocupados nesta quadra
+  const ocupados = {};
+  Object.entries(agendaData).forEach(([key, slot]) => {
+    const m = key.match(/^q(\d+)_d(\d+)_(.+)$/);
+    if(!m || parseInt(m[1]) !== q) return;
+    ocupados[`${m[2]}_${m[3]}`] = slot;
+  });
+
+  // Cabeçalho
+  let html = `<table style="width:100%;border-collapse:collapse;table-layout:fixed;min-width:420px">
+    <thead><tr>
+      <th style="width:36px;background:var(--card);padding:4px;font-size:9px;color:var(--muted);position:sticky;top:0;z-index:5"></th>
+      ${AG_DIAS.map(d => `<th style="background:var(--card);padding:4px;font-size:9px;color:var(--green2);font-weight:600;text-align:center;position:sticky;top:0;z-index:5">${d}</th>`).join('')}
+    </tr></thead><tbody>`;
+
+  for(let row = 0; row < totalRows; row++) {
+    const min = START_MIN + row * BASE;
+    const hh  = String(Math.floor(min/60)).padStart(2,'0');
+    const mm  = String(min % 60).padStart(2,'0');
+    const hora = `${hh}:${mm}`;
+    const showLabel = mm === '00';
+    html += `<tr style="height:${ROW_H}px">
+      <td style="font-size:8px;color:var(--muted);text-align:right;padding-right:4px;vertical-align:middle;white-space:nowrap">${showLabel ? hora : ''}</td>`;
+    for(let d = 0; d < 6; d++) {
+      const slotKey = `${d}_${hora}`;
+      const slot = ocupados[slotKey];
+      if(slot) {
+        const entity = (students||[]).find(s => String(s.id) === String(slot.entityId));
+        const nome = entity ? entity.nome.split(' ')[0] : (slot.obs || '—');
+        const cor = slot.slotTipo === 'grupo' ? '#c9a84c' : '#1D9E75';
+        html += `<td style="background:${cor};border-radius:3px;padding:2px 3px;font-size:8px;color:#fff;font-weight:600;text-align:center;vertical-align:middle;cursor:default">${nome}</td>`;
+      } else {
+        html += `<td style="border:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:background .1s" 
+          onmouseenter="this.style.background='rgba(29,158,117,0.12)'" 
+          onmouseleave="this.style.background=''"
+          onclick="selecionarRepSlot(${q},${d},'${hora}')" 
+          title="Selecionar ${AG_DIAS[d]} ${hora}"></td>`;
+      }
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function selecionarRepSlot(q, d, hora) {
+  const AG_DIAS_FULL = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  _repSlotSel = { q, d, hora, diaLabel: AG_DIAS_FULL[d] };
+
+  const slotDiv = document.getElementById('frm-slot-selecionado');
+  const descEl  = document.getElementById('frm-slot-desc');
+  if(slotDiv) slotDiv.style.display = 'flex';
+  if(descEl)  descEl.textContent = `Q${q+1} · ${AG_DIAS_FULL[d]} · ${hora}`;
+
+  // Preencher campos manuais
+  const hoje = new Date().toISOString().slice(0,10);
+  const dtEl = document.getElementById('frm-data');
+  if(dtEl) dtEl.value = hoje;
+  const hrEl = document.getElementById('frm-hora');
+  if(hrEl)  hrEl.value = hora;
+
+  updateRepWAMsg();
+}
+
+function clearRepSlot() {
+  _repSlotSel = null;
+  const slotDiv = document.getElementById('frm-slot-selecionado');
+  if(slotDiv) slotDiv.style.display = 'none';
+}
+
+function _renderRepTurmas() {
+  loadAgenda();
+  const el = document.getElementById('frm-turmas-list');
+  if(!el) return;
+
+  const turmas = (students||[]).filter(s => s.type === 'group');
+  if(!turmas.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Nenhuma turma cadastrada.</div>';
+    return;
+  }
+
+  const AG_DIAS = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  el.innerHTML = turmas.map(t => {
+    const hs = (t.horarios||[]);
+    const horaStr = hs.length ? hs.map(h => `${AG_DIAS[h.dia]||'?'} ${h.hora} Q${(h.quadra||0)+1}`).join(', ') : '—';
+    const isSelected = _repTurmaSel && String(_repTurmaSel.entityId) === String(t.id);
+    return `<div onclick="selecionarRepTurma('${t.id}')"
+      style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:${isSelected?'rgba(155,114,208,0.15)':'var(--card2)'};border:1px solid ${isSelected?'rgba(155,114,208,0.4)':'var(--border2)'};border-radius:9px;cursor:pointer;transition:all .12s">
+      <div style="font-size:20px">👥</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:var(--text)">${t.nome}</div>
+        <div style="font-size:10px;color:var(--muted)">${horaStr} · ${(t.membros||[]).length} aluno${(t.membros||[]).length!==1?'s':''}</div>
+      </div>
+      ${isSelected ? '<div style="font-size:16px">✅</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function selecionarRepTurma(entityId) {
+  const turma = (students||[]).find(s => String(s.id) === String(entityId));
+  if(!turma) return;
+  const AG_DIAS = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const hs = (turma.horarios||[]);
+  const horaStr = hs.length ? hs.map(h => `${AG_DIAS[h.dia]||'?'} ${h.hora}`).join(', ') : '—';
+  _repTurmaSel = { entityId: String(entityId), nome: turma.nome, horario: horaStr };
+
+  const selDiv  = document.getElementById('frm-turma-selecionada');
+  const nomeEl  = document.getElementById('frm-turma-sel-nome');
+  const infoEl  = document.getElementById('frm-turma-sel-info');
+  if(selDiv) selDiv.style.display = 'block';
+  if(nomeEl) nomeEl.textContent = turma.nome;
+  if(infoEl) infoEl.textContent = horaStr;
+
+  _renderRepTurmas(); // re-render para marcar selecionada
+  updateRepWATurmaMsg();
+}
+
+function updateRepWAMsg() {
+  if(!_freqEntity) return;
+  const data = document.getElementById('frm-data')?.value || '';
+  const hora = document.getElementById('frm-hora')?.value || '';
+  const nome = _freqEntity.nome.split(' ')[0];
+  const msg = data && hora
+    ? `Olá ${nome}! Sua reposição está confirmada para ${fmtDate(data)} às ${hora}. Qualquer dúvida é só me chamar. 🎾`
+    : `Olá ${nome}! Vamos agendar sua reposição. Qual horário fica melhor para você?`;
+  const el = document.getElementById('frm-wa-text');
+  if(el) el.value = msg;
+}
+
+function updateRepWATurmaMsg() {
+  if(!_freqEntity || !_repTurmaSel) return;
+  const nome = _freqEntity.nome.split(' ')[0];
+  const msg = `Olá ${nome}! Sua reposição foi agendada para a turma "${_repTurmaSel.nome}" (${_repTurmaSel.horario}). Confirma presença? 🎾`;
+  const el = document.getElementById('frm-wa-turma-text');
+  if(el) el.value = msg;
+}
+
+function copyFreqWA() {
+  const el = document.getElementById('frm-wa-text');
+  if(!el) return;
+  navigator.clipboard.writeText(el.value).then(() => showToast('✓ Mensagem copiada')).catch(()=>{ el.select(); document.execCommand('copy'); showToast('✓ Copiado'); });
+}
+
+function copyFreqWATurma() {
+  const el = document.getElementById('frm-wa-turma-text');
+  if(!el) return;
+  navigator.clipboard.writeText(el.value).then(() => showToast('✓ Mensagem copiada')).catch(()=>{ el.select(); document.execCommand('copy'); showToast('✓ Copiado'); });
+}
+
+function saveReposicao() {
+  if(!_freqEntity) return;
+  const dataFalta = document.getElementById('frm-credito-id')?.value || '';
+  const obs = (_repTabAtiva === 'turma'
+    ? document.getElementById('frm-obs-turma')?.value
+    : document.getElementById('frm-obs')?.value) || '';
+
+  // Localizar crédito de reposição pendente
+  const rep = (_freqEntity.frequencia||[]).find(r =>
+    r.tipo === 'reposicao' && r.status === 'pendente' && r.data === dataFalta
+  );
+  if(!rep) { showToast('⚠ Crédito de reposição não encontrado', true); return; }
+
+  if(_repTabAtiva === 'turma') {
+    if(!_repTurmaSel) { showToast('⚠ Selecione uma turma', true); return; }
+    rep.status = 'agendada';
+    rep.turmaId = _repTurmaSel.entityId;
+    rep.obs = obs;
+    saveStudents();
+    closeModal('freqRepModal');
+    _renderFreqAll();
+    showToast(`✓ Reposição agendada na turma ${_repTurmaSel.nome}`);
+    return;
+  }
+
+  // Modo livre — precisa de data e hora
+  const data = document.getElementById('frm-data')?.value || (_repSlotSel ? new Date().toISOString().slice(0,10) : '');
+  const hora = _repSlotSel ? _repSlotSel.hora : (document.getElementById('frm-hora')?.value || '');
+  if(!data || !hora) { showToast('⚠ Selecione um horário na grade ou preencha data e hora', true); return; }
+
+  // Marcar crédito como agendado
+  rep.status = 'agendada';
+  rep.dataReposicao = data;
+  rep.horaReposicao = hora;
+  rep.obs = obs;
+
+  // Bloquear slot na grade automaticamente (FEATURE 2)
+  if(_repSlotSel) {
+    loadAgenda();
+    const dow = new Date(data + 'T12:00:00').getDay();
+    const diaIdx = dow === 0 ? -1 : dow - 1;
+    if(diaIdx >= 0 && diaIdx === _repSlotSel.d) {
+      const key = `q${_repSlotSel.q}_d${_repSlotSel.d}_${hora}`;
+      if(!agendaData[key]) {
+        agendaData[key] = {
+          entityId: String(_freqEntity.id),
+          profId: (_freqEntity.horarios||[])[0]?.profId || null,
+          durMin: (_freqEntity.horarios||[])[0]?.durMin || 60,
+          obs: 'Reposição',
+          slotTipo: 'reposicao',
+        };
+        saveAgenda();
+        showToast(`✓ Reposição agendada · slot bloqueado na grade`);
+      } else {
+        showToast(`✓ Reposição registrada (slot já ocupado na grade)`);
+      }
+    }
+  } else {
+    showToast(`✓ Reposição registrada para ${fmtDate(data)} às ${hora}`);
+  }
+
+  saveStudents();
+  closeModal('freqRepModal');
+  _renderFreqAll();
+  _atualizarFreqBadge();
+}
 
 // ═══════════════════════════════════════
 // D3 FREQUÊNCIA — CHAMADA & REPOSIÇÃO
