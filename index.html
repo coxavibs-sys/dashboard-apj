@@ -4381,6 +4381,309 @@ document.addEventListener('click', function(e){
 
 
 // ═══════════════════════════════════════
+// D3 FREQUÊNCIA — CHAMADA & REPOSIÇÃO
+// ═══════════════════════════════════════
+
+// Estado temporário da chamada (sessão atual apenas)
+// Individual: { "entityId+hora": "presente"|"falta_simples"|"falta_justificada" }
+// Turma:      { "entityId+hora": { membros: { "alunoId": "presente"|... } } }
+let chamadaState = {};
+
+// Contexto do modal de chamada de turma
+let _ctmCtx = null; // { eId, hora, q, data, grupo }
+
+// ── CHAMADA RÁPIDA — aluno individual ──────────────────────────────
+function registrarChamadaRapida(eId, hora, tipo, data) {
+  const aluno = (students||[]).find(s => String(s.id) === String(eId));
+  if(!aluno) return;
+
+  // Estado visual temporário
+  chamadaState[String(eId) + hora] = tipo;
+
+  // Persistir frequência
+  if(!aluno.frequencia) aluno.frequencia = [];
+
+  // Remover registro anterior do mesmo dia/hora (evita duplicata)
+  aluno.frequencia = aluno.frequencia.filter(r =>
+    !(r.data === data && r._chamadaHora === hora && r.tipo !== 'reposicao')
+  );
+
+  // Inserir novo registro
+  aluno.frequencia.push({ tipo, data, _chamadaHora: hora });
+
+  // Se falta justificada → gerar crédito de reposição + bloquear grade
+  if(tipo === 'falta_justificada') {
+    // Remover reposição pendente anterior desta falta específica
+    aluno.frequencia = aluno.frequencia.filter(r =>
+      !(r.tipo === 'reposicao' && r._origemHora === hora && r._origemData === data && r.status === 'pendente')
+    );
+
+    // Vencimento = 30 dias
+    const venc = new Date(data + 'T12:00:00');
+    venc.setDate(venc.getDate() + 30);
+    const vencStr = venc.toISOString().slice(0,10);
+
+    aluno.frequencia.push({
+      tipo: 'reposicao',
+      status: 'pendente',
+      data,
+      vencimento: vencStr,
+      _origemHora: hora,
+      _origemData: data,
+      _chamadaHora: hora,
+    });
+
+    // ── FEATURE 2: bloquear slot na grade automaticamente ──
+    // Descobre em qual quadra/dia está este slot
+    loadAgenda();
+    const dow = new Date(data + 'T12:00:00').getDay();
+    const diaIdx = dow === 0 ? -1 : dow - 1;
+    if(diaIdx >= 0) {
+      // Buscar o slot desta entidade neste dia/hora
+      let slotEncontrado = null;
+      Object.entries(agendaData).forEach(([key, slot]) => {
+        const m = key.match(/^q(\d+)_d(\d+)_(.+)$/);
+        if(!m) return;
+        if(parseInt(m[2]) !== diaIdx) return;
+        if(String(slot.entityId) !== String(eId)) return;
+        if(m[3] !== hora) return;
+        slotEncontrado = { key, q: parseInt(m[1]), d: diaIdx, hora: m[3], slot };
+      });
+
+      if(slotEncontrado) {
+        // Criar chave para a data específica da falta
+        // Usamos a hora+data como identificador — armazenado como nota no obs
+        const repoKey = `q${slotEncontrado.q}_d${diaIdx}_${hora}`;
+        // Marcar no agendaData como reposição pendente desta data
+        // Não sobrescreve o slot recorrente — salva nota de falta justificada
+        if(!agendaData[repoKey]) return;
+        // Adicionar flag de falta justificada para exibição na grade
+        if(!agendaData[repoKey]._faltasJustificadas) {
+          agendaData[repoKey]._faltasJustificadas = [];
+        }
+        // Evitar duplicata
+        if(!agendaData[repoKey]._faltasJustificadas.includes(data)) {
+          agendaData[repoKey]._faltasJustificadas.push(data);
+        }
+        saveAgenda();
+      }
+    }
+  }
+
+  // Se marcou presente ou falta simples → limpar flag de falta justificada se existia
+  if(tipo === 'presente' || tipo === 'falta_simples') {
+    loadAgenda();
+    const dow = new Date(data + 'T12:00:00').getDay();
+    const diaIdx = dow === 0 ? -1 : dow - 1;
+    if(diaIdx >= 0) {
+      Object.keys(agendaData).forEach(key => {
+        const m = key.match(/^q(\d+)_d(\d+)_(.+)$/);
+        if(!m || parseInt(m[2]) !== diaIdx || m[3] !== hora) return;
+        if(String(agendaData[key].entityId) !== String(eId)) return;
+        if(agendaData[key]._faltasJustificadas) {
+          agendaData[key]._faltasJustificadas =
+            agendaData[key]._faltasJustificadas.filter(d => d !== data);
+        }
+      });
+      saveAgenda();
+    }
+    // Remover reposição pendente gerada anteriormente para este dia/hora
+    aluno.frequencia = aluno.frequencia.filter(r =>
+      !(r.tipo === 'reposicao' && r._origemHora === hora && r._origemData === data && r.status === 'pendente')
+    );
+  }
+
+  saveStudents();
+}
+
+// ── CHAMADA DE TURMA — abrir modal ─────────────────────────────────
+function openChamadaTurma(eId, hora, q) {
+  const grupo = (students||[]).find(s => String(s.id) === String(eId));
+  if(!grupo || grupo.type !== 'group') return;
+
+  const hoje  = new Date();
+  const data  = hoje.toISOString().slice(0,10);
+  const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const diasFull = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const dow    = hoje.getDay();
+  const diaIdx = dow === 0 ? -1 : dow - 1;
+  const dataStr = diaIdx >= 0
+    ? `${diasFull[diaIdx]}, ${hoje.getDate()} de ${meses[hoje.getMonth()]}`
+    : 'Hoje';
+
+  _ctmCtx = { eId: String(eId), hora, q, data, grupo };
+
+  document.getElementById('ctm-title').textContent = `👥 ${grupo.nome}`;
+  document.getElementById('ctm-sub').textContent   = `${dataStr} · ${hora}`;
+
+  // Recuperar estado anterior desta turma/hora se existir
+  const stAtual = chamadaState[String(eId) + hora];
+  const membrosState = (stAtual && stAtual.membros) ? stAtual.membros : {};
+
+  // Montar lista de membros
+  const membros = (grupo.membros||[])
+    .map(mid => (students||[]).find(s => s.id === Number(mid) || s.id === mid))
+    .filter(Boolean);
+
+  if(!membros.length) {
+    document.getElementById('ctm-members').innerHTML =
+      '<p class="muted small" style="padding:12px 0">Esta turma não tem membros cadastrados.</p>';
+  } else {
+    document.getElementById('ctm-members').innerHTML = membros.map(m => {
+      const st = membrosState[String(m.id)] || '';
+      const nivel = (m.nivel||'').split(' — ')[0];
+      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border2)" id="ctm-row-${m.id}">
+        <div style="width:30px;height:30px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0">${m.nome.charAt(0).toUpperCase()}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">${m.nome.split(' ')[0]}</div>
+          <div style="font-size:10px;color:var(--muted)">${nivel}</div>
+        </div>
+        <div style="display:flex;gap:5px">
+          <button onclick="setChamadaMembro('${m.id}','presente')"
+            style="width:34px;height:34px;border-radius:8px;border:2px solid ${st==='presente'?'var(--green2)':'var(--border2)'};background:${st==='presente'?'rgba(29,158,117,0.2)':'var(--card2)'};cursor:pointer;font-size:16px;transition:all .12s" title="Presente">✅</button>
+          <button onclick="setChamadaMembro('${m.id}','falta_simples')"
+            style="width:34px;height:34px;border-radius:8px;border:2px solid ${st==='falta_simples'?'var(--red)':'var(--border2)'};background:${st==='falta_simples'?'rgba(224,92,92,0.2)':'var(--card2)'};cursor:pointer;font-size:16px;transition:all .12s" title="Falta Simples">❌</button>
+          <button onclick="setChamadaMembro('${m.id}','falta_justificada')"
+            style="width:34px;height:34px;border-radius:8px;border:2px solid ${st==='falta_justificada'?'var(--amber)':'var(--border2)'};background:${st==='falta_justificada'?'rgba(232,160,48,0.2)':'var(--card2)'};cursor:pointer;font-size:16px;transition:all .12s" title="Falta Justificada">⚠️</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('ctm-resumo').style.display = 'none';
+  document.getElementById('chamadaTurmaModal').classList.add('open');
+}
+
+// Atualizar estado de um membro no modal
+function setChamadaMembro(alunoId, tipo) {
+  if(!_ctmCtx) return;
+  const key = _ctmCtx.eId + _ctmCtx.hora;
+  if(!chamadaState[key] || typeof chamadaState[key] !== 'object') {
+    chamadaState[key] = { membros: {} };
+  }
+  chamadaState[key].membros[String(alunoId)] = tipo;
+
+  // Atualizar visual do botão em tempo real
+  const row = document.getElementById(`ctm-row-${alunoId}`);
+  if(row) {
+    const btns = row.querySelectorAll('button');
+    const tipos = ['presente','falta_simples','falta_justificada'];
+    const cores  = ['var(--green2)','var(--red)','var(--amber)'];
+    const bgs    = ['rgba(29,158,117,0.2)','rgba(224,92,92,0.2)','rgba(232,160,48,0.2)'];
+    btns.forEach((btn, i) => {
+      const ativo = tipos[i] === tipo;
+      btn.style.borderColor  = ativo ? cores[i]  : 'var(--border2)';
+      btn.style.background   = ativo ? bgs[i]    : 'var(--card2)';
+    });
+  }
+
+  // Atualizar resumo em tempo real
+  _atualizarResumoCTM();
+}
+
+function _atualizarResumoCTM() {
+  if(!_ctmCtx) return;
+  const key = _ctmCtx.eId + _ctmCtx.hora;
+  const st  = chamadaState[key];
+  if(!st || !st.membros) return;
+
+  const vals = Object.values(st.membros);
+  const pres  = vals.filter(v => v === 'presente').length;
+  const faltaS = vals.filter(v => v === 'falta_simples').length;
+  const faltaJ = vals.filter(v => v === 'falta_justificada').length;
+  const total = vals.length;
+
+  if(total > 0) {
+    document.getElementById('ctm-resumo').style.display = 'block';
+    document.getElementById('ctm-resumo-body').innerHTML =
+      `<span style="color:var(--green2)">✅ ${pres} presente${pres!==1?'s':''}</span>` +
+      (faltaS ? `&nbsp;&nbsp;<span style="color:var(--red)">❌ ${faltaS} falta${faltaS!==1?'s':''} simples</span>` : '') +
+      (faltaJ ? `&nbsp;&nbsp;<span style="color:var(--amber)">⚠️ ${faltaJ} justificada${faltaJ!==1?'s':''} · ${faltaJ} reposição${faltaJ!==1?'ões':''} gerada${faltaJ!==1?'s':''}</span>` : '');
+  }
+}
+
+// ── SALVAR CHAMADA DE TURMA ────────────────────────────────────────
+function salvarChamadaTurma() {
+  if(!_ctmCtx) return;
+  const { eId, hora, data, grupo } = _ctmCtx;
+  const key = eId + hora;
+  const st  = chamadaState[key];
+  if(!st || !st.membros || !Object.keys(st.membros).length) {
+    showToast('⚠ Marque pelo menos um aluno antes de salvar', true);
+    return;
+  }
+
+  // Persistir frequência de cada membro
+  Object.entries(st.membros).forEach(([alunoId, tipo]) => {
+    const aluno = (students||[]).find(s => String(s.id) === String(alunoId));
+    if(!aluno) return;
+    if(!aluno.frequencia) aluno.frequencia = [];
+
+    // Remover registro anterior do mesmo dia/hora
+    aluno.frequencia = aluno.frequencia.filter(r =>
+      !(r.data === data && r._chamadaHora === hora && r.tipo !== 'reposicao')
+    );
+    aluno.frequencia.push({ tipo, data, _chamadaHora: hora });
+
+    // Falta justificada → crédito de reposição
+    if(tipo === 'falta_justificada') {
+      aluno.frequencia = aluno.frequencia.filter(r =>
+        !(r.tipo === 'reposicao' && r._origemHora === hora && r._origemData === data && r.status === 'pendente')
+      );
+      const venc = new Date(data + 'T12:00:00');
+      venc.setDate(venc.getDate() + 30);
+      aluno.frequencia.push({
+        tipo: 'reposicao', status: 'pendente', data,
+        vencimento: venc.toISOString().slice(0,10),
+        _origemHora: hora, _origemData: data, _chamadaHora: hora,
+      });
+    } else {
+      // Limpar reposição pendente se existia desta origem
+      aluno.frequencia = aluno.frequencia.filter(r =>
+        !(r.tipo === 'reposicao' && r._origemHora === hora && r._origemData === data && r.status === 'pendente')
+      );
+    }
+  });
+
+  // ── FEATURE 2: atualizar flags de falta justificada na grade ──
+  loadAgenda();
+  const dow    = new Date(data + 'T12:00:00').getDay();
+  const diaIdx = dow === 0 ? -1 : dow - 1;
+  if(diaIdx >= 0) {
+    // Encontrar slot da turma neste dia/hora
+    Object.keys(agendaData).forEach(agKey => {
+      const m = agKey.match(/^q(\d+)_d(\d+)_(.+)$/);
+      if(!m || parseInt(m[2]) !== diaIdx || m[3] !== hora) return;
+      if(String(agendaData[agKey].entityId) !== String(eId)) return;
+
+      // Membros com falta justificada
+      const faltaJs = Object.entries(st.membros)
+        .filter(([,t]) => t === 'falta_justificada')
+        .map(([id]) => id);
+
+      if(!agendaData[agKey]._faltasJustificadasTurma) {
+        agendaData[agKey]._faltasJustificadasTurma = {};
+      }
+      if(faltaJs.length) {
+        agendaData[agKey]._faltasJustificadasTurma[data] = faltaJs;
+      } else {
+        delete agendaData[agKey]._faltasJustificadasTurma[data];
+      }
+    });
+    saveAgenda();
+  }
+
+  saveStudents();
+  closeModal('chamadaTurmaModal');
+
+  const vals   = Object.values(st.membros);
+  const pres   = vals.filter(v => v === 'presente').length;
+  const faltaJ = vals.filter(v => v === 'falta_justificada').length;
+  showToast(`✓ Chamada salva · ${pres} presente${pres!==1?'s':''}${faltaJ?' · '+faltaJ+' reposição'+(faltaJ!==1?'ões':'')+' gerada'+(faltaJ!==1?'s':''):''}`);
+  renderD3Freq();
+}
+
+// ═══════════════════════════════════════
 // D3 FREQUÊNCIA — PANE DEDICADO
 // ═══════════════════════════════════════
 function renderD3Freq() {
@@ -5482,10 +5785,14 @@ function populateProfSelect(selId) {
   sel.innerHTML = '<option value="">— Selecione —</option>';
   professores.forEach(p => {
     const o = document.createElement('option');
-    o.value = p.id; o.textContent = p.nome;
+    o.value = p.id;
+    o.textContent = `● ${p.nome}`;
+    o.dataset.cor = p.cor;
     sel.appendChild(o);
   });
   if(professores.length) sel.value = professores[0].id;
+  _syncProfSelectColor(sel);
+  sel.addEventListener('change', function(){ _syncProfSelectColor(this); });
 }
 
 function addHorarioTemp(prefix) {
@@ -5788,17 +6095,28 @@ function renderGrade() {
           // ── Ícone do bloco ──
           const icone = isReserva ? '🔒' : isReposicao ? '🔄' : isGroup ? '👥' : '';
 
+          // ── FEATURE 2: badge de falta(s) justificada(s) registradas ──
+          const hoje = new Date().toISOString().slice(0,10);
+          const faltasHoje = isGroup
+            ? (slot._faltasJustificadasTurma && slot._faltasJustificadasTurma[hoje]
+                ? slot._faltasJustificadasTurma[hoje].length : 0)
+            : (slot._faltasJustificadas && slot._faltasJustificadas.includes(hoje) ? 1 : 0);
+          const badgeFalta = faltasHoje > 0
+            ? `<div style="position:absolute;top:3px;right:4px;background:rgba(232,160,48,0.9);color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:6px;letter-spacing:.2px">⚠ ${faltasHoje > 1 ? faltasHoje + ' faltas' : 'falta'}</div>`
+            : '';
+
           blocos += `
             <div class="ag-slot-wrap" style="position:absolute;left:2px;right:2px;top:${top+2}px;height:${height-4}px;z-index:10;border-radius:7px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.45)"
               onmouseenter="this.querySelector('.ag-edit-btn-abs') && (this.querySelector('.ag-edit-btn-abs').style.opacity='1');this.querySelector('.ag-del-btn-abs') && (this.querySelector('.ag-del-btn-abs').style.opacity='1')"
               onmouseleave="this.querySelector('.ag-edit-btn-abs') && (this.querySelector('.ag-edit-btn-abs').style.opacity='0');this.querySelector('.ag-del-btn-abs') && (this.querySelector('.ag-del-btn-abs').style.opacity='0')">
               <div class="ag-slot" style="background:${bg};height:100%;border-radius:7px;position:relative;border-left:3px solid rgba(255,255,255,0.25)" onclick="${onclick}">
                 <div style="position:absolute;top:3px;left:5px;font-size:8px;font-weight:700;color:rgba(255,255,255,0.65);letter-spacing:.3px;text-transform:uppercase">${badgeLabel}</div>
+                ${badgeFalta}
                 <div class="ag-slot-nome" style="margin-top:10px">${icone?icone+' ':''}${primeiro}</div>
                 ${!isReserva && membrosSlot.length
                   ? `<div style="font-size:9px;color:rgba(255,255,255,0.85);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${membrosSlot.join(' · ')}</div>`
                   : !isReserva ? `<div class="ag-slot-nivel">${nivel}</div>` : ''}
-                <div class="ag-slot-prof">${prof ? prof.nome.split(' ')[0] : ''}</div>
+                <div class="ag-slot-prof">${prof ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${prof.cor};margin-right:3px;vertical-align:middle;opacity:.9"></span>${prof.nome.split(' ')[0]}` : ''}</div>
                 <div class="ag-slot-dur">${durMin}min</div>
               </div>
               <button class="ag-edit-btn-abs" onclick="event.stopPropagation();openSlotModal(${q},${d},'${hora}')"
@@ -5954,9 +6272,19 @@ function agPopularProfs(selectId) {
   sel.innerHTML = '<option value="">— Selecione —</option>';
   professores.forEach(p=>{
     const o=document.createElement('option');
-    o.value=p.id; o.textContent=p.nome; sel.appendChild(o);
+    o.value=p.id;
+    o.textContent=`● ${p.nome}`;
+    o.dataset.cor=p.cor;
+    sel.appendChild(o);
   });
   if(professores[0]) sel.value=professores[0].id;
+  _syncProfSelectColor(sel);
+  sel.addEventListener('change', function(){ _syncProfSelectColor(this); });
+}
+
+function _syncProfSelectColor(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  sel.style.color = (opt && opt.dataset.cor) ? opt.dataset.cor : '';
 }
 
 function openSlotModal(q, d, hora) {
@@ -6170,8 +6498,9 @@ function renderProfList() {
   if(!professores.length){ el.innerHTML='<p class="muted small">Nenhum professor cadastrado.</p>'; return; }
   el.innerHTML = professores.map(p => `
     <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border2)">
-      <div style="width:14px;height:14px;border-radius:50%;background:${p.cor};flex-shrink:0"></div>
-      <span style="flex:1;font-size:13px">${p.nome}</span>
+      <div style="width:16px;height:16px;border-radius:50%;background:${p.cor};flex-shrink:0;box-shadow:0 0 6px ${p.cor}88"></div>
+      <span style="flex:1;font-size:13px;font-weight:500">${p.nome}</span>
+      <span style="font-size:10px;color:${p.cor};font-weight:700;font-family:monospace">${p.cor.toUpperCase()}</span>
       <button class="btn btn-s btn-sm" style="color:var(--red);border-color:rgba(224,92,92,0.25);padding:3px 8px;font-size:10px" onclick="deleteProf(${p.id})">🗑</button>
     </div>`).join('');
 }
