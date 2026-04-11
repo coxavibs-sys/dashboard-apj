@@ -3234,6 +3234,19 @@ function renderExTags(bloco) {
 function removeEx(bloco, id) {
   selectedExPerBloco[bloco] = selectedExPerBloco[bloco].filter(e=>e.id!==id);
   renderExTags(bloco);
+
+  // Remontar o textarea com os exercícios restantes
+  const ta = document.getElementById('bloco-'+bloco);
+  if(!ta) return;
+  const restantes = selectedExPerBloco[bloco];
+  if(restantes.length === 0) {
+    ta.value = '';
+  } else {
+    ta.value = restantes.map(ex =>
+      `· ${ex.nome}${ex.duracao?' ('+ex.duracao+')':''}${ex.objetivo?' — '+ex.objetivo:''}`
+    ).join('\n');
+  }
+  ta.dispatchEvent(new Event('input'));
 }
 
 function appendExToTextarea(bloco, ex) {
@@ -3344,7 +3357,9 @@ function getSocraticQ(foco) {
 function refreshPreLesson() {
   if (!activeEntity) return;
   const nome     = activeEntity.nome || '';
-  const primeiro = nome.split(' ')[0];
+  const niveisPrefixos = ['APJ','Kids','Mini','Sênior','Senior'];
+  const primeiroToken  = nome.split(' ')[0];
+  const primeiro = niveisPrefixos.includes(primeiroToken) ? (nome || 'aluno') : primeiroToken;
   const data     = document.getElementById('lf-data')?.value || '';
   const hora     = document.getElementById('lf-hora')?.value || '';
   const nivel    = (activeEntity.nivel||'').split(' — ')[0];
@@ -3357,28 +3372,34 @@ function refreshPreLesson() {
   const blocoJ = (document.getElementById('bloco-j')?.value || '').trim();
   const focoField = (document.getElementById('lf-foco')?.value || '').trim();
 
-  // Extrair exercícios de cada bloco (linhas com ·)
+  // Extrair exercícios de cada bloco — só o nome, sem duração/objetivo
   const extractEx = (txt) => txt.split('\n')
     .map(l => l.trim())
     .filter(l => l.startsWith('·') || l.startsWith('▸'))
-    .map(l => l.replace(/^[·▸•\s]+/, '').trim())
+    .map(l => {
+      // Remove prefixo · ou ▸
+      let nome = l.replace(/^[·▸•\s]+/, '').trim();
+      // Remove duração "(X min)" e objetivo "— ..."
+      nome = nome.replace(/\s*\(\d+\s*min\)/, '').replace(/\s*—.*$/, '').trim();
+      return nome;
+    })
     .filter(Boolean);
 
   const exA = extractEx(blocoA);
   const exP = extractEx(blocoP);
   const exJ = extractEx(blocoJ);
 
-  // temaAula = campo foco ou primeira linha não-exercício do bloco A
+  // temaAula = campo foco APENAS (não pega exercício do bloco A)
   const blocoALinhas = blocoA.split('\n').map(l => l.trim()).filter(Boolean);
-  const temaAula = focoField || blocoALinhas.find(l => !l.startsWith('·') && !l.startsWith('▸')) || blocoALinhas[0] || '';
+  const temaAula = focoField || blocoALinhas.find(l => !l.startsWith('·') && !l.startsWith('▸')) || '';
   const nivelStr = nivel ? ` (${nivel})` : '';
 
   if (!data) {
     ta.value = 'Preencha a data para gerar a mensagem...';
     return;
   }
-  if (!temaAula && exA.length === 0) {
-    ta.value = 'Preencha o Bloco A (Aprende) no plano de aula para gerar a mensagem...';
+  if (!focoField && exA.length === 0 && exP.length === 0 && exJ.length === 0) {
+    ta.value = 'Preencha o Foco da Aula ou adicione exercícios para gerar a mensagem...';
     return;
   }
 
@@ -3397,36 +3418,27 @@ function refreshPreLesson() {
   // Build message
   let msg = `🎾 Oi ${primeiro}! Tudo bem?\n\n`;
   msg += `Sua aula${nivelStr} é ${dataFormatada}${horaStr}.\n\n`;
+  msg += `📌 *O que vamos trabalhar hoje*\n`;
+  if(focoField) msg += `${focoField}\n`;
+  msg += '\n';
 
-  // Foco / tema
-  if(temaAula) msg += `📌 *O que vamos trabalhar hoje*\n${temaAula}\n\n`;
-
-  // Bloco A — exercícios de aquecimento/educativo
   if(exA.length) {
-    msg += `🔥 *Aquecimento / Aprende*\n`;
+    msg += `🔥 *Aquecimento · Aprende*\n`;
     exA.forEach(l => msg += `▸ ${l}\n`);
     msg += '\n';
   }
-
-  // Bloco P — exercícios de prática
   if(exP.length) {
-    msg += `🏋️ *O que vamos praticar*\n`;
+    msg += `🏋️ *Pratica*\n`;
     exP.forEach(l => msg += `▸ ${l}\n`);
     msg += '\n';
   }
-
-  // Bloco J — jogo
   if(exJ.length) {
-    msg += `🎮 *No jogo de hoje*\n`;
+    msg += `🎮 *Joga*\n`;
     exJ.forEach(l => msg += `▸ ${l}\n`);
     msg += '\n';
-  } else if(blocoJ) {
-    const jLine = blocoJ.split('\n')[0].trim().replace(/^[·•▸J\d\s:]+/,'').trim();
-    if(jLine) msg += `🎮 *No jogo de hoje*\n${jLine}\n\n`;
   }
 
-  // Pergunta socrática
-  msg += `💭 *Pense nisso antes de chegar na quadra:*\n${getSocraticQ(temaAula + ' ' + blocoA)}\n\n`;
+  msg += `💭 *Pense nisso antes de chegar na quadra:*\n${getSocraticQ(focoField + ' ' + blocoA)}\n\n`;
   msg += `Nos vemos em breve! 🙌\n`;
   msg += `— Prof. Marcos | Approach Tennis Academy`;
 
