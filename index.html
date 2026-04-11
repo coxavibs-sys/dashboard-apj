@@ -3372,16 +3372,15 @@ function refreshPreLesson() {
   const blocoJ = (document.getElementById('bloco-j')?.value || '').trim();
   const focoField = (document.getElementById('lf-foco')?.value || '').trim();
 
-  // Extrair exercícios de cada bloco — só o nome, sem duração/objetivo
+  // Extrair exercícios — nome + objetivo, sem duração "(X min)"
   const extractEx = (txt) => txt.split('\n')
     .map(l => l.trim())
     .filter(l => l.startsWith('·') || l.startsWith('▸'))
     .map(l => {
-      // Remove prefixo · ou ▸
-      let nome = l.replace(/^[·▸•\s]+/, '').trim();
-      // Remove duração "(X min)" e objetivo "— ..."
-      nome = nome.replace(/\s*\(\d+\s*min\)/, '').replace(/\s*—.*$/, '').trim();
-      return nome;
+      let texto = l.replace(/^[·▸•\s]+/, '').trim();
+      // Remove só a duração "(X min)" mas mantém o resto
+      texto = texto.replace(/\s*\(\d+\s*min\)/, '').trim();
+      return texto;
     })
     .filter(Boolean);
 
