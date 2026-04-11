@@ -3357,28 +3357,27 @@ function refreshPreLesson() {
   const blocoJ = (document.getElementById('bloco-j')?.value || '').trim();
   const focoField = (document.getElementById('lf-foco')?.value || '').trim();
 
-  // Derive readable "what we work on" from bloco-a or foco field
-  // Take first non-empty line of bloco-a, or foco field as fallback
-  const blocoALines = blocoA.split('\n').map(l=>l.trim()).filter(Boolean);
-  const temaAula = blocoALines[0] || focoField || '';
-
-  // Extract exercise names from bloco-p (· lines) for "o que vamos praticar"
-  const exLines = blocoP.split('\n')
-    .map(l=>l.trim())
-    .filter(l=>l.startsWith('·') || l.startsWith('▸') || l.startsWith('P1') || l.startsWith('P2') || l.startsWith('P3'))
-    .slice(0,2)
-    .map(l=>l.replace(/^[·•▸P\d\s:]+/,'').trim())
+  // Extrair exercícios de cada bloco (linhas com ·)
+  const extractEx = (txt) => txt.split('\n')
+    .map(l => l.trim())
+    .filter(l => l.startsWith('·') || l.startsWith('▸'))
+    .map(l => l.replace(/^[·▸•\s]+/, '').trim())
     .filter(Boolean);
 
-  // Socratic question — still based on keyword detection but now over bloco-a content
-  const socratica = getSocraticQ(temaAula + ' ' + blocoA);
-  const nivelStr  = nivel ? ` (${nivel})` : '';
+  const exA = extractEx(blocoA);
+  const exP = extractEx(blocoP);
+  const exJ = extractEx(blocoJ);
+
+  // temaAula = campo foco ou primeira linha não-exercício do bloco A
+  const blocoALinhas = blocoA.split('\n').map(l => l.trim()).filter(Boolean);
+  const temaAula = focoField || blocoALinhas.find(l => !l.startsWith('·') && !l.startsWith('▸')) || blocoALinhas[0] || '';
+  const nivelStr = nivel ? ` (${nivel})` : '';
 
   if (!data) {
     ta.value = 'Preencha a data para gerar a mensagem...';
     return;
   }
-  if (!temaAula) {
+  if (!temaAula && exA.length === 0) {
     ta.value = 'Preencha o Bloco A (Aprende) no plano de aula para gerar a mensagem...';
     return;
   }
@@ -3395,29 +3394,39 @@ function refreshPreLesson() {
 
   const horaStr = hora ? ` às ${hora}` : '';
 
-  // Build message — language of the student, not the professor
+  // Build message
   let msg = `🎾 Oi ${primeiro}! Tudo bem?\n\n`;
   msg += `Sua aula${nivelStr} é ${dataFormatada}${horaStr}.\n\n`;
 
-  // What we work on — from bloco-a
-  msg += `📌 *O que vamos trabalhar hoje*\n${temaAula}\n\n`;
+  // Foco / tema
+  if(temaAula) msg += `📌 *O que vamos trabalhar hoje*\n${temaAula}\n\n`;
 
-  // What we practice — from bloco-p exercises if available
-  if (exLines.length) {
-    msg += `🏋️ *O que vamos praticar*\n`;
-    exLines.forEach(l => msg += `▸ ${l}\n`);
+  // Bloco A — exercícios de aquecimento/educativo
+  if(exA.length) {
+    msg += `🔥 *Aquecimento / Aprende*\n`;
+    exA.forEach(l => msg += `▸ ${l}\n`);
     msg += '\n';
   }
 
-  // Game (J) — brief mention if filled
-  if (blocoJ) {
-    const jLine = blocoJ.split('\n')[0].trim().replace(/^[·•▸J\d\s:]+/,'').trim();
-    if (jLine) msg += `🎮 *No jogo de hoje*\n${jLine}\n\n`;
+  // Bloco P — exercícios de prática
+  if(exP.length) {
+    msg += `🏋️ *O que vamos praticar*\n`;
+    exP.forEach(l => msg += `▸ ${l}\n`);
+    msg += '\n';
   }
 
-  // Socratic question to prime the mind
-  msg += `💭 *Pense nisso antes de chegar na quadra:*\n${socratica}\n\n`;
+  // Bloco J — jogo
+  if(exJ.length) {
+    msg += `🎮 *No jogo de hoje*\n`;
+    exJ.forEach(l => msg += `▸ ${l}\n`);
+    msg += '\n';
+  } else if(blocoJ) {
+    const jLine = blocoJ.split('\n')[0].trim().replace(/^[·•▸J\d\s:]+/,'').trim();
+    if(jLine) msg += `🎮 *No jogo de hoje*\n${jLine}\n\n`;
+  }
 
+  // Pergunta socrática
+  msg += `💭 *Pense nisso antes de chegar na quadra:*\n${getSocraticQ(temaAula + ' ' + blocoA)}\n\n`;
   msg += `Nos vemos em breve! 🙌\n`;
   msg += `— Prof. Marcos | Approach Tennis Academy`;
 
