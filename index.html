@@ -1551,6 +1551,22 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     <div id="ewm-aulas-list" style="margin-bottom:12px"></div>
     <!-- botão adicionar aula -->
     <button class="btn btn-s btn-sm" onclick="ewmAddAula()" style="width:100%;margin-bottom:14px;border-style:dashed">+ Adicionar Aula</button>
+    <!-- TRIPÉ APJ -->
+    <div style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px">Tripé APJ</div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--amber);margin-bottom:4px">⚡ Footwork</div>
+        <input class="fc" id="ewm-footwork" type="text" placeholder="Ex: Split step com troca de direção" style="font-size:12px;padding:7px 10px">
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--green2);margin-bottom:4px">🎾 Técnica</div>
+        <input class="fc" id="ewm-tecnica" type="text" placeholder="Ex: U-turn no forehand" style="font-size:12px;padding:7px 10px">
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--purple);margin-bottom:4px">🧩 Tático</div>
+        <input class="fc" id="ewm-tatico" type="text" placeholder="Ex: Consistência no rally cruzado" style="font-size:12px;padding:7px 10px">
+      </div>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-s" onclick="closeEntityWeekModal()">Cancelar</button>
       <button class="btn btn-p" onclick="saveEntityWeekFocus()">Salvar</button>
@@ -2916,11 +2932,23 @@ function renderEntityTrim() {
     const aulaBadge = aulasNaSem > 0 && !aulasDots
       ? `<div style="font-size:8px;background:rgba(29,158,117,0.2);color:var(--green2);border-radius:3px;padding:1px 4px;margin-top:2px">${aulasNaSem} aula${aulasNaSem>1?'s':''}</div>`
       : '';
+    // Tripé badges para o grid
+    let tripeGrid = '';
+    if(semData && typeof semData === 'object' && semData.tripe) {
+      const t = semData.tripe;
+      const pesoCor = { principal:'var(--green2)', secundario:'var(--amber)', base:'var(--muted)' };
+      const pesoSz  = { principal:'9px', secundario:'8px', base:'7px' };
+      tripeGrid = `<div style="display:flex;gap:3px;margin-top:3px;flex-wrap:wrap">
+        <span style="font-size:${pesoSz[t.footwork||'principal']};color:${pesoCor[t.footwork||'principal']};font-weight:600">⚡${t.footwork==='principal'?'●':'○'}</span>
+        <span style="font-size:${pesoSz[t.tecnica||'principal']};color:${pesoCor[t.tecnica||'principal']};font-weight:600">🎾${t.tecnica==='principal'?'●':'○'}</span>
+        <span style="font-size:${pesoSz[t.tatico||'principal']};color:${pesoCor[t.tatico||'principal']};font-weight:600">🧩${t.tatico==='principal'?'●':'○'}</span>
+      </div>`;
+    }
     return `<div class="wk" onclick="openEntityWeekModal(${wk.sem})">
       <div class="wk-n">SEM ${wk.sem}</div>
       <div class="wk-ph ${wk.cls}">${wk.phase}</div>
       <div class="wk-f">${focoLabel || '<span style="color:var(--muted);font-size:8px">+ foco</span>'}</div>
-      ${aulasDots}${aulaBadge}
+      ${aulasDots}${aulaBadge}${tripeGrid}
     </div>`;
   }).join('');
 
@@ -3015,6 +3043,8 @@ function renderEntityTrim() {
 // ─── MODAL SEMANA DA ENTIDADE ─────────
 let activeEntityWeek = null;
 let ewmAulas = []; // estado local do modal
+let ewmTripe = { footwork:'', tecnica:'', tatico:'' }; // tripé da semana — texto livre
+const TRIPE_LABEL = { footwork:'⚡ Footwork', tecnica:'🎾 Técnica', tatico:'🧩 Tático' };
 
 function openEntityWeekModal(sem) {
   if(!activeEntity) return;
@@ -3037,7 +3067,17 @@ function openEntityWeekModal(sem) {
   // Se não há aulas ainda, começa com 1 campo em branco
   if(ewmAulas.length === 0) ewmAulas = [{ num:1, foco:'', tipo:'individual' }];
 
+  // Carregar tripé existente
+  const tripe = (semData && semData.tripe) ? semData.tripe : { footwork:'', tecnica:'', tatico:'' };
+  ewmTripe = { ...tripe };
   renderEwmAulas();
+  // Preencher inputs do tripé
+  setTimeout(()=>{
+    ['footwork','tecnica','tatico'].forEach(k => {
+      const el = document.getElementById('ewm-'+k);
+      if(el) el.value = ewmTripe[k] || '';
+    });
+  }, 30);
   document.getElementById('entityWeekModal').classList.add('open');
   setTimeout(()=>{
     const first = document.querySelector('#ewm-aulas-list .ewm-foco-input');
@@ -3091,6 +3131,7 @@ function closeEntityWeekModal() {
   document.getElementById('entityWeekModal').classList.remove('open');
   activeEntityWeek = null;
   ewmAulas = [];
+  ewmTripe = { footwork:'', tecnica:'', tatico:'' };
 }
 
 function saveEntityWeekFocus() {
@@ -3100,11 +3141,17 @@ function saveEntityWeekFocus() {
   // Filtrar aulas sem foco (vazias)
   const aulasFiltradas = ewmAulas.filter(a => a.foco && a.foco.trim());
 
+  // Ler tripé dos inputs antes de salvar
+  ['footwork','tecnica','tatico'].forEach(k=>{
+    const el = document.getElementById('ewm-'+k);
+    if(el) ewmTripe[k] = el.value.trim();
+  });
   if(aulasFiltradas.length === 0) {
     delete activeEntity.trimestre[activeEntityWeek];
   } else {
     activeEntity.trimestre[activeEntityWeek] = {
-      aulas: aulasFiltradas.map((a,i) => ({ num:i+1, foco:a.foco.trim(), tipo:a.tipo }))
+      aulas: aulasFiltradas.map((a,i) => ({ num:i+1, foco:a.foco.trim(), tipo:a.tipo })),
+      tripe: { ...ewmTripe }
     };
   }
   saveStudents();
@@ -7871,13 +7918,27 @@ function gerarTrimPDF() {
     const isAval = fase === 'Avaliação';
     const bgRow = sem % 2 === 0 ? '#fafafa' : '#fff';
 
+    // Tripé no PDF — texto livre por pilar
+    let tripeHTML = '';
+    if(sd && sd.tripe) {
+      const t = sd.tripe;
+      const partes = [
+        t.footwork ? `<div style="margin-bottom:4px;display:flex;align-items:flex-start;gap:4px"><span style="font-size:10px;flex-shrink:0">⚡</span><span style="font-size:11px;color:#555;line-height:1.4">${t.footwork}</span></div>` : '',
+        t.tecnica  ? `<div style="margin-bottom:4px;display:flex;align-items:flex-start;gap:4px"><span style="font-size:10px;flex-shrink:0">🎾</span><span style="font-size:11px;color:#555;line-height:1.4">${t.tecnica}</span></div>` : '',
+        t.tatico   ? `<div style="display:flex;align-items:flex-start;gap:4px"><span style="font-size:10px;flex-shrink:0">🧩</span><span style="font-size:11px;color:#555;line-height:1.4">${t.tatico}</span></div>` : '',
+      ].filter(Boolean);
+      tripeHTML = partes.length ? partes.join('') : `<span style="color:#aaa;font-size:10px;font-style:italic">—</span>`;
+    } else {
+      tripeHTML = `<span style="color:#aaa;font-size:10px;font-style:italic">—</span>`;
+    }
     return `<tr style="background:${bgRow}">
-      <td style="padding:9px 14px;border-bottom:1px solid #eee;white-space:nowrap;font-size:12px;color:#444;font-weight:700;width:70px">Sem ${sem}</td>
-      <td style="padding:9px 14px;border-bottom:1px solid #eee;width:130px">
+      <td style="padding:9px 14px;border-bottom:1px solid #eee;white-space:nowrap;font-size:12px;color:#444;font-weight:700;width:60px">Sem ${sem}</td>
+      <td style="padding:9px 14px;border-bottom:1px solid #eee;width:110px">
         <span style="display:inline-block;background:${cor}18;color:${cor};border:1px solid ${cor}44;border-radius:20px;font-size:10px;font-weight:700;padding:2px 10px;letter-spacing:.3px">${fase}</span>
         ${isAval ? `<div style="font-size:10px;color:#e05c5c;margin-top:4px;font-weight:600">📋 ${fmtDataAv}</div>` : ''}
       </td>
       <td style="padding:9px 14px;border-bottom:1px solid #eee;font-size:12px;color:#333;line-height:1.6">${focoHTML}</td>
+      <td style="padding:9px 14px;border-bottom:1px solid #eee">${tripeHTML}</td>
     </tr>`;
   }).join('');
 
@@ -7947,9 +8008,10 @@ function gerarTrimPDF() {
     <table style="width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07)">
       <thead>
         <tr style="background:#0b1019">
-          <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#25c491;letter-spacing:.8px;text-transform:uppercase;width:70px">Sem</th>
-          <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#25c491;letter-spacing:.8px;text-transform:uppercase;width:130px">Fase</th>
+          <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#25c491;letter-spacing:.8px;text-transform:uppercase;width:60px">Sem</th>
+          <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#25c491;letter-spacing:.8px;text-transform:uppercase;width:110px">Fase</th>
           <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#25c491;letter-spacing:.8px;text-transform:uppercase">Foco</th>
+          <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#25c491;letter-spacing:.8px;text-transform:uppercase;width:110px">Tripé APJ</th>
         </tr>
       </thead>
       <tbody>${semanasRows}</tbody>
