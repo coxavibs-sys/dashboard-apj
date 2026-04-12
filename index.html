@@ -663,6 +663,13 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
         <!-- Controles -->
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
           <span style="font-size:11px;font-weight:600;color:var(--green2)">📅 Grade Semanal</span>
+          <!-- Navegação de semana -->
+          <div style="display:flex;align-items:center;gap:4px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:2px 4px">
+            <button onclick="agNavSemana(-1)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px;font-family:inherit;line-height:1" title="Semana anterior">‹</button>
+            <span id="ag-semana-label" style="font-size:11px;color:var(--text);font-weight:600;min-width:100px;text-align:center">—</span>
+            <button onclick="agNavSemana(1)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px;font-family:inherit;line-height:1" title="Próxima semana">›</button>
+          </div>
+          <button onclick="agIrHoje()" style="background:rgba(29,158,117,0.12);border:1px solid rgba(29,158,117,0.3);color:var(--green2);font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;cursor:pointer;font-family:inherit">Hoje</button>
           <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
             <select class="fs" id="ag-slot-dur" onchange="renderAgendaInline()" style="font-size:11px;padding:4px 8px">
               <option value="30">30 min</option>
@@ -6650,6 +6657,46 @@ const AG_DIAS = ['Seg','Ter','Qua','Qui','Sex','Sáb'];
 const AG_DIAS_FULL = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 const AG_QUADRAS = 4;
 
+// ─── SEMANA ATIVA ─────────────────────
+// 0 = semana atual, 1 = próxima semana, -1 = semana passada
+let agSemanaOffset = 0;
+
+// Retorna a data (Date) da segunda-feira da semana offset
+function agGetSegundaFeira(offset) {
+  const hoje = new Date();
+  const dow = hoje.getDay(); // 0=Dom
+  const diffSeg = dow === 0 ? -6 : 1 - dow; // dias até a segunda
+  const seg = new Date(hoje);
+  seg.setDate(hoje.getDate() + diffSeg + offset * 7);
+  seg.setHours(0,0,0,0);
+  return seg;
+}
+
+// Retorna array de 6 datas (Seg→Sáb) da semana ativa
+function agGetDiasSemana() {
+  const seg = agGetSegundaFeira(agSemanaOffset);
+  return Array.from({length:6}, (_, i) => {
+    const d = new Date(seg);
+    d.setDate(seg.getDate() + i);
+    return d;
+  });
+}
+
+// Formata data como "07/04"
+function fmtDiaMes(date) {
+  return `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}`;
+}
+
+function agNavSemana(delta) {
+  agSemanaOffset += delta;
+  renderAgendaInline();
+}
+
+function agIrHoje() {
+  agSemanaOffset = 0;
+  renderAgendaInline();
+}
+
 // Slots por dia: Seg-Sex 06-22, Sáb 06-13
 function agSlots(dia, slotMin) {
   const start = 6;
@@ -6713,26 +6760,34 @@ function renderGrade() {
   const el = document.getElementById('ag-grade');
   if(!el) return;
   const q = agQuadraAtiva;
-  // Grade sempre em linhas de 15min — slotMin só afeta quais horários são "âncoras" para abrir modal
-  const BASE = 15; // px e min por linha
+  const BASE = 15;
   const slotMin = parseInt(document.getElementById('ag-slot-dur')?.value||60);
 
   function toMin(h){ const [hh,mm]=h.split(':').map(Number); return hh*60+mm; }
   function minToH(m){ return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; }
 
-  // Gerar todas as linhas de 15min para cada dia
-  const ROW_H = 20; // px por linha de 15min
-  const START_MIN = 6*60; // 06:00
-  const END_MIN_WEEK = 22*60; // 22:00 seg-sex
-  const END_MIN_SAT  = 13*60; // 13:00 sáb
+  const ROW_H = 20;
+  const START_MIN = 6*60;
+  const END_MIN_WEEK = 22*60;
+  const END_MIN_SAT  = 13*60;
 
-  // Coletar horários âncora (para snap de novo slot) — múltiplos de slotMin
-  const ancoras = {};
-  for(let d=0;d<6;d++){
-    ancoras[d] = new Set(agSlots(d, slotMin));
+  // Datas da semana ativa
+  const diasSemana = agGetDiasSemana();
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+  // Atualizar label da semana
+  const lblEl = document.getElementById('ag-semana-label');
+  if(lblEl) {
+    const seg = diasSemana[0], sab = diasSemana[5];
+    const isHoje = agSemanaOffset === 0;
+    lblEl.textContent = `${fmtDiaMes(seg)} – ${fmtDiaMes(sab)}`;
+    lblEl.style.color = isHoje ? 'var(--green2)' : 'var(--text)';
   }
 
-  // Coletar todos os slots da quadra ativa
+  const ancoras = {};
+  for(let d=0;d<6;d++) ancoras[d] = new Set(agSlots(d, slotMin));
+
+  // Slots fixos da quadra ativa
   const slotsQ = [];
   Object.entries(agendaData).forEach(([key,slot])=>{
     const m = key.match(/^q(\d+)_d(\d+)_(.+)$/);
@@ -6742,18 +6797,62 @@ function renderGrade() {
     slotsQ.push({ d, hora, inicioMin: toMin(hora), durMin, slot, key });
   });
 
-  // Para cada dia, calcular número de linhas
+  // Reposições agendadas para esta semana (do perfil do aluno)
+  // Chave: "d_HH:MM" → { alunoId, durMin, profId, turmaId }
+  const reposSemana = {}; // { "d_hora": [...] }
+  diasSemana.forEach((dateDia, dIdx) => {
+    const dateStr = `${dateDia.getFullYear()}-${String(dateDia.getMonth()+1).padStart(2,'0')}-${String(dateDia.getDate()).padStart(2,'0')}`;
+    (students||[]).filter(s=>s.type==='student').forEach(s=>{
+      (s.frequencia||[]).filter(r=>
+        r.tipo==='reposicao' && r.status==='agendada' &&
+        r.dataReposicao===dateStr && r.horaReposicao && !r.turmaId
+      ).forEach(r=>{
+        const chave = `${dIdx}_${r.horaReposicao}`;
+        if(!reposSemana[chave]) reposSemana[chave] = [];
+        reposSemana[chave].push({ alunoId: s.id, nome: s.nome, profId: r.profId||null, durMin: s.horarios?.[0]?.durMin||60 });
+      });
+    });
+  });
+
+  // Alunos em reposição de turma nesta semana
+  // { "entityId_dIdx": [nomeAluno, ...] }
+  const reposTurma = {};
+  diasSemana.forEach((dateDia, dIdx) => {
+    const dateStr = `${dateDia.getFullYear()}-${String(dateDia.getMonth()+1).padStart(2,'0')}-${String(dateDia.getDate()).padStart(2,'0')}`;
+    (students||[]).filter(s=>s.type==='student').forEach(s=>{
+      (s.frequencia||[]).filter(r=>
+        r.tipo==='reposicao' && r.status==='agendada' && r.turmaId && r.data
+      ).forEach(r=>{
+        // Encontrar o dia da semana da turma
+        const turma = (students||[]).find(t=>String(t.id)===String(r.turmaId));
+        if(!turma) return;
+        (turma.horarios||[]).forEach(h=>{
+          if(h.dia === dIdx) {
+            const chave = `${r.turmaId}_${dIdx}`;
+            if(!reposTurma[chave]) reposTurma[chave] = [];
+            if(!reposTurma[chave].find(x=>x.id===s.id))
+              reposTurma[chave].push({ id: s.id, nome: s.nome.split(' ')[0] });
+          }
+        });
+      });
+    });
+  });
+
   const endMin = (d) => d<5 ? END_MIN_WEEK : END_MIN_SAT;
   const numRows = (d) => (endMin(d) - START_MIN) / BASE;
-
-  // Total de linhas (usar o máximo entre dias)
   const totalRows = Math.max(...[0,1,2,3,4,5].map(d => numRows(d)));
 
-  // Build HTML — uma tabela com linhas de 15min
-  // Cada coluna de dia tem position:relative com blocos absolutos sobrepostos
+  // Cabeçalho com data e destaque do dia atual
   let html = `<table class="ag-table" style="table-layout:fixed"><thead><tr>
     <th class="ag-th-hora">Hora</th>
-    ${AG_DIAS.map(d=>`<th>${d}</th>`).join('')}
+    ${diasSemana.map((dateDia, dIdx) => {
+      const isHoje = dateDia.getTime() === hoje.getTime();
+      const ehPassado = dateDia < hoje;
+      return `<th style="${isHoje?'color:var(--green2);background:rgba(29,158,117,0.08)':''}${ehPassado?'opacity:.5':''}">
+        <div style="font-size:10px;font-weight:700">${AG_DIAS[dIdx]}</div>
+        <div style="font-size:9px;font-weight:${isHoje?'700':'400'};color:${isHoje?'var(--green2)':'var(--muted)'}">${fmtDiaMes(dateDia)}</div>
+      </th>`;
+    }).join('')}
   </tr></thead><tbody>`;
 
   // Linhas de 15min
@@ -6885,6 +6984,46 @@ function renderGrade() {
               <button class="ag-del-btn-abs" onclick="event.stopPropagation();deleteSlot(${q},${d},'${hora}')"
                 style="position:absolute;top:3px;right:3px;background:rgba(180,30,30,0.55);border:none;color:#fff;border-radius:4px;width:19px;height:19px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;opacity:0;transition:opacity .15s"
                 title="Remover">×</button>
+            </div>`;
+        });
+
+        // ── Feature 2: Reposições agendadas neste dia (do perfil do aluno) ──
+        const chavesRepos = Object.keys(reposSemana).filter(k => k.startsWith(`${d}_`));
+        chavesRepos.forEach(chave => {
+          const hora = chave.split('_').slice(1).join('_');
+          const repos = reposSemana[chave];
+          const inicioMin = toMin(hora);
+          const durMin = repos[0]?.durMin || 60;
+          const top    = ((inicioMin - START_MIN) / BASE) * ROW_H;
+          const height = (durMin / BASE) * ROW_H;
+          const nomes  = repos.map(r => r.nome.split(' ')[0]).join(' · ');
+          const prof   = repos[0]?.profId ? professores.find(p=>p.id===repos[0].profId) : null;
+          const bg     = prof ? prof.cor : '#b07830';
+          blocos += `
+            <div class="ag-slot-wrap" style="position:absolute;left:2px;right:2px;top:${top+2}px;height:${height-4}px;z-index:11;border-radius:7px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.4)">
+              <div class="ag-slot" style="background:${bg};height:100%;border-radius:7px;position:relative;border-left:3px solid rgba(255,255,255,0.4);padding:4px 5px 3px;opacity:.92">
+                <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.95);line-height:1.3">🔄 Reposição</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-top:1px">${nomes}</div>
+              </div>
+            </div>`;
+        });
+
+        // ── Feature 3: Badge de aluno em reposição de turma neste dia ──
+        // Adicionar badge +N no slot do grupo correspondente
+        // (já renderizado acima — injetar via dataset seria complexo; usamos overlay)
+        const turmasCom = Object.keys(reposTurma).filter(k => k.endsWith(`_${d}`));
+        turmasCom.forEach(chave => {
+          const turmaId = chave.split('_')[0];
+          const alunosExtra = reposTurma[chave];
+          // Encontrar o slot desta turma neste dia para posicionar o badge
+          const slotTurma = slotsQ.find(s => s.d===d && String(s.slot?.entityId)===String(turmaId));
+          if(!slotTurma) return;
+          const top = ((slotTurma.inicioMin - START_MIN) / BASE) * ROW_H;
+          const height = (slotTurma.durMin / BASE) * ROW_H;
+          const nomes = alunosExtra.map(a=>a.nome).join(', ');
+          blocos += `
+            <div style="position:absolute;left:4px;right:4px;top:${top+2}px;height:${Math.min(20,height-4)}px;z-index:15;pointer-events:none">
+              <div style="position:absolute;bottom:3px;right:3px;background:rgba(155,114,208,0.95);color:#fff;font-size:8px;font-weight:700;padding:2px 5px;border-radius:5px;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis" title="Reposição: ${nomes}">+${alunosExtra.length} rep${alunosExtra.length>1?'.':' '+nomes}</div>
             </div>`;
         });
 
