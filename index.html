@@ -1541,15 +1541,15 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 
 <!-- MODAL: SEMANA DO TRIMESTRE (ENTIDADE) -->
 <div class="modal-bg" id="entityWeekModal">
-  <div class="modal" style="max-width:380px">
+  <div class="modal" style="max-width:440px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div style="font-size:15px;font-weight:600;color:var(--green2)" id="ewm-title">Semana —</div>
       <button onclick="closeEntityWeekModal()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1">×</button>
     </div>
-    <div class="fg">
-      <label class="fl">Foco da semana</label>
-      <input class="fc" id="ewm-foco" type="text" placeholder="Ex: Forehand inside-out com padrão cruzado">
-    </div>
+    <!-- lista de aulas -->
+    <div id="ewm-aulas-list" style="margin-bottom:12px"></div>
+    <!-- botão adicionar aula -->
+    <button class="btn btn-s btn-sm" onclick="ewmAddAula()" style="width:100%;margin-bottom:14px;border-style:dashed">+ Adicionar Aula</button>
     <div class="modal-footer">
       <button class="btn btn-s" onclick="closeEntityWeekModal()">Cancelar</button>
       <button class="btn btn-p" onclick="saveEntityWeekFocus()">Salvar</button>
@@ -2859,17 +2859,36 @@ function renderEntityTrim() {
   // Grid 13 semanas
   const grid = document.getElementById('entity-trim-grid');
   grid.innerHTML = TRIM_PHASES.map(wk => {
-    const focus = td[wk.sem] || '';
-    // Contar aulas desta semana
+    const semData = td[wk.sem];
+    // Retrocompatível: suporte a string antiga e novo formato objeto
+    let focoLabel = '';
+    let aulasDots = '';
+    if(semData && typeof semData === 'object' && semData.aulas && semData.aulas.length > 0) {
+      const aulas = semData.aulas;
+      const primeiroFoco = aulas[0].foco || '';
+      focoLabel = primeiroFoco.length > 22 ? primeiroFoco.slice(0,22)+'…' : primeiroFoco;
+      if(aulas.length > 1) {
+        aulasDots = `<div style="display:flex;gap:3px;margin-top:3px;flex-wrap:wrap">
+          ${aulas.map((a,i)=>`<span style="font-size:8px;padding:1px 5px;border-radius:3px;font-weight:600;
+            background:${a.tipo==='turma'?'rgba(155,114,208,0.2)':'rgba(29,158,117,0.2)'};
+            color:${a.tipo==='turma'?'var(--purple)':'var(--green2)'}">${i+1}</span>`).join('')}
+        </div>`;
+      } else {
+        aulasDots = `<div style="font-size:8px;background:rgba(29,158,117,0.2);color:var(--green2);border-radius:3px;padding:1px 4px;margin-top:2px;display:inline-block">1 aula</div>`;
+      }
+    } else if(semData && typeof semData === 'string') {
+      focoLabel = semData.length > 22 ? semData.slice(0,22)+'…' : semData;
+    }
+    // Contar aulas do D2 vinculadas a esta semana
     const aulasNaSem = (activeEntity.aulas||[]).filter(a=>a.semana && a.semana.replace('Sem ','').trim() == wk.sem).length;
-    const aulaBadge = aulasNaSem > 0
+    const aulaBadge = aulasNaSem > 0 && !aulasDots
       ? `<div style="font-size:8px;background:rgba(29,158,117,0.2);color:var(--green2);border-radius:3px;padding:1px 4px;margin-top:2px">${aulasNaSem} aula${aulasNaSem>1?'s':''}</div>`
       : '';
     return `<div class="wk" onclick="openEntityWeekModal(${wk.sem})">
       <div class="wk-n">SEM ${wk.sem}</div>
       <div class="wk-ph ${wk.cls}">${wk.phase}</div>
-      <div class="wk-f">${focus || '<span style="color:var(--muted);font-size:8px">+ foco</span>'}</div>
-      ${aulaBadge}
+      <div class="wk-f">${focoLabel || '<span style="color:var(--muted);font-size:8px">+ foco</span>'}</div>
+      ${aulasDots}${aulaBadge}
     </div>`;
   }).join('');
 
@@ -2963,25 +2982,99 @@ function renderEntityTrim() {
 
 // ─── MODAL SEMANA DA ENTIDADE ─────────
 let activeEntityWeek = null;
+let ewmAulas = []; // estado local do modal
+
 function openEntityWeekModal(sem) {
   if(!activeEntity) return;
   activeEntityWeek = sem;
   const ph = TRIM_PHASES.find(w=>w.sem===sem);
   document.getElementById('ewm-title').textContent = `Semana ${sem} — ${ph ? ph.phase : ''}`;
-  document.getElementById('ewm-foco').value = (activeEntity.trimestre||{})[sem] || '';
+
+  // Carregar aulas existentes — retrocompatível com foco único antigo
+  const td = activeEntity.trimestre || {};
+  const semData = td[sem];
+  if(semData && typeof semData === 'object' && semData.aulas) {
+    ewmAulas = semData.aulas.map(a => ({...a}));
+  } else if(semData && typeof semData === 'string') {
+    // migração de dado antigo (foco único string)
+    ewmAulas = [{ num:1, foco: semData, tipo:'individual' }];
+  } else {
+    ewmAulas = [];
+  }
+
+  // Se não há aulas ainda, começa com 1 campo em branco
+  if(ewmAulas.length === 0) ewmAulas = [{ num:1, foco:'', tipo:'individual' }];
+
+  renderEwmAulas();
   document.getElementById('entityWeekModal').classList.add('open');
-  setTimeout(()=>document.getElementById('ewm-foco').focus(),80);
+  setTimeout(()=>{
+    const first = document.querySelector('#ewm-aulas-list .ewm-foco-input');
+    if(first) first.focus();
+  }, 80);
 }
+
+function renderEwmAulas() {
+  const el = document.getElementById('ewm-aulas-list');
+  el.innerHTML = ewmAulas.map((a, i) => `
+    <div style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:10px;font-weight:700;color:var(--green2);background:rgba(29,158,117,0.12);padding:2px 8px;border-radius:5px;white-space:nowrap">Aula ${i+1}</span>
+        <select onchange="ewmSetTipo(${i},this.value)" style="background:var(--card);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:11px;padding:3px 8px;font-family:var(--font);outline:none;flex:1">
+          <option value="individual" ${a.tipo==='individual'?'selected':''}>Individual</option>
+          <option value="turma"      ${a.tipo==='turma'     ?'selected':''}>Turma</option>
+          <option value="semi"       ${a.tipo==='semi'      ?'selected':''}>Semi-particular</option>
+        </select>
+        ${ewmAulas.length > 1
+          ? `<button onclick="ewmRemoveAula(${i})" style="background:rgba(224,92,92,0.1);border:1px solid rgba(224,92,92,0.2);color:var(--red);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>`
+          : ''}
+      </div>
+      <input class="fc ewm-foco-input" type="text"
+        placeholder="Foco desta aula — ex: Forehand inside-out"
+        value="${(a.foco||'').replace(/"/g,'&quot;')}"
+        oninput="ewmSetFoco(${i},this.value)"
+        style="font-size:12px;padding:7px 10px">
+    </div>
+  `).join('');
+}
+
+function ewmAddAula() {
+  ewmAulas.push({ num: ewmAulas.length+1, foco:'', tipo:'individual' });
+  renderEwmAulas();
+  setTimeout(()=>{
+    const inputs = document.querySelectorAll('#ewm-aulas-list .ewm-foco-input');
+    if(inputs.length) inputs[inputs.length-1].focus();
+  },50);
+}
+
+function ewmRemoveAula(i) {
+  ewmAulas.splice(i,1);
+  ewmAulas.forEach((a,idx)=>a.num=idx+1);
+  renderEwmAulas();
+}
+
+function ewmSetFoco(i, val) { ewmAulas[i].foco = val; }
+function ewmSetTipo(i, val) { ewmAulas[i].tipo = val; }
+
 function closeEntityWeekModal() {
   document.getElementById('entityWeekModal').classList.remove('open');
   activeEntityWeek = null;
+  ewmAulas = [];
 }
+
 function saveEntityWeekFocus() {
   if(!activeEntity || activeEntityWeek === null) return;
   if(!activeEntity.trimestre) activeEntity.trimestre = {};
-  const v = document.getElementById('ewm-foco').value.trim();
-  if(v) activeEntity.trimestre[activeEntityWeek] = v;
-  else delete activeEntity.trimestre[activeEntityWeek];
+
+  // Filtrar aulas sem foco (vazias)
+  const aulasFiltradas = ewmAulas.filter(a => a.foco && a.foco.trim());
+
+  if(aulasFiltradas.length === 0) {
+    delete activeEntity.trimestre[activeEntityWeek];
+  } else {
+    activeEntity.trimestre[activeEntityWeek] = {
+      aulas: aulasFiltradas.map((a,i) => ({ num:i+1, foco:a.foco.trim(), tipo:a.tipo }))
+    };
+  }
   saveStudents();
   renderEntityTrim();
   closeEntityWeekModal();
