@@ -2325,9 +2325,30 @@ function saveTrim() {
 function showPane(n) {
   document.querySelectorAll('.pane').forEach((p,i)=>p.classList.toggle('on',i===n));
   document.querySelectorAll('.nb').forEach((b,i)=>b.classList.toggle('on',i===n));
-  if(n===3) renderAgendaInline();
-  if(n===4) renderD3Freq();
-  if(n===5) renderStats();
+
+  // Resetar cada aba para sua página inicial
+  if(n===2) {
+    // D1 Exercícios — sem sub-views, só renderizar
+    renderExercises();
+  }
+  if(n===3) {
+    // D2 Coordenação — voltar para lista de alunos/turmas
+    const views = ['d2-plan-view','d2-history-view','d2-trim-view','d2-aval-view','d2-freq-view'];
+    views.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+    const list = document.getElementById('d2-list-view');
+    if(list) list.style.display='block';
+    activeEntity = null;
+    renderAgendaInline();
+    renderStudentGrid();
+  }
+  if(n===4) {
+    // D3 Frequência — voltar para chamada do dia
+    renderD3Freq();
+  }
+  if(n===5) {
+    // D5 Stats — página inicial
+    renderStats();
+  }
 }
 
 // ═══════════════════════════════════════
@@ -5589,6 +5610,218 @@ function renderD3Freq() {
 
 }
 
+
+// ─────────────────────────────────────────────
+// RENDER STATS — D5 VISÃO ANALÍTICA
+// ─────────────────────────────────────────────
+function renderStats() {
+  loadData();
+  const stud = students || [];
+  const alunos = stud.filter(s => s.type === 'student');
+  const grupos = stud.filter(s => s.type === 'group');
+
+  // ── KPIs ──
+  const totalAulas = alunos.reduce((acc,s)=>acc+(s.aulas||[]).length,0);
+  const avaliacoes = alunos.filter(s=>{
+    const key = `apj_aval_${s.id}`;
+    try { return JSON.parse(localStorage.getItem(key)||'[]').length > 0; } catch(e){ return false; }
+  }).length;
+
+  const kpiEl = document.getElementById('stats-kpis');
+  if(kpiEl) kpiEl.innerHTML = [
+    { v: alunos.length,    l: 'Alunos',        c: 'var(--green2)' },
+    { v: grupos.length,    l: 'Turmas',         c: 'var(--blue)'   },
+    { v: exercises.length, l: 'Exercícios',     c: 'var(--amber)'  },
+    { v: totalAulas,       l: 'Aulas Salvas',   c: 'var(--purple)' },
+    { v: avaliacoes,       l: 'Avaliados',      c: 'var(--green2)' },
+  ].map(k=>`
+    <div class="card2" style="text-align:center">
+      <div style="font-size:26px;font-weight:700;color:${k.c};margin:4px 0">${k.v}</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">${k.l}</div>
+    </div>`).join('');
+
+  // ── Distribuição por nível ──
+  const nivelEl = document.getElementById('stats-nivel-chart');
+  if(nivelEl) {
+    const map = {};
+    alunos.forEach(s=>{
+      const n = (s.nivel||'Sem nível').split(' — ')[0];
+      map[n] = (map[n]||0) + 1;
+    });
+    const cores = {'APJ 1':'#25c491','APJ 2':'#5b9bd5','APJ 3':'#e8a030','APJ 4':'#9b72d0','APJ 5':'#e05c5c','Kids':'#c9a84c','Mini':'#4a7fa8','Sênior':'#7a8499','Sem nível':'#7a8499'};
+    const total = Math.max(1, alunos.length);
+    nivelEl.innerHTML = Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([n,v])=>{
+      const cor = cores[n]||'var(--green)';
+      const pct = Math.round((v/total)*100);
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:11px;font-weight:600;color:var(--text);min-width:60px">${n}</span>
+        <div style="flex:1;height:10px;background:rgba(255,255,255,0.05);border-radius:5px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${cor};border-radius:5px"></div>
+        </div>
+        <span style="font-size:11px;color:var(--muted);min-width:28px;text-align:right">${v} <span style="font-size:9px">(${pct}%)</span></span>
+      </div>`;
+    }).join('') || '<p class="muted small">Nenhum aluno cadastrado.</p>';
+  }
+
+  // ── Aulas por mês ──
+  const aulasEl = document.getElementById('stats-aulas-chart');
+  if(aulasEl) {
+    const mesMap = {};
+    alunos.forEach(s=>(s.aulas||[]).forEach(a=>{
+      if(!a.data) return;
+      const [y,m] = a.data.split('-');
+      const key = `${y}-${m}`;
+      mesMap[key] = (mesMap[key]||0) + 1;
+    }));
+    const keys = Object.keys(mesMap).sort().slice(-6);
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    if(keys.length) {
+      const max = Math.max(1, ...keys.map(k=>mesMap[k]));
+      aulasEl.innerHTML = keys.map(k=>{
+        const [y,m] = k.split('-');
+        const v = mesMap[k];
+        const pct = Math.round((v/max)*100);
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+          <span style="font-size:10px;color:var(--muted);min-width:36px">${meses[parseInt(m)-1]}</span>
+          <div style="flex:1;height:10px;background:rgba(255,255,255,0.05);border-radius:5px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--blue);border-radius:5px"></div>
+          </div>
+          <span style="font-size:11px;color:var(--muted);min-width:24px;text-align:right">${v}</span>
+        </div>`;
+      }).join('');
+    } else {
+      aulasEl.innerHTML = '<p class="muted small">Nenhuma aula registrada.</p>';
+    }
+  }
+
+  // ── Top exercícios usados ──
+  const exEl = document.getElementById('stats-ex-chart');
+  if(exEl) {
+    const exMap = {};
+    alunos.forEach(s=>(s.aulas||[]).forEach(a=>{
+      ['bloco_a','bloco_p','bloco_j'].forEach(b=>{
+        (a[b]||'').split('\n').filter(l=>l.trim().startsWith('·')).forEach(l=>{
+          const nome = l.replace(/^[·\s]+/,'').split('(')[0].split('—')[0].trim();
+          if(nome) exMap[nome] = (exMap[nome]||0)+1;
+        });
+      });
+    }));
+    const top = Object.entries(exMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    if(top.length) {
+      const max = Math.max(1, top[0][1]);
+      exEl.innerHTML = top.map(([nome,v])=>`
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+          <span style="font-size:10px;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nome}</span>
+          <div style="width:80px;height:8px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;flex-shrink:0">
+            <div style="height:100%;width:${Math.round((v/max)*100)}%;background:var(--green);border-radius:4px"></div>
+          </div>
+          <span style="font-size:10px;color:var(--muted);min-width:18px;text-align:right">${v}</span>
+        </div>`).join('');
+    } else {
+      exEl.innerHTML = '<p class="muted small">Nenhuma aula com exercícios registrada.</p>';
+    }
+  }
+
+  // ── Banco por golpe ──
+  const golpeEl = document.getElementById('stats-golpe-chart');
+  if(golpeEl) {
+    const gMap = {};
+    exercises.forEach(e=>{ gMap[e.golpe] = (gMap[e.golpe]||0)+1; });
+    const total = Math.max(1, exercises.length);
+    const cores2 = {FH:'#25c491',BH:'#5b9bd5',Saque:'#e8a030',Voleio:'#9b72d0',Footwork:'#e05c5c',Tático:'#c9a84c',Mental:'#4a7fa8',Físico:'#1D9E75',Técnico:'#7a8499'};
+    golpeEl.innerHTML = Object.entries(gMap).sort((a,b)=>b[1]-a[1]).map(([g,v])=>{
+      const cor = cores2[g]||'var(--green)';
+      const pct = Math.round((v/total)*100);
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <span style="font-size:11px;color:var(--text);min-width:70px">${g}</span>
+        <div style="flex:1;height:9px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${cor};border-radius:4px"></div>
+        </div>
+        <span style="font-size:10px;color:var(--muted);min-width:24px;text-align:right">${v}</span>
+      </div>`;
+    }).join('') || '<p class="muted small">Nenhum exercício no banco.</p>';
+  }
+
+  // ── Radar APJ — média das avaliações ──
+  const DIMS = [
+    {key:'bio',label:'Biomecânica',color:'#25c491'},
+    {key:'cons',label:'Consistência',color:'#5b9bd5'},
+    {key:'foot',label:'Footwork',color:'#e8a030'},
+    {key:'tatic',label:'Decisão Tática',color:'#9b72d0'},
+    {key:'mental',label:'Mental',color:'#e05c5c'},
+  ];
+  const radarSvg = document.getElementById('stats-radar-svg');
+  const radarLeg = document.getElementById('stats-radar-legend');
+  const medias = {};
+  let countAval = 0;
+  DIMS.forEach(d=>medias[d.key]=0);
+  alunos.forEach(s=>{
+    try {
+      const avals = JSON.parse(localStorage.getItem(`apj_aval_${s.id}`)||'[]');
+      if(!avals.length) return;
+      const last = avals[avals.length-1];
+      if(!last.scores) return;
+      countAval++;
+      DIMS.forEach(d=>{ medias[d.key] += (last.scores[d.key]?.score||0); });
+    } catch(e){}
+  });
+  if(countAval>0) DIMS.forEach(d=>medias[d.key]=Math.round(medias[d.key]/countAval*10)/10);
+
+  if(radarSvg) {
+    const size=160, cx=80, cy=80, r=60, n=DIMS.length;
+    const pts = DIMS.map((d,i)=>{
+      const ang = (i/n)*Math.PI*2 - Math.PI/2;
+      const val = Math.min(10, medias[d.key]||0);
+      const rr  = (val/10)*r;
+      return { x: cx+rr*Math.cos(ang), y: cy+rr*Math.sin(ang), ax: cx+r*Math.cos(ang), ay: cy+r*Math.sin(ang), ...d };
+    });
+    const polyPts = pts.map(p=>`${p.x},${p.y}`).join(' ');
+    const axisPts = pts.map(p=>`${p.ax},${p.ay}`).join(' ');
+    radarSvg.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <polygon points="${axisPts}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+      <polygon points="${pts.map(p=>`${cx+(p.ax-cx)*.5},${cy+(p.ay-cy)*.5}`).join(' ')}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+      ${pts.map(p=>`<line x1="${cx}" y1="${cy}" x2="${p.ax}" y2="${p.ay}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`).join('')}
+      <polygon points="${polyPts}" fill="rgba(29,158,117,0.25)" stroke="#25c491" stroke-width="2"/>
+      ${pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="3" fill="${p.color}"/>`).join('')}
+    </svg>`;
+    if(radarLeg) radarLeg.innerHTML = DIMS.map(d=>`
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <div style="width:10px;height:10px;border-radius:50%;background:${d.color};flex-shrink:0"></div>
+        <span style="font-size:12px;color:var(--text);flex:1">${d.label}</span>
+        <span style="font-size:13px;font-weight:700;color:${d.color}">${countAval?medias[d.key].toFixed(1):'—'}</span>
+      </div>`).join('');
+  }
+
+  // ── Resumo por aluno ──
+  const tblEl = document.getElementById('stats-alunos-table');
+  if(tblEl) {
+    if(!alunos.length) {
+      tblEl.innerHTML = '<p class="muted small">Nenhum aluno cadastrado.</p>';
+    } else {
+      tblEl.innerHTML = `<table class="tbl">
+        <tr><th>Aluno</th><th>Nível</th><th>Aulas</th><th>Constância</th><th>Reposições</th></tr>
+        ${alunos.map(s=>{
+          const pres  = (s.frequencia||[]).filter(r=>r.tipo==='presente').length;
+          const falts = (s.frequencia||[]).filter(r=>r.tipo==='falta_simples'||r.tipo==='falta_justificada').length;
+          const repos = (s.frequencia||[]).filter(r=>r.tipo==='reposicao'&&r.status==='pendente').length;
+          const total = pres+falts;
+          const pct   = total>0?Math.round((pres/total)*100):null;
+          const cor   = pct===null?'var(--muted)':pct>=80?'var(--green2)':pct>=60?'var(--amber)':'var(--red)';
+          return `<tr>
+            <td style="font-weight:500">${s.nome}</td>
+            <td><span class="badge b-check" style="font-size:9px">${(s.nivel||'—').split(' — ')[0]}</span></td>
+            <td>${(s.aulas||[]).length}</td>
+            <td style="color:${cor};font-weight:600">${pct!==null?pct+'%':'—'}</td>
+            <td style="color:${repos>0?'var(--amber)':'var(--muted)'}">${repos>0?repos+' pendente'+(repos!==1?'s':''):'✅'}</td>
+          </tr>`;
+        }).join('')}
+      </table>`;
+    }
+  }
+
+  // ── Frequência (KPIs + ranking + gráficos) ──
+  renderStatsFrequencia(stud);
+}
 
 // ─────────────────────────────────────────────
 // RENDERIZAÇÃO DE FREQUÊNCIA NO D4
