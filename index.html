@@ -1001,6 +1001,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
         <div style="font-size:11px;color:var(--muted)" id="d2-trim-sub">Planejamento trimestral · 13 semanas · Método APJ</div>
       </div>
       <div style="display:flex;gap:8px">
+        <button class="btn btn-s btn-sm" onclick="openTrimPDFModal()" style="color:var(--green2);border-color:rgba(29,158,117,0.35)">📄 Gerar PDF</button>
         <button class="btn btn-s btn-sm" onclick="clearEntityTrim()" title="Limpar focos do trimestre">🗑 Limpar</button>
       </div>
     </div>
@@ -1553,6 +1554,37 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     <div class="modal-footer">
       <button class="btn btn-s" onclick="closeEntityWeekModal()">Cancelar</button>
       <button class="btn btn-p" onclick="saveEntityWeekFocus()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: GERAR PDF TRIMESTRAL -->
+<div class="modal-bg" id="trimPDFModal">
+  <div class="modal" style="max-width:480px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="font-size:15px;font-weight:600;color:var(--green2)">📄 Planejamento para o Aluno</div>
+      <button onclick="closeTrimPDFModal()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div class="fg">
+      <label class="fl">Objetivo 1 do trimestre</label>
+      <input class="fc" id="pdf-obj1" type="text" placeholder="Ex: Desenvolver o forehand inside-out com consistência">
+    </div>
+    <div class="fg">
+      <label class="fl">Objetivo 2 do trimestre</label>
+      <input class="fc" id="pdf-obj2" type="text" placeholder="Ex: Construir padrão tático no rally neutro">
+    </div>
+    <div class="fg">
+      <label class="fl">Data da Avaliação (Semana 12)</label>
+      <input class="fc" id="pdf-dataav" type="date">
+    </div>
+    <div class="fg">
+      <label class="fl">Mensagem do professor para o aluno</label>
+      <textarea class="fc" id="pdf-msg" rows="4" placeholder="Ex: Este trimestre você vai dar um salto real no seu jogo. Confio no seu processo."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-s" onclick="closeTrimPDFModal()">Cancelar</button>
+      <button class="btn btn-p" onclick="gerarTrimPDF()">📄 Gerar PDF</button>
     </div>
   </div>
 </div>
@@ -7761,6 +7793,185 @@ function deleteProf(id) {
   renderLegenda();
   renderGrade();
   showToast('✓ Professor removido');
+}
+
+
+// ═══════════════════════════════════════
+// PDF PLANEJAMENTO TRIMESTRAL
+// ═══════════════════════════════════════
+function openTrimPDFModal() {
+  if(!activeEntity) return;
+  document.getElementById('pdf-obj1').value = '';
+  document.getElementById('pdf-obj2').value = '';
+  document.getElementById('pdf-dataav').value = '';
+  document.getElementById('pdf-msg').value = '';
+  document.getElementById('trimPDFModal').classList.add('open');
+}
+function closeTrimPDFModal() {
+  document.getElementById('trimPDFModal').classList.remove('open');
+}
+
+function gerarTrimPDF() {
+  if(!activeEntity) return;
+  const obj1    = document.getElementById('pdf-obj1').value.trim();
+  const obj2    = document.getElementById('pdf-obj2').value.trim();
+  const dataAv  = document.getElementById('pdf-dataav').value;
+  const msg     = document.getElementById('pdf-msg').value.trim();
+  const nome    = activeEntity.nome || 'Aluno';
+  const nivel   = activeEntity.nivel || '';
+  const td      = activeEntity.trimestre || {};
+
+  // Formatar data
+  const fmtDataAv = dataAv
+    ? new Date(dataAv + 'T12:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'})
+    : 'A definir';
+
+  // Montar linhas de semanas
+  const FASES_PDF = [
+    {sems:[1,2],  label:'Fundação',   cor:'#5b9bd5'},
+    {sems:[3,4,5,6], label:'Técnico', cor:'#25c491'},
+    {sems:[7,8,9],   label:'Tático',  cor:'#9b72d0'},
+    {sems:[10],      label:'Integração', cor:'#e8a030'},
+    {sems:[11],      label:'Preparação', cor:'#c9a84c'},
+    {sems:[12],      label:'Avaliação',  cor:'#e05c5c'},
+    {sems:[13],      label:'Devolutiva', cor:'#9b72d0'},
+  ];
+
+  const semanasRows = FASES_PDF.map(fase => {
+    const semLabel = fase.sems.length > 1
+      ? `Sem ${fase.sems[0]}–${fase.sems[fase.sems.length-1]}`
+      : `Sem ${fase.sems[0]}`;
+
+    // Coletar focos das semanas desta fase
+    const focos = [];
+    fase.sems.forEach(s => {
+      const sd = td[s];
+      if(sd && typeof sd === 'object' && sd.aulas) {
+        sd.aulas.forEach((a,i) => {
+          if(a.foco) focos.push(sd.aulas.length > 1 ? `Aula ${i+1}: ${a.foco}` : a.foco);
+        });
+      } else if(sd && typeof sd === 'string') {
+        focos.push(sd);
+      }
+    });
+
+    const focoHTML = focos.length
+      ? focos.map(f => `<div style="margin-bottom:3px">• ${f}</div>`).join('')
+      : '<span style="color:#999;font-size:11px;font-style:italic">A definir</span>';
+
+    const isAval = fase.label === 'Avaliação';
+
+    return `
+      <tr>
+        <td style="padding:10px 14px;border-bottom:1px solid #eee;white-space:nowrap;font-size:12px;color:#555;font-weight:600">${semLabel}</td>
+        <td style="padding:10px 14px;border-bottom:1px solid #eee">
+          <span style="display:inline-block;background:${fase.cor}22;color:${fase.cor};border:1px solid ${fase.cor}55;border-radius:20px;font-size:10px;font-weight:700;padding:2px 10px;letter-spacing:.3px">${fase.label}</span>
+          ${isAval ? `<span style="font-size:10px;color:#e05c5c;margin-left:6px">📋 ${fmtDataAv}</span>` : ''}
+        </td>
+        <td style="padding:10px 14px;border-bottom:1px solid #eee;font-size:12px;color:#333;line-height:1.6">${focoHTML}</td>
+      </tr>`;
+  }).join('');
+
+  const objHTML = (obj1 || obj2) ? `
+    <div style="margin:28px 0 24px">
+      <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;color:#1D9E75;text-transform:uppercase;margin-bottom:12px">Objetivos do Trimestre</div>
+      ${obj1 ? `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px">
+        <span style="background:#1D9E75;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px">1</span>
+        <span style="font-size:13px;color:#222;line-height:1.5">${obj1}</span>
+      </div>` : ''}
+      ${obj2 ? `<div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="background:#1D9E75;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px">2</span>
+        <span style="font-size:13px;color:#222;line-height:1.5">${obj2}</span>
+      </div>` : ''}
+    </div>` : '';
+
+  const msgHTML = msg ? `
+    <div style="margin-top:28px;background:linear-gradient(135deg,#0b1019,#141e2e);border-radius:14px;padding:24px 28px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle,rgba(29,158,117,0.15),transparent);border-radius:50%;transform:translate(30px,-30px)"></div>
+      <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;color:#25c491;text-transform:uppercase;margin-bottom:14px">Mensagem do Professor</div>
+      <div style="font-size:13px;color:#e8eaf0;line-height:1.8;font-style:italic;position:relative">"${msg}"</div>
+      <div style="margin-top:16px;font-size:11px;color:#7a8499">— Marcos Habenschus · Approach Tennis Academy</div>
+    </div>` : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Planejamento APJ — ${nome}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Inter',sans-serif; background:#fff; color:#222; }
+  @media print {
+    body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .no-print { display:none !important; }
+  }
+</style>
+</head>
+<body>
+<div style="max-width:700px;margin:0 auto;padding:40px 32px 60px">
+
+  <!-- HEADER COM LOGO -->
+  <div style="background:linear-gradient(135deg,#0b1019 0%,#141e2e 60%,#1a2a3a 100%);border-radius:18px;padding:36px 32px 28px;margin-bottom:32px;position:relative;overflow:hidden">
+    <!-- Detalhe decorativo -->
+    <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(29,158,117,0.2),transparent);border-radius:50%"></div>
+    <div style="position:absolute;bottom:-30px;left:40px;width:150px;height:150px;background:radial-gradient(circle,rgba(37,196,145,0.08),transparent);border-radius:50%"></div>
+
+    <!-- Logo APJ -->
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;position:relative">
+      <div style="width:48px;height:48px;background:linear-gradient(135deg,#1D9E75,#25c491);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#fff;letter-spacing:-1px;box-shadow:0 4px 16px rgba(29,158,117,0.45)">APJ</div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#25c491;letter-spacing:.2px">Approach Tennis Academy</div>
+        <div style="font-size:11px;color:#7a8499;margin-top:2px;letter-spacing:.3px">Santos, SP · Método APJ · Marcos Habenschus</div>
+      </div>
+    </div>
+
+    <!-- Nome do aluno -->
+    <div style="position:relative">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.8px;color:#7a8499;text-transform:uppercase;margin-bottom:6px">Planejamento Trimestral</div>
+      <div style="font-size:28px;font-weight:800;color:#fff;letter-spacing:-.5px;line-height:1.1">${nome}</div>
+      ${nivel ? `<div style="display:inline-block;margin-top:10px;background:rgba(29,158,117,0.2);border:1px solid rgba(29,158,117,0.4);color:#25c491;font-size:11px;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:.3px">${nivel}</div>` : ''}
+    </div>
+  </div>
+
+  <!-- OBJETIVOS -->
+  ${objHTML}
+
+  <!-- TABELA DE SEMANAS -->
+  <div style="margin-bottom:28px">
+    <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;color:#1D9E75;text-transform:uppercase;margin-bottom:14px">Visão das 13 Semanas</div>
+    <table style="width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07)">
+      <thead>
+        <tr style="background:#0b1019">
+          <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#25c491;letter-spacing:.8px;text-transform:uppercase;width:90px">Semanas</th>
+          <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#25c491;letter-spacing:.8px;text-transform:uppercase;width:140px">Fase</th>
+          <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:#25c491;letter-spacing:.8px;text-transform:uppercase">Foco</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${semanasRows}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MENSAGEM -->
+  ${msgHTML}
+
+  <!-- RODAPÉ -->
+  <div style="margin-top:36px;padding-top:20px;border-top:1px solid #eee;display:flex;align-items:center;justify-content:space-between">
+    <div style="font-size:10px;color:#bbb;letter-spacing:.3px">Approach Tennis Academy · Santos, SP · Método APJ · 2026</div>
+    <div style="width:28px;height:28px;background:linear-gradient(135deg,#1D9E75,#25c491);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:9px;color:#fff;letter-spacing:-.5px">APJ</div>
+  </div>
+
+</div>
+<script>window.onload=()=>window.print();<\/script>
+</body>
+</html>`;
+
+  const w = window.open('','_blank','width=800,height=900');
+  w.document.write(html);
+  w.document.close();
+  closeTrimPDFModal();
 }
 
 // ═══════════════════════════════════════
