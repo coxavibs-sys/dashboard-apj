@@ -6417,13 +6417,56 @@ function handleFullRestore(event) {
         saveExercises(); renderExercises();
 
         if (isFullBackup && data.alunos) {
-          const existIds = new Set(students.map(s=>s.nome.toLowerCase()));
-          const novosAl  = data.alunos.filter(s=>!existIds.has((s.nome||'').toLowerCase()));
-          const maxId    = students.reduce((m,s)=>Math.max(m,s.id||0),0);
-          novosAl.forEach((s,i)=>{ s.id = maxId + i + 1; });
-          students    = [...students, ...novosAl];
-          alunosNovos = novosAl.length;
+          const existMap = {};
+          students.forEach(s => { existMap[s.nome.toLowerCase()] = s; });
+
+          const maxId = students.reduce((m,s)=>Math.max(m,Number(s.id)||0),0);
+          let nextId = maxId + 1;
+
+          data.alunos.forEach(incoming => {
+            const key = (incoming.nome||'').toLowerCase();
+            if (existMap[key]) {
+              // Aluno já existe — mesclar trimestre e aulas sem sobrescrever o que já tem localmente
+              const local = existMap[key];
+              // Mesclar trimestre: entradas do backup que não existem localmente
+              if (incoming.trimestre) {
+                if (!local.trimestre) local.trimestre = {};
+                Object.entries(incoming.trimestre).forEach(([sem, val]) => {
+                  if (!local.trimestre[sem]) local.trimestre[sem] = val;
+                });
+              }
+              // Mesclar aulas: adicionar aulas do backup que não existem (por data+duracao)
+              if (incoming.aulas && incoming.aulas.length) {
+                if (!local.aulas) local.aulas = [];
+                const aulasKeys = new Set(local.aulas.map(a => a.data + '_' + a.duracao));
+                const novasAulas = incoming.aulas.filter(a => !aulasKeys.has(a.data + '_' + a.duracao));
+                local.aulas = [...local.aulas, ...novasAulas];
+              }
+              // Mesclar avaliações
+              if (incoming.avaliacoes && incoming.avaliacoes.length) {
+                if (!local.avaliacoes) local.avaliacoes = [];
+                const avalKeys = new Set(local.avaliacoes.map(a => a.data));
+                incoming.avaliacoes.forEach(av => {
+                  if (!avalKeys.has(av.data)) local.avaliacoes.push(av);
+                });
+              }
+            } else {
+              // Aluno novo — adicionar com ID novo
+              incoming.id = nextId++;
+              incoming.membros = (incoming.membros||[]).map(Number);
+              students.push(incoming);
+              alunosNovos++;
+            }
+          });
           saveStudents(); renderStudentGrid();
+        }
+
+        // Mesclar trimData global também (compatibilidade com formato antigo)
+        if (isFullBackup && data.trimestre) {
+          Object.entries(data.trimestre).forEach(([k,v]) => {
+            if (!trimData[k]) trimData[k] = v;
+          });
+          saveTrim();
         }
 
         if (isFullBackup && data.agenda) {
