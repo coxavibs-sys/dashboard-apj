@@ -395,7 +395,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     ⇅ Sincronizar
   </button>
 </div>
-<input type="file" id="fullBackupInput" accept=".json" style="display:none" onchange="handleFullRestore(event)">
+<!-- fullBackupInput movido para dentro do syncModal -->
 
 <div class="dash">
 
@@ -6294,6 +6294,7 @@ function renderStatsFrequencia(stud) {
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-s btn-sm" onclick="triggerRestore('merge')" style="flex:1;border-color:rgba(91,155,213,0.3);color:var(--blue)">⊕ Mesclar<br><span style="font-size:10px;font-weight:400;color:var(--muted)">mantém o que já existe</span></button>
         <button class="btn btn-s btn-sm" onclick="triggerRestore('replace')" style="flex:1;border-color:rgba(224,92,92,0.3);color:var(--red)">↺ Substituir tudo<br><span style="font-size:10px;font-weight:400;color:var(--muted)">apaga dados atuais</span></button>
+        <input type="file" id="fullBackupInput" accept=".json" style="display:none" onchange="handleFullRestore(event)">
       </div>
     </div>
 
@@ -6356,35 +6357,56 @@ function exportAll() {
 
 function triggerRestore(mode) {
   restoreMode = mode;
-  document.getElementById('fullBackupInput').click();
+  // Resetar o input antes de clicar — garante que onchange dispara mesmo com mesmo arquivo
+  const inp = document.getElementById('fullBackupInput');
+  inp.value = '';
+  setTimeout(() => inp.click(), 50);
 }
 
 function handleFullRestore(event) {
   const file = event.target.files[0];
-  if (!file) return;
+  if (!file) { showToast('⚠ Nenhum arquivo selecionado', true); return; }
+
+  // Validar extensão
+  if (!file.name.toLowerCase().endsWith('.json')) {
+    showToast('⚠ Selecione um arquivo .json', true);
+    event.target.value = '';
+    return;
+  }
+
+  showToast('⏳ Lendo arquivo...');
+
   const reader = new FileReader();
+  reader.onerror = function() {
+    showToast('⚠ Erro ao ler o arquivo', true);
+    event.target.value = '';
+  };
   reader.onload = function(e) {
     try {
       const data = JSON.parse(e.target.result);
 
-      const isFullBackup = data.tipo === 'backup_completo' || (data.exercicios && data.alunos);
-      const isExOnly     = Array.isArray(data) || (data.exercicios && !data.alunos);
+      const isFullBackup = data.tipo === 'backup_completo' || (data.exercicios !== undefined && data.alunos !== undefined);
+      const isExOnly     = Array.isArray(data) || (data.exercicios !== undefined && data.alunos === undefined);
 
       if (!isFullBackup && !isExOnly) {
-        alert('⚠ Formato não reconhecido');
+        showToast('⚠ Formato não reconhecido — verifique o arquivo', true);
         event.target.value = '';
         return;
       }
 
       if (restoreMode === 'replace') {
-        if (!confirm(`Substituir TUDO?\n\nIsso vai restaurar:\n• ${(data.exercicios||[]).length} exercícios\n• ${(data.alunos||[]).length} alunos/turmas\n• Grade de quadras\n• Professores\n\nEssa ação não pode ser desfeita.`)) {
+        if (!confirm(`Substituir TUDO?
+
+Isso vai restaurar:
+• ${(data.exercicios||[]).length} exercícios
+• ${(data.alunos||[]).length} alunos/turmas
+
+Essa ação não pode ser desfeita.`)) {
           event.target.value = '';
           return;
         }
-        // Full replace — v3.0
         exercises   = data.exercicios  || [...DEFAULT_EXERCISES];
-        // Garantir que IDs são números (compatibilidade string/number)
-        students = (data.alunos || []).map(a => ({
+        students    = (data.alunos || []).map(a => ({
           ...a,
           id: Number(a.id),
           membros: (a.membros||[]).map(Number)
@@ -6403,90 +6425,115 @@ function handleFullRestore(event) {
         saveExercises(); saveStudents(); saveTrim(); saveAgenda(); saveProfs();
         renderExercises(); renderStudentGrid(); renderGrade();
         closeModal('syncModal');
-        alert(`✓ Backup restaurado!\n\n• ${exercises.length} exercícios\n• ${students.length} alunos\n• ${professores.length} professores`);
+        showToast(`✓ Backup restaurado — ${exercises.length} exercícios · ${students.length} alunos`);
 
       } else {
-        // Merge mode
-        let exNovos = 0, alunosNovos = 0;
+        // ── MERGE MODE ──────────────────────────────────────────
+        let exNovos = 0, alunosNovos = 0, alunosMesclados = 0;
 
+        // Exercícios
         const exIncoming = isFullBackup ? (data.exercicios||[]) : (Array.isArray(data)?data:(data.exercicios||[]));
-        const existNames  = new Set(exercises.map(e=>e.nome.toLowerCase()));
-        const novosEx     = exIncoming.filter(e=>!existNames.has((e.nome||'').toLowerCase()));
-        exercises = [...exercises, ...novosEx].map((ex,i)=>({...ex,id:i+1}));
+        const existNames = new Set(exercises.map(ex => (ex.nome||'').toLowerCase()));
+        const novosEx    = exIncoming.filter(ex => !existNames.has((ex.nome||'').toLowerCase()));
+        exercises = [...exercises, ...novosEx].map((ex,i) => ({...ex, id:i+1}));
         exNovos   = novosEx.length;
-        saveExercises(); renderExercises();
+        if (exNovos > 0) { saveExercises(); renderExercises(); }
 
-        if (isFullBackup && data.alunos) {
+        // Alunos
+        if (isFullBackup && Array.isArray(data.alunos)) {
           const existMap = {};
-          students.forEach(s => { existMap[s.nome.toLowerCase()] = s; });
-
-          const maxId = students.reduce((m,s)=>Math.max(m,Number(s.id)||0),0);
+          students.forEach(s => { existMap[(s.nome||'').toLowerCase()] = s; });
+          const maxId = students.reduce((m,s) => Math.max(m, Number(s.id)||0), 0);
           let nextId = maxId + 1;
 
           data.alunos.forEach(incoming => {
             const key = (incoming.nome||'').toLowerCase();
+
             if (existMap[key]) {
-              // Aluno já existe — mesclar trimestre e aulas sem sobrescrever o que já tem localmente
+              // Aluno existente — mesclar sem sobrescrever
               const local = existMap[key];
-              // Mesclar trimestre: entradas do backup que não existem localmente
-              if (incoming.trimestre) {
+
+              // Trimestre
+              if (incoming.trimestre && Object.keys(incoming.trimestre).length > 0) {
                 if (!local.trimestre) local.trimestre = {};
                 Object.entries(incoming.trimestre).forEach(([sem, val]) => {
                   if (!local.trimestre[sem]) local.trimestre[sem] = val;
                 });
+                alunosMesclados++;
               }
-              // Mesclar aulas: adicionar aulas do backup que não existem (por data+duracao)
-              if (incoming.aulas && incoming.aulas.length) {
+
+              // Aulas
+              if (incoming.aulas && incoming.aulas.length > 0) {
                 if (!local.aulas) local.aulas = [];
-                const aulasKeys = new Set(local.aulas.map(a => a.data + '_' + a.duracao));
-                const novasAulas = incoming.aulas.filter(a => !aulasKeys.has(a.data + '_' + a.duracao));
-                local.aulas = [...local.aulas, ...novasAulas];
+                const aulasKeys = new Set(local.aulas.map(a => (a.data||'') + '_' + (a.duracao||'')));
+                incoming.aulas
+                  .filter(a => !aulasKeys.has((a.data||'') + '_' + (a.duracao||'')))
+                  .forEach(a => local.aulas.push(a));
               }
-              // Mesclar avaliações
-              if (incoming.avaliacoes && incoming.avaliacoes.length) {
+
+              // Avaliações
+              if (incoming.avaliacoes && incoming.avaliacoes.length > 0) {
                 if (!local.avaliacoes) local.avaliacoes = [];
-                const avalKeys = new Set(local.avaliacoes.map(a => a.data));
-                incoming.avaliacoes.forEach(av => {
-                  if (!avalKeys.has(av.data)) local.avaliacoes.push(av);
-                });
+                const avalKeys = new Set(local.avaliacoes.map(a => a.data||''));
+                incoming.avaliacoes
+                  .filter(av => !avalKeys.has(av.data||''))
+                  .forEach(av => local.avaliacoes.push(av));
               }
+
             } else {
-              // Aluno novo — adicionar com ID novo
-              incoming.id = nextId++;
-              incoming.membros = (incoming.membros||[]).map(Number);
-              students.push(incoming);
+              // Aluno novo
+              const novoAluno = {
+                ...incoming,
+                id: nextId++,
+                membros: (incoming.membros||[]).map(Number)
+              };
+              students.push(novoAluno);
               alunosNovos++;
             }
           });
-          saveStudents(); renderStudentGrid();
+
+          saveStudents();
+          renderStudentGrid();
         }
 
-        // Mesclar trimData global também (compatibilidade com formato antigo)
-        if (isFullBackup && data.trimestre) {
+        // trimData global (formato legado)
+        if (isFullBackup && data.trimestre && Object.keys(data.trimestre).length > 0) {
           Object.entries(data.trimestre).forEach(([k,v]) => {
             if (!trimData[k]) trimData[k] = v;
           });
           saveTrim();
         }
 
+        // Agenda
         if (isFullBackup && data.agenda) {
-          Object.entries(data.agenda).forEach(([k,v]) => { if (!agendaData[k]) agendaData[k] = v; });
+          Object.entries(data.agenda).forEach(([k,v]) => {
+            if (!agendaData[k]) agendaData[k] = v;
+          });
           saveAgenda(); renderGrade();
         }
 
-        if (isFullBackup && data.professores && data.professores.length) {
-          const existProfs = new Set(professores.map(p=>p.nome.toLowerCase()));
-          const novosProfs = data.professores.filter(p=>!existProfs.has((p.nome||'').toLowerCase()));
-          professores = [...professores, ...novosProfs];
+        // Professores
+        if (isFullBackup && data.professores && data.professores.length > 0) {
+          const existProfs = new Set(professores.map(p => (p.nome||'').toLowerCase()));
+          data.professores
+            .filter(p => !existProfs.has((p.nome||'').toLowerCase()))
+            .forEach(p => professores.push(p));
           saveProfs();
         }
 
         closeModal('syncModal');
-        alert(`✓ Mesclado!\n\n• ${alunosNovos} aluno(s) novo(s)\n• ${exNovos} exercício(s) novo(s)`);
+        const msg = `✓ Importado com sucesso!
+
+• ${alunosNovos} aluno(s) novo(s)
+• ${alunosMesclados} aluno(s) com trimestre atualizado
+• ${exNovos} exercício(s) novo(s)`;
+        showToast(`✓ ${alunosNovos} novo(s) · ${alunosMesclados} mesclado(s) · ${exNovos} ex.`);
+        if (alunosNovos > 0 || alunosMesclados > 0) setTimeout(() => alert(msg), 300);
       }
 
     } catch(err) {
-      alert('⚠ Erro ao ler o arquivo: ' + err.message);
+      console.error('Restore error:', err);
+      showToast('⚠ Erro ao processar: ' + err.message, true);
     }
     event.target.value = '';
   };
