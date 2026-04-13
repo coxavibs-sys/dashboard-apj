@@ -3146,16 +3146,27 @@ function saveEntityWeekFocus() {
     const el = document.getElementById('ewm-'+k);
     if(el) ewmTripe[k] = el.value.trim();
   });
-  if(aulasFiltradas.length === 0) {
+
+  const tripePreenchido = ewmTripe.footwork || ewmTripe.tecnica || ewmTripe.tatico;
+
+  if(aulasFiltradas.length === 0 && !tripePreenchido) {
+    // Nada preenchido — limpa a semana
     delete activeEntity.trimestre[activeEntityWeek];
   } else {
+    // Salva o que tiver — aulas, tripé ou ambos
     activeEntity.trimestre[activeEntityWeek] = {
       aulas: aulasFiltradas.map((a,i) => ({ num:i+1, foco:a.foco.trim(), tipo:a.tipo })),
       tripe: { ...ewmTripe }
     };
   }
+
+  // Garantir que activeEntity está sincronizado dentro do array students
+  const idx = students.findIndex(s => Number(s.id) === Number(activeEntity.id));
+  if(idx !== -1) students[idx] = activeEntity;
+
   saveStudents();
   renderEntityTrim();
+  showToast('✓ Semana ' + activeEntityWeek + ' salva');
   closeEntityWeekModal();
 }
 function clearEntityTrim() {
