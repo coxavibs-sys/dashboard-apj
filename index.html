@@ -6373,8 +6373,11 @@ function triggerRestore(mode) {
 }
 
 function handleFullRestore(event) {
+  console.log('[APJ Import] Iniciando import...');
   const file = event.target.files[0];
-  if (!file) { showToast('⚠ Nenhum arquivo selecionado', true); return; }
+  if (!file) { showToast('⚠ Nenhum arquivo selecionado', true); console.log('[APJ Import] Sem arquivo'); return; }
+
+  console.log('[APJ Import] Arquivo:', file.name, 'Tamanho:', file.size, 'bytes');
 
   // Validar extensão
   if (!file.name.toLowerCase().endsWith('.json')) {
@@ -6387,18 +6390,25 @@ function handleFullRestore(event) {
 
   const reader = new FileReader();
   reader.onerror = function() {
+    console.error('[APJ Import] FileReader error:', reader.error);
     showToast('⚠ Erro ao ler o arquivo', true);
     event.target.value = '';
   };
   reader.onload = function(e) {
     try {
+      console.log('[APJ Import] Arquivo lido, tamanho:', e.target.result.length);
       const data = JSON.parse(e.target.result);
+      console.log('[APJ Import] JSON parsed OK. Campos:', Object.keys(data));
+      console.log('[APJ Import] tipo:', data.tipo, '| alunos:', (data.alunos||[]).length, '| exercicios:', (data.exercicios||[]).length);
 
       const isFullBackup = data.tipo === 'backup_completo' || (data.exercicios !== undefined && data.alunos !== undefined);
       const isExOnly     = Array.isArray(data) || (data.exercicios !== undefined && data.alunos === undefined);
 
+      console.log('[APJ Import] isFullBackup:', isFullBackup, '| isExOnly:', isExOnly, '| mode:', restoreMode);
+
       if (!isFullBackup && !isExOnly) {
         showToast('⚠ Formato não reconhecido — verifique o arquivo', true);
+        console.warn('[APJ Import] Formato não reconhecido');
         event.target.value = '';
         return;
       }
@@ -6455,8 +6465,10 @@ Essa ação não pode ser desfeita.`)) {
           const maxId = students.reduce((m,s) => Math.max(m, Number(s.id)||0), 0);
           let nextId = maxId + 1;
 
+          console.log('[APJ Import] Processando', data.alunos.length, 'alunos do backup...');
           data.alunos.forEach(incoming => {
             const key = (incoming.nome||'').toLowerCase();
+            console.log('[APJ Import] Aluno:', incoming.nome, '| existe localmente:', !!existMap[key]);
 
             if (existMap[key]) {
               // Aluno existente — mesclar sem sobrescrever
@@ -6501,6 +6513,7 @@ Essa ação não pode ser desfeita.`)) {
             }
           });
 
+          console.log('[APJ Import] Students após merge:', students.length, '| novos:', alunosNovos, '| mesclados:', alunosMesclados);
           saveStudents();
           renderStudentGrid();
         }
