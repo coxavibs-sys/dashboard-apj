@@ -6161,7 +6161,7 @@ function renderStatsFrequencia(stud) {
   const fcCanvas = document.getElementById('stats-freq-chart');
   if(fcCanvas){
     if(window._statsFreqChart) { try{window._statsFreqChart.destroy();}catch(e){} }
-    if(semKeys.length){
+    if(semKeys.length && typeof Chart !== 'undefined'){
       window._statsFreqChart = new Chart(fcCanvas,{
         type:'bar',
         data:{
@@ -6261,7 +6261,16 @@ function renderStatsFrequencia(stud) {
   }
 }
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// Chart.js — carregamento não-bloqueante (falha silenciosamente se offline)
+(function(){
+  var s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+  s.async = true;
+  s.onerror = function(){ window._chartJsUnavailable = true; };
+  document.head.appendChild(s);
+})();
+</script>
 
 <!-- ══════════════════════════════════
      SYNC MODAL
