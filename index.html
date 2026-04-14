@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard APJ · Módulo 10 · Approach Tennis Academy</title>
+<title>Dashboard APJ · V1.12 · Approach Tennis Academy</title>
 <style>
 :root{
   --bg:#0b1019;--card:#141e2e;--card2:#192236;--card3:#1e293b;
@@ -5316,17 +5316,24 @@ function _renderRepGrade() {
 
 function selecionarRepSlot(q, d, hora) {
   const AG_DIAS_FULL = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-  _repSlotSel = { q, d, hora, diaLabel: AG_DIAS_FULL[d] };
+
+  // Calcular data real do slot selecionado (semana ativa, não sempre hoje)
+  const diasSemanaAtual = agGetDiasSemana();
+  const dataDia = diasSemanaAtual[d];
+  const dataReal = dataDia
+    ? `${dataDia.getFullYear()}-${String(dataDia.getMonth()+1).padStart(2,'0')}-${String(dataDia.getDate()).padStart(2,'0')}`
+    : new Date().toISOString().slice(0,10);
+
+  _repSlotSel = { q, d, hora, diaLabel: AG_DIAS_FULL[d], dataReal };
 
   const slotDiv = document.getElementById('frm-slot-selecionado');
   const descEl  = document.getElementById('frm-slot-desc');
   if(slotDiv) slotDiv.style.display = 'flex';
-  if(descEl)  descEl.textContent = `Q${q+1} · ${AG_DIAS_FULL[d]} · ${hora}`;
+  if(descEl)  descEl.textContent = `Q${q+1} · ${AG_DIAS_FULL[d]} ${fmtDate(dataReal)} · ${hora}`;
 
-  // Preencher campos manuais
-  const hoje = new Date().toISOString().slice(0,10);
+  // Preencher campo de data com a data real do slot
   const dtEl = document.getElementById('frm-data');
-  if(dtEl) dtEl.value = hoje;
+  if(dtEl) dtEl.value = dataReal;
   const hrEl = document.getElementById('frm-hora');
   if(hrEl)  hrEl.value = hora;
 
@@ -5444,7 +5451,7 @@ function saveReposicao() {
   }
 
   // Modo livre — precisa de data e hora
-  const data = document.getElementById('frm-data')?.value || (_repSlotSel ? new Date().toISOString().slice(0,10) : '');
+  const data = document.getElementById('frm-data')?.value || (_repSlotSel?.dataReal || new Date().toISOString().slice(0,10));
   const hora = _repSlotSel ? _repSlotSel.hora : (document.getElementById('frm-hora')?.value || '');
   if(!data || !hora) { showToast('⚠ Selecione um horário na grade ou preencha data e hora', true); return; }
 
@@ -5454,30 +5461,9 @@ function saveReposicao() {
   rep.horaReposicao = hora;
   rep.obs = obs;
 
-  // Bloquear slot na grade automaticamente (FEATURE 2)
-  if(_repSlotSel) {
-    loadAgenda();
-    const dow = new Date(data + 'T12:00:00').getDay();
-    const diaIdx = dow === 0 ? -1 : dow - 1;
-    if(diaIdx >= 0 && diaIdx === _repSlotSel.d) {
-      const key = `q${_repSlotSel.q}_d${_repSlotSel.d}_${hora}`;
-      if(!agendaData[key]) {
-        agendaData[key] = {
-          entityId: String(_freqEntity.id),
-          profId: (_freqEntity.horarios||[])[0]?.profId || null,
-          durMin: (_freqEntity.horarios||[])[0]?.durMin || 60,
-          obs: 'Reposição',
-          slotTipo: 'reposicao',
-        };
-        saveAgenda();
-        showToast(`✓ Reposição agendada · slot bloqueado na grade`);
-      } else {
-        showToast(`✓ Reposição registrada (slot já ocupado na grade)`);
-      }
-    }
-  } else {
-    showToast(`✓ Reposição registrada para ${fmtDate(data)} às ${hora}`);
-  }
+  // ── Slot de reposição é renderizado dinamicamente via reposSemana (por data)
+  // NÃO salva no agendaData para não aparecer em todas as semanas (recorrente)
+  showToast(`✓ Reposição agendada · ${fmtDate(data)} às ${hora}`);
 
   saveStudents();
   closeModal('freqRepModal');
@@ -8031,21 +8017,31 @@ function saveSlot() {
     if(!entityId){ showToast('⚠ Selecione o aluno',true); return; }
     const profId = parseInt(document.getElementById('ag-rp-prof').value)||null;
     const durMin = parseInt(document.getElementById('ag-rp-dur').value)||60;
-    alocarSlot(entityId, profId, durMin, '');
-    // Marcar slot como reposição
-    const key = `q${q}_d${d}_${hora}`;
-    if(agendaData[key]) agendaData[key].slotTipo = 'reposicao';
-    saveAgenda();
-    // Atualizar crédito de reposição do aluno
+
+    // Calcular a data real deste slot (semana ativa + dia d)
+    const diasSemanaAtual = agGetDiasSemana();
+    const dataDia = diasSemanaAtual[d];
+    const dataReal = dataDia
+      ? `${dataDia.getFullYear()}-${String(dataDia.getMonth()+1).padStart(2,'0')}-${String(dataDia.getDate()).padStart(2,'0')}`
+      : new Date().toISOString().slice(0,10);
+
+    // Atualizar crédito de reposição do aluno com data + hora reais
+    // NÃO salva slot recorrente no agendaData — renderizado dinamicamente por reposSemana
     const aluno = (students||[]).find(s=>String(s.id)===String(entityId));
     if(aluno){
       const rep=(aluno.frequencia||[]).find(r=>r.tipo==='reposicao'&&r.status==='pendente');
-      if(rep){ rep.status='agendada'; rep.dataReposicao=hora; saveStudents(); }
+      if(rep){
+        rep.status = 'agendada';
+        rep.dataReposicao = dataReal;
+        rep.horaReposicao = hora;
+        if(profId) rep.profId = profId;
+        saveStudents();
+      }
     }
     closeModal('agSlotModal');
     renderGrade();
     const aluno2=(students||[]).find(s=>String(s.id)===String(entityId));
-    showToast(`✓ Reposição de ${aluno2?.nome?.split(' ')[0]||'aluno'} alocada`);
+    showToast(`✓ Reposição de ${aluno2?.nome?.split(' ')[0]||'aluno'} · ${dataReal} às ${hora}`);
   }
 }
 
@@ -8454,6 +8450,24 @@ function abrirAulaDoSlot() {
 // ═══════════════════════════════════════
 (function initApp() {
   loadData();
+
+  // ── MIGRAÇÃO: remover slots recorrentes de reposição do agendaData (bug v1.10) ──
+  // Reposições não devem ser recorrentes — são renderizadas dinamicamente por data
+  try {
+    loadAgenda();
+    let migrou = false;
+    Object.keys(agendaData).forEach(key => {
+      if(agendaData[key]?.slotTipo === 'reposicao') {
+        delete agendaData[key];
+        migrou = true;
+      }
+    });
+    if(migrou) {
+      saveAgenda();
+      console.log('[APJ] Migração v1.11: slots recorrentes de reposição removidos da grade.');
+    }
+  } catch(e) {}
+
   renderExercises();
   renderManual();
   renderStudentGrid();
