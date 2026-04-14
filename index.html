@@ -791,7 +791,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
               <option>Sem 4</option><option>Sem 5</option><option>Sem 6</option>
               <option>Sem 7</option><option>Sem 8</option><option>Sem 9</option>
               <option>Sem 10</option><option>Sem 11</option><option>Sem 12</option>
-              <option>Sem 13</option>
+              
             </select>
           </div>
         </div>
@@ -1041,7 +1041,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     <div class="div"></div>
     <div class="g2">
       <div>
-        <h3 style="margin-bottom:10px">Protocolo das 13 Semanas</h3>
+        <h3 style="margin-bottom:10px">Protocolo das 12 Semanas</h3>
         <table class="tbl">
           <tr><th>Semanas</th><th>Fase</th><th>Objetivo</th></tr>
           <tr><td>1–2</td><td><span class="badge" style="background:rgba(91,155,213,0.15);color:var(--blue)">Fundação</span></td><td>Confirma diagnóstico da aula experimental · define 2 focos do trimestre</td></tr>
@@ -1137,7 +1137,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
             <div id="freq-const-bar" style="height:100%;width:0%;border-radius:5px;transition:width .6s ease;background:linear-gradient(90deg,var(--green),var(--green2))"></div>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:3px">
-            <span>Sem 1</span><span>Sem 13</span>
+            <span>Sem 1</span><span>Sem 12</span>
           </div>
         </div>
         <!-- Grade por semana do trimestre -->
@@ -1606,6 +1606,52 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     <div class="modal-footer">
       <button class="btn btn-s" onclick="closeTrimPDFModal()">Cancelar</button>
       <button class="btn btn-p" onclick="gerarTrimPDF()">📄 Gerar PDF</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: CHAMADA RÁPIDA DO SLOT -->
+<div class="modal-bg" id="chamadaRapidaModal">
+  <div class="modal" style="max-width:360px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--green2)" id="cr-titulo">Nome do Aluno</div>
+        <div style="font-size:11px;color:var(--muted)" id="cr-sub">APJ 1 · Seg 08:00</div>
+      </div>
+      <button onclick="closeModal('chamadaRapidaModal')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1">×</button>
+    </div>
+
+    <!-- Indicador de frequência atual do dia -->
+    <div id="cr-status-atual" style="margin-bottom:14px;font-size:12px;color:var(--muted);text-align:center"></div>
+
+    <!-- Botões de chamada -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <button onclick="registrarChamadaRapida('presente')"
+        style="padding:14px 8px;background:rgba(29,158,117,0.15);border:2px solid rgba(29,158,117,0.4);color:var(--green2);border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);transition:all .15s"
+        onmouseover="this.style.background='rgba(29,158,117,0.3)'" onmouseout="this.style.background='rgba(29,158,117,0.15)'">
+        ✅ Presente
+      </button>
+      <button onclick="registrarChamadaRapida('falta_simples')"
+        style="padding:14px 8px;background:rgba(224,92,92,0.12);border:2px solid rgba(224,92,92,0.35);color:var(--red);border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);transition:all .15s"
+        onmouseover="this.style.background='rgba(224,92,92,0.25)'" onmouseout="this.style.background='rgba(224,92,92,0.12)'">
+        ❌ Falta
+      </button>
+      <button onclick="registrarChamadaRapida('falta_justificada')"
+        style="padding:14px 8px;background:rgba(232,160,48,0.12);border:2px solid rgba(232,160,48,0.35);color:var(--amber);border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);transition:all .15s"
+        onmouseover="this.style.background='rgba(232,160,48,0.25)'" onmouseout="this.style.background='rgba(232,160,48,0.12)'">
+        🟡 Justificada
+      </button>
+      <button onclick="registrarChamadaRapida('reposicao')"
+        style="padding:14px 8px;background:rgba(176,120,48,0.12);border:2px solid rgba(176,120,48,0.35);color:var(--gold);border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);transition:all .15s"
+        onmouseover="this.style.background='rgba(176,120,48,0.25)'" onmouseout="this.style.background='rgba(176,120,48,0.12)'">
+        🔄 Reposição
+      </button>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-s btn-sm" style="flex:1" onclick="closeModal('chamadaRapidaModal')">Fechar</button>
+      <button class="btn btn-s btn-sm" style="flex:1;color:var(--blue);border-color:rgba(91,155,213,0.3)" onclick="abrirAulaDoSlot()">📋 Abrir Aula</button>
     </div>
   </div>
 </div>
@@ -2914,7 +2960,7 @@ function renderEntityTrim() {
   const trim = getActiveTrim(activeEntity);
   const td = (trim && trim.semanas) ? trim.semanas : (activeEntity.trimestre || {});
 
-  // Grid 13 semanas
+  // Grid 12 semanas
   const grid = document.getElementById('entity-trim-grid');
   grid.innerHTML = TRIM_PHASES.map(wk => {
     const semData = td[wk.sem];
@@ -4835,7 +4881,7 @@ function _renderFreqKpis() {
 
   // Previstas: contar aulas do trimestre (horários recorrentes × semanas)
   const hs = (_freqEntity.horarios||[]).length;
-  const previstas = hs * 13; // 13 semanas por trimestre
+  const previstas = hs * 12; // 12 semanas por trimestre
 
   const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
   set('fkpi-previstas', previstas);
@@ -7575,7 +7621,7 @@ function renderGrade() {
           const onclick = isReserva
             ? `openSlotModal(${q},${d},'${hora}')`
             : entity
-              ? `openSlotAula(${entity.id}, ${q}, ${d}, '${hora}')`
+              ? `abrirChamadaRapida(${entity.id}, ${q}, ${d}, '${hora}')`
               : `openSlotModal(${q},${d},'${hora}')`;
 
           // ── Badge falta justificada (hoje) ──
@@ -7587,12 +7633,25 @@ function renderGrade() {
             ? `<div style="position:absolute;top:2px;right:3px;background:rgba(0,0,0,0.35);color:#fff;font-size:7px;font-weight:700;padding:1px 4px;border-radius:4px">⚠${faltasHoje>1?' '+faltasHoje:''}</div>`
             : '';
 
+          // Verificar frequência registrada hoje para o slot
+          const _hoje = new Date().toISOString().slice(0,10);
+          const _freqSlot = entity ? (entity.frequencia||[]).find(r =>
+            r.data === _hoje && r._chamadaHora === hora && r.tipo !== undefined
+          ) : null;
+          const _freqDot = _freqSlot ? (() => {
+            const _dotCor = {
+              presente:'#1D9E75', falta_simples:'#e05c5c',
+              falta_justificada:'#e8a030', reposicao:'#c9a84c'
+            }[_freqSlot.tipo] || '#888';
+            return `<div class="freq-indicator" style="position:absolute;bottom:4px;right:4px;width:9px;height:9px;border-radius:50%;background:${_dotCor};box-shadow:0 0 5px ${_dotCor};z-index:15;border:1px solid rgba(255,255,255,0.3)"></div>`;
+          })() : '';
+
           blocos += `
-            <div class="ag-slot-wrap" style="position:absolute;left:2px;right:2px;top:${top+2}px;height:${height-4}px;z-index:10;border-radius:7px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.4)"
+            <div class="ag-slot-wrap" data-slot-key="q${q}_d${d}_${hora}" style="position:absolute;left:2px;right:2px;top:${top+2}px;height:${height-4}px;z-index:10;border-radius:7px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.4)"
               onmouseenter="this.querySelector('.ag-edit-btn-abs')&&(this.querySelector('.ag-edit-btn-abs').style.opacity='1');this.querySelector('.ag-del-btn-abs')&&(this.querySelector('.ag-del-btn-abs').style.opacity='1')"
               onmouseleave="this.querySelector('.ag-edit-btn-abs')&&(this.querySelector('.ag-edit-btn-abs').style.opacity='0');this.querySelector('.ag-del-btn-abs')&&(this.querySelector('.ag-del-btn-abs').style.opacity='0')">
               <div class="ag-slot" style="background:${bg};height:100%;border-radius:7px;position:relative;border-left:3px solid rgba(255,255,255,0.2);padding:4px 5px 3px" onclick="${onclick}">
-                ${badgeFalta}
+                ${badgeFalta}${_freqDot}
                 <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3">${linha1}</div>
                 ${linha2 ? `<div style="font-size:11px;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-top:1px">${linha2}</div>` : ''}
                 ${linha3 ? `<div style="font-size:11px;color:rgba(255,255,255,0.95);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-top:1px">${linha3}</div>` : ''}
@@ -8234,7 +8293,7 @@ function gerarTrimPDF() {
 
   <!-- TABELA SEMANAS -->
   <div style="margin-bottom:28px">
-    <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;color:#1D9E75;text-transform:uppercase;margin-bottom:14px">Visão das 13 Semanas</div>
+    <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;color:#1D9E75;text-transform:uppercase;margin-bottom:14px">Visão das 12 Semanas</div>
     <table style="width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07)">
       <thead>
         <tr style="background:#0b1019">
@@ -8267,6 +8326,128 @@ function gerarTrimPDF() {
   closeTrimPDFModal();
 }
 
+
+
+// ═══════════════════════════════════════
+// CHAMADA RÁPIDA DO SLOT DA GRADE
+// ═══════════════════════════════════════
+let _crEntityId = null;
+let _crQ = null, _crD = null, _crHora = null;
+
+const FREQ_LABEL = {
+  presente:         '✅ Presente',
+  falta_simples:    '❌ Falta',
+  falta_justificada:'🟡 Justificada',
+  reposicao:        '🔄 Reposição',
+};
+const FREQ_COR = {
+  presente:         'var(--green2)',
+  falta_simples:    'var(--red)',
+  falta_justificada:'var(--amber)',
+  reposicao:        'var(--gold)',
+};
+
+function abrirChamadaRapida(entityId, q, d, hora) {
+  const entity = (students||[]).find(s => String(s.id) === String(entityId));
+  if(!entity) return;
+
+  _crEntityId = entityId;
+  _crQ = q; _crD = d; _crHora = hora;
+
+  const AG_DIAS_FULL = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  document.getElementById('cr-titulo').textContent = entity.nome;
+  document.getElementById('cr-sub').textContent = (entity.nivel||'').split(' — ')[0] + ' · ' + (AG_DIAS_FULL[d]||'') + ' ' + hora;
+
+  // Verificar se já tem frequência registrada hoje
+  const hoje = new Date().toISOString().slice(0,10);
+  const freqHoje = (entity.frequencia||[]).find(r =>
+    r.data === hoje && r._chamadaHora === hora && r.tipo !== undefined
+  );
+
+  const statusEl = document.getElementById('cr-status-atual');
+  if(freqHoje) {
+    const cor = FREQ_COR[freqHoje.tipo] || 'var(--muted)';
+    statusEl.innerHTML = `<span style="color:${cor};font-weight:700">Registrado hoje: ${FREQ_LABEL[freqHoje.tipo]||freqHoje.tipo}</span>`;
+  } else {
+    statusEl.innerHTML = '<span style="color:var(--muted)">Sem registro hoje ainda</span>';
+  }
+
+  document.getElementById('chamadaRapidaModal').classList.add('open');
+}
+
+function registrarChamadaRapida(tipo) {
+  const entity = (students||[]).find(s => String(s.id) === String(_crEntityId));
+  if(!entity) return;
+
+  const hoje = new Date().toISOString().slice(0,10);
+  const hora = _crHora;
+
+  // Remover registro anterior do mesmo dia/hora se existir
+  entity.frequencia = (entity.frequencia||[]).filter(r =>
+    !(r.data === hoje && r._chamadaHora === hora)
+  );
+
+  // Adicionar novo registro
+  const registro = { tipo, data: hoje, _chamadaHora: hora };
+  if(tipo === 'reposicao') {
+    registro.status = 'pendente';
+    registro.vencimento = new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0,10);
+    registro._origemHora = hora;
+    registro._origemData = hoje;
+  }
+  entity.frequencia.push(registro);
+
+  // Sync no array students
+  const idx = students.findIndex(s => Number(s.id) === Number(entity.id));
+  if(idx !== -1) students[idx] = entity;
+
+  saveStudents();
+
+  // Atualizar indicador visual no slot
+  atualizarIndicadorSlot(_crEntityId, _crQ, _crD, hora, tipo);
+
+  // Atualizar status no modal
+  const cor = FREQ_COR[tipo] || 'var(--muted)';
+  document.getElementById('cr-status-atual').innerHTML =
+    `<span style="color:${cor};font-weight:700">✓ ${FREQ_LABEL[tipo]} registrado!</span>`;
+
+  showToast(`✓ ${entity.nome.split(' ')[0]} — ${FREQ_LABEL[tipo]}`);
+
+  // Fechar após 800ms
+  setTimeout(() => closeModal('chamadaRapidaModal'), 800);
+}
+
+function atualizarIndicadorSlot(entityId, q, d, hora, tipo) {
+  // Atualizar badge visual no slot sem re-renderizar toda a grade
+  const key = `q${q}_d${d}_${hora}`;
+  const slotEl = document.querySelector(`[data-slot-key="${key}"]`);
+  if(!slotEl) { renderGrade(); return; } // fallback
+
+  // Remover indicador anterior
+  const old = slotEl.querySelector('.freq-indicator');
+  if(old) old.remove();
+
+  // Adicionar novo indicador
+  const cor = {
+    presente:          '#1D9E75',
+    falta_simples:     '#e05c5c',
+    falta_justificada: '#e8a030',
+    reposicao:         '#c9a84c',
+  }[tipo] || '#888';
+
+  const dot = document.createElement('div');
+  dot.className = 'freq-indicator';
+  dot.style.cssText = `position:absolute;bottom:4px;right:4px;width:8px;height:8px;border-radius:50%;background:${cor};box-shadow:0 0 4px ${cor};z-index:15`;
+  slotEl.style.position = 'relative';
+  slotEl.appendChild(dot);
+}
+
+function abrirAulaDoSlot() {
+  closeModal('chamadaRapidaModal');
+  const entity = (students||[]).find(s => String(s.id) === String(_crEntityId));
+  if(!entity) return;
+  setTimeout(() => openSlotAula(_crEntityId, _crQ, _crD, _crHora), 150);
+}
 
 // ═══════════════════════════════════════
 // INIT — carrega todos os dados ao abrir
