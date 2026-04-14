@@ -5767,6 +5767,30 @@ function salvarChamadaTurma() {
   saveStudents();
   closeModal('chamadaTurmaModal');
 
+  // ── Badge visual de resumo no slot da turma na grade ──
+  if(diaIdx >= 0) {
+    Object.keys(agendaData).forEach(agKey => {
+      const m = agKey.match(/^q(\d+)_d(\d+)_(.+)$/);
+      if(!m || parseInt(m[2]) !== diaIdx || m[3] !== hora) return;
+      if(String(agendaData[agKey].entityId) !== String(eId)) return;
+      const slotEl = document.querySelector(`[data-slot-key="${agKey}"]`);
+      if(!slotEl) return;
+      const old = slotEl.querySelector('.freq-indicator-turma');
+      if(old) old.remove();
+      const vals2  = Object.values(st.membros);
+      const pres2  = vals2.filter(v=>v==='presente').length;
+      const total2 = vals2.length;
+      const cor2   = pres2 === total2 ? '#1D9E75' : pres2 > 0 ? '#e8a030' : '#e05c5c';
+      const dot2   = document.createElement('div');
+      dot2.className = 'freq-indicator-turma';
+      dot2.style.cssText = `position:absolute;bottom:4px;right:4px;background:${cor2};color:#fff;font-size:7px;font-weight:700;padding:1px 4px;border-radius:5px;z-index:15;box-shadow:0 0 4px ${cor2}`;
+      dot2.textContent = `${pres2}/${total2}`;
+      const innerSlot = slotEl.querySelector('.ag-slot') || slotEl;
+      innerSlot.style.position = 'relative';
+      innerSlot.appendChild(dot2);
+    });
+  }
+
   const vals   = Object.values(st.membros);
   const pres   = vals.filter(v => v === 'presente').length;
   const faltaJ = vals.filter(v => v === 'falta_justificada').length;
@@ -7607,7 +7631,9 @@ function renderGrade() {
           const onclick = isReserva
             ? `openSlotModal(${q},${d},'${hora}')`
             : entity
-              ? `abrirChamadaRapida(${entity.id}, ${q}, ${d}, '${hora}')`
+              ? (entity.type === 'group'
+                  ? `openChamadaTurma('${entity.id}','${hora}',${q})`
+                  : `abrirChamadaRapida(${entity.id}, ${q}, ${d}, '${hora}')`)
               : `openSlotModal(${q},${d},'${hora}')`;
 
           // ── Badge falta justificada (hoje) ──
@@ -7619,10 +7645,13 @@ function renderGrade() {
             ? `<div style="position:absolute;top:2px;right:3px;background:rgba(0,0,0,0.35);color:#fff;font-size:7px;font-weight:700;padding:1px 4px;border-radius:4px">⚠${faltasHoje>1?' '+faltasHoje:''}</div>`
             : '';
 
-          // Verificar frequência registrada hoje para o slot
-          const _hoje = new Date().toISOString().slice(0,10);
+          // Verificar frequência registrada para a data real deste slot (funciona em semanas passadas/futuras)
+          const _dataDia = diasSemana[d];
+          const _dataSlot = _dataDia
+            ? `${_dataDia.getFullYear()}-${String(_dataDia.getMonth()+1).padStart(2,'0')}-${String(_dataDia.getDate()).padStart(2,'0')}`
+            : new Date().toISOString().slice(0,10);
           const _freqSlot = entity ? (entity.frequencia||[]).find(r =>
-            r.data === _hoje && r._chamadaHora === hora && r.tipo !== undefined
+            r.data === _dataSlot && r._chamadaHora === hora && r.tipo !== undefined
           ) : null;
           const _freqDot = _freqSlot ? (() => {
             const _dotCor = {
@@ -8434,8 +8463,9 @@ function atualizarIndicadorSlot(entityId, q, d, hora, tipo) {
   const dot = document.createElement('div');
   dot.className = 'freq-indicator';
   dot.style.cssText = `position:absolute;bottom:4px;right:4px;width:8px;height:8px;border-radius:50%;background:${cor};box-shadow:0 0 4px ${cor};z-index:15`;
-  slotEl.style.position = 'relative';
-  slotEl.appendChild(dot);
+  const innerSlot = slotEl.querySelector('.ag-slot') || slotEl;
+  innerSlot.style.position = 'relative';
+  innerSlot.appendChild(dot);
 }
 
 function abrirAulaDoSlot() {
