@@ -1627,22 +1627,22 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 
     <!-- Botões de chamada -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <button onclick="registrarChamadaRapida('presente')"
+      <button onclick="_regChamadaSlot('presente')"
         style="padding:14px 8px;background:rgba(29,158,117,0.15);border:2px solid rgba(29,158,117,0.4);color:var(--green2);border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);transition:all .15s"
         onmouseover="this.style.background='rgba(29,158,117,0.3)'" onmouseout="this.style.background='rgba(29,158,117,0.15)'">
         ✅ Presente
       </button>
-      <button onclick="registrarChamadaRapida('falta_simples')"
+      <button onclick="_regChamadaSlot('falta_simples')"
         style="padding:14px 8px;background:rgba(224,92,92,0.12);border:2px solid rgba(224,92,92,0.35);color:var(--red);border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);transition:all .15s"
         onmouseover="this.style.background='rgba(224,92,92,0.25)'" onmouseout="this.style.background='rgba(224,92,92,0.12)'">
         ❌ Falta
       </button>
-      <button onclick="registrarChamadaRapida('falta_justificada')"
+      <button onclick="_regChamadaSlot('falta_justificada')"
         style="padding:14px 8px;background:rgba(232,160,48,0.12);border:2px solid rgba(232,160,48,0.35);color:var(--amber);border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);transition:all .15s"
         onmouseover="this.style.background='rgba(232,160,48,0.25)'" onmouseout="this.style.background='rgba(232,160,48,0.12)'">
         🟡 Justificada
       </button>
-      <button onclick="registrarChamadaRapida('reposicao')"
+      <button onclick="_regChamadaSlot('reposicao')"
         style="padding:14px 8px;background:rgba(176,120,48,0.12);border:2px solid rgba(176,120,48,0.35);color:var(--gold);border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);transition:all .15s"
         onmouseover="this.style.background='rgba(176,120,48,0.25)'" onmouseout="this.style.background='rgba(176,120,48,0.12)'">
         🔄 Reposição
@@ -5927,7 +5927,7 @@ function renderD3Freq() {
     }
 
     const btnArea = isGroup
-      ? `<button class="btn btn-s btn-sm" onclick="openChamadaTurma('${eId}','${s.hora}',${s.q})" style="white-space:nowrap">
+      ? `<button class="btn btn-s btn-sm" onclick="openChamadaTurma('${eId}','${s.hora}',${s.q},${s.d})" style="white-space:nowrap">
           ${st?'✏️ Editar':'👥 Chamada'}
         </button>`
       : `<div class="ch-btns">
@@ -8439,7 +8439,7 @@ function abrirChamadaRapida(entityId, q, d, hora) {
   document.getElementById('chamadaRapidaModal').classList.add('open');
 }
 
-function registrarChamadaRapida(tipo) {
+function _regChamadaSlot(tipo) {
   const entity = (students||[]).find(s => String(s.id) === String(_crEntityId));
   if(!entity) return;
 
