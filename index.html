@@ -1656,6 +1656,31 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
   </div>
 </div>
 
+<!-- MODAL: GESTÃO DE REPOSIÇÃO AGENDADA -->
+<div class="modal-bg" id="reposicaoGestaoModal">
+  <div class="modal" style="max-width:360px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--gold)" id="rg-titulo">🔄 Reposição</div>
+        <div style="font-size:11px;color:var(--muted)" id="rg-sub"></div>
+      </div>
+      <button onclick="closeModal('reposicaoGestaoModal')" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div id="rg-info" style="background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--muted)"></div>
+    <div style="display:grid;gap:8px">
+      <button onclick="remarcarReposicao()"
+        style="padding:12px;background:rgba(29,158,117,0.12);border:2px solid rgba(29,158,117,0.35);color:var(--green2);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font);text-align:left">
+        📅 Remarcar reposição
+      </button>
+      <button onclick="cancelarReposicao()"
+        style="padding:12px;background:rgba(224,92,92,0.08);border:2px solid rgba(224,92,92,0.25);color:var(--red);border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--font);text-align:left">
+        🗑 Cancelar reposição
+      </button>
+    </div>
+    <button class="btn btn-s" style="width:100%;margin-top:12px" onclick="closeModal('reposicaoGestaoModal')">Fechar</button>
+  </div>
+</div>
+
 <!-- MODAL: NOVA TURMA -->
 <div class="modal-bg" id="newGroupModal">
   <div class="modal" style="max-width:500px;max-height:90vh;overflow-y:auto">
@@ -7723,12 +7748,24 @@ function renderGrade() {
           const nomes  = repos.map(r => r.nome.split(' ')[0]).join(' · ');
           const prof   = repos[0]?.profId ? professores.find(p=>p.id===repos[0].profId) : null;
           const bg     = prof ? prof.cor : '#b07830';
+          // Data real deste slot
+          const dataDiaRep = diasSemana[d];
+          const dataRep = dataDiaRep
+            ? `${dataDiaRep.getFullYear()}-${String(dataDiaRep.getMonth()+1).padStart(2,'0')}-${String(dataDiaRep.getDate()).padStart(2,'0')}`
+            : '';
+          const alunoId = repos[0]?.alunoId || '';
           blocos += `
-            <div class="ag-slot-wrap" style="position:absolute;left:2px;right:2px;top:${top+2}px;height:${height-4}px;z-index:11;border-radius:7px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.4)">
-              <div class="ag-slot" style="background:${bg};height:100%;border-radius:7px;position:relative;border-left:3px solid rgba(255,255,255,0.4);padding:4px 5px 3px;opacity:.92">
+            <div class="ag-slot-wrap" style="position:absolute;left:2px;right:2px;top:${top+2}px;height:${height-4}px;z-index:11;border-radius:7px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.4)"
+              onmouseenter="this.querySelector('.rg-del-btn')&&(this.querySelector('.rg-del-btn').style.opacity='1')"
+              onmouseleave="this.querySelector('.rg-del-btn')&&(this.querySelector('.rg-del-btn').style.opacity='0')">
+              <div class="ag-slot" style="background:${bg};height:100%;border-radius:7px;position:relative;border-left:3px solid rgba(255,255,255,0.4);padding:4px 5px 3px;opacity:.92;cursor:pointer"
+                onclick="openReposicaoGestao('${alunoId}','${hora}','${dataRep}',${q},${d})">
                 <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.95);line-height:1.3">🔄 Reposição</div>
                 <div style="font-size:11px;color:rgba(255,255,255,0.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-top:1px">${nomes}</div>
               </div>
+              <button class="rg-del-btn" onclick="event.stopPropagation();cancelarReposicaoDireto('${alunoId}','${hora}','${dataRep}')"
+                style="position:absolute;top:3px;right:3px;background:rgba(180,30,30,0.55);border:none;color:#fff;border-radius:4px;width:19px;height:19px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;opacity:0;transition:opacity .15s"
+                title="Cancelar reposição">×</button>
             </div>`;
         });
 
@@ -8557,6 +8594,89 @@ function abrirAulaDoSlot() {
   const entity = (students||[]).find(s => String(s.id) === String(_crEntityId));
   if(!entity) return;
   setTimeout(() => openSlotAula(_crEntityId, _crQ, _crD, _crHora), 150);
+}
+
+// ═══════════════════════════════════════
+// GESTÃO DE REPOSIÇÃO AGENDADA (na grade)
+// ═══════════════════════════════════════
+let _rgCtx = null; // { alunoId, hora, data, q, d }
+
+function openReposicaoGestao(alunoId, hora, data, q, d) {
+  const aluno = (students||[]).find(s => String(s.id) === String(alunoId));
+  if(!aluno) return;
+
+  const rep = (aluno.frequencia||[]).find(r =>
+    r.tipo === 'reposicao' && r.status === 'agendada' &&
+    r.dataReposicao === data && r.horaReposicao === hora
+  );
+
+  _rgCtx = { alunoId, hora, data, q, d };
+
+  const AG_DIAS_FULL = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  document.getElementById('rg-titulo').textContent = `🔄 Reposição — ${aluno.nome.split(' ')[0]}`;
+  document.getElementById('rg-sub').textContent    = `${AG_DIAS_FULL[d]||''} ${data.split('-').reverse().join('/')} às ${hora}`;
+  document.getElementById('rg-info').innerHTML     = rep
+    ? `<div>Falta original: <strong>${rep._origemData ? rep._origemData.split('-').reverse().join('/') : rep.data?.split('-').reverse().join('/') || '—'}</strong></div>
+       <div style="margin-top:4px">Nível: <strong>${(aluno.nivel||'').split(' — ')[0]||'—'}</strong></div>`
+    : `<div style="color:var(--amber)">⚠ Reposição sem vínculo de falta encontrada.</div>`;
+
+  document.getElementById('reposicaoGestaoModal').classList.add('open');
+}
+
+function remarcarReposicao() {
+  if(!_rgCtx) return;
+  const { alunoId, hora, data } = _rgCtx;
+  const aluno = (students||[]).find(s => String(s.id) === String(alunoId));
+  if(!aluno) return;
+
+  // Voltar status para pendente — o professor pode reagendar pelo perfil do aluno
+  const rep = (aluno.frequencia||[]).find(r =>
+    r.tipo === 'reposicao' && r.status === 'agendada' &&
+    r.dataReposicao === data && r.horaReposicao === hora
+  );
+  if(rep) {
+    rep.status = 'pendente';
+    delete rep.dataReposicao;
+    delete rep.horaReposicao;
+    // Renovar vencimento por mais 30 dias
+    const novoVenc = new Date();
+    novoVenc.setDate(novoVenc.getDate() + 30);
+    rep.vencimento = novoVenc.toISOString().slice(0,10);
+    saveStudents();
+  }
+
+  closeModal('reposicaoGestaoModal');
+  renderGrade();
+  showToast(`✓ Reposição de ${aluno.nome.split(' ')[0]} voltou para pendente — reagende pelo perfil`);
+}
+
+function cancelarReposicao() {
+  if(!_rgCtx) return;
+  cancelarReposicaoDireto(_rgCtx.alunoId, _rgCtx.hora, _rgCtx.data);
+  closeModal('reposicaoGestaoModal');
+}
+
+function cancelarReposicaoDireto(alunoId, hora, data) {
+  const aluno = (students||[]).find(s => String(s.id) === String(alunoId));
+  if(!aluno) return;
+  if(!confirm(`Cancelar reposição de ${aluno.nome.split(' ')[0]} em ${data.split('-').reverse().join('/')} às ${hora}?\n\nO crédito de reposição voltará como pendente.`)) return;
+
+  const rep = (aluno.frequencia||[]).find(r =>
+    r.tipo === 'reposicao' && r.status === 'agendada' &&
+    r.dataReposicao === data && r.horaReposicao === hora
+  );
+  if(rep) {
+    rep.status = 'pendente';
+    delete rep.dataReposicao;
+    delete rep.horaReposicao;
+    const novoVenc = new Date();
+    novoVenc.setDate(novoVenc.getDate() + 30);
+    rep.vencimento = novoVenc.toISOString().slice(0,10);
+    saveStudents();
+  }
+
+  renderGrade();
+  showToast(`✓ Reposição cancelada · crédito voltou como pendente`);
 }
 
 // ═══════════════════════════════════════
