@@ -5588,21 +5588,28 @@ function registrarChamadaRapida(eId, hora, tipo, data) {
 }
 
 // ── CHAMADA DE TURMA — abrir modal ─────────────────────────────────
-function openChamadaTurma(eId, hora, q) {
+function openChamadaTurma(eId, hora, q, d) {
   const grupo = (students||[]).find(s => String(s.id) === String(eId));
   if(!grupo || grupo.type !== 'group') return;
 
-  const hoje  = new Date();
-  const data  = hoje.toISOString().slice(0,10);
+  // Calcular data real do slot (semana ativa, não sempre hoje)
+  const diasSemanaAtual = agGetDiasSemana();
+  const dIdx = (d !== undefined && d !== null) ? d : (() => {
+    const dow = new Date().getDay(); return dow === 0 ? -1 : dow - 1;
+  })();
+  const dataDia = dIdx >= 0 ? diasSemanaAtual[dIdx] : new Date();
+  const data = dataDia
+    ? `${dataDia.getFullYear()}-${String(dataDia.getMonth()+1).padStart(2,'0')}-${String(dataDia.getDate()).padStart(2,'0')}`
+    : new Date().toISOString().slice(0,10);
+
   const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   const diasFull = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-  const dow    = hoje.getDay();
-  const diaIdx = dow === 0 ? -1 : dow - 1;
-  const dataStr = diaIdx >= 0
-    ? `${diasFull[diaIdx]}, ${hoje.getDate()} de ${meses[hoje.getMonth()]}`
+  const dataObj = new Date(data + 'T12:00:00');
+  const dataStr = dIdx >= 0
+    ? `${diasFull[dIdx]}, ${dataObj.getDate()} de ${meses[dataObj.getMonth()]}`
     : 'Hoje';
 
-  _ctmCtx = { eId: String(eId), hora, q, data, grupo };
+  _ctmCtx = { eId: String(eId), hora, q, d: dIdx, data, grupo };
 
   document.getElementById('ctm-title').textContent = `👥 ${grupo.nome}`;
   document.getElementById('ctm-sub').textContent   = `${dataStr} · ${hora}`;
@@ -7632,7 +7639,7 @@ function renderGrade() {
             ? `openSlotModal(${q},${d},'${hora}')`
             : entity
               ? (entity.type === 'group'
-                  ? `openChamadaTurma('${entity.id}','${hora}',${q})`
+                  ? `openChamadaTurma('${entity.id}','${hora}',${q},${d})`
                   : `abrirChamadaRapida(${entity.id}, ${q}, ${d}, '${hora}')`)
               : `openSlotModal(${q},${d},'${hora}')`;
 
@@ -8357,7 +8364,7 @@ function gerarTrimPDF() {
 // CHAMADA RÁPIDA DO SLOT DA GRADE
 // ═══════════════════════════════════════
 let _crEntityId = null;
-let _crQ = null, _crD = null, _crHora = null;
+let _crQ = null, _crD = null, _crHora = null, _crData = null;
 
 const FREQ_LABEL = {
   presente:         '✅ Presente',
@@ -8376,25 +8383,33 @@ function abrirChamadaRapida(entityId, q, d, hora) {
   const entity = (students||[]).find(s => String(s.id) === String(entityId));
   if(!entity) return;
 
+  // Calcular data real do slot (semana ativa, não sempre hoje)
+  const diasSemanaAtual = agGetDiasSemana();
+  const dataDia = diasSemanaAtual[d];
+  const dataReal = dataDia
+    ? `${dataDia.getFullYear()}-${String(dataDia.getMonth()+1).padStart(2,'0')}-${String(dataDia.getDate()).padStart(2,'0')}`
+    : new Date().toISOString().slice(0,10);
+
   _crEntityId = entityId;
-  _crQ = q; _crD = d; _crHora = hora;
+  _crQ = q; _crD = d; _crHora = hora; _crData = dataReal;
 
   const AG_DIAS_FULL = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   document.getElementById('cr-titulo').textContent = entity.nome;
-  document.getElementById('cr-sub').textContent = (entity.nivel||'').split(' — ')[0] + ' · ' + (AG_DIAS_FULL[d]||'') + ' ' + hora;
+  document.getElementById('cr-sub').textContent =
+    (entity.nivel||'').split(' — ')[0] + ' · ' + (AG_DIAS_FULL[d]||'') + ' ' + hora +
+    (agSemanaOffset !== 0 ? ' · ' + dataReal.split('-').reverse().join('/') : '');
 
-  // Verificar se já tem frequência registrada hoje
-  const hoje = new Date().toISOString().slice(0,10);
-  const freqHoje = (entity.frequencia||[]).find(r =>
-    r.data === hoje && r._chamadaHora === hora && r.tipo !== undefined
+  // Verificar se já tem frequência registrada para a data real deste slot
+  const freqDia = (entity.frequencia||[]).find(r =>
+    r.data === dataReal && r._chamadaHora === hora && r.tipo !== undefined
   );
 
   const statusEl = document.getElementById('cr-status-atual');
-  if(freqHoje) {
-    const cor = FREQ_COR[freqHoje.tipo] || 'var(--muted)';
-    statusEl.innerHTML = `<span style="color:${cor};font-weight:700">Registrado hoje: ${FREQ_LABEL[freqHoje.tipo]||freqHoje.tipo}</span>`;
+  if(freqDia) {
+    const cor = FREQ_COR[freqDia.tipo] || 'var(--muted)';
+    statusEl.innerHTML = `<span style="color:${cor};font-weight:700">Registrado: ${FREQ_LABEL[freqDia.tipo]||freqDia.tipo}</span>`;
   } else {
-    statusEl.innerHTML = '<span style="color:var(--muted)">Sem registro hoje ainda</span>';
+    statusEl.innerHTML = '<span style="color:var(--muted)">Sem registro nesta data</span>';
   }
 
   document.getElementById('chamadaRapidaModal').classList.add('open');
@@ -8404,21 +8419,24 @@ function registrarChamadaRapida(tipo) {
   const entity = (students||[]).find(s => String(s.id) === String(_crEntityId));
   if(!entity) return;
 
-  const hoje = new Date().toISOString().slice(0,10);
+  // Usar data real do slot (não sempre hoje)
+  const dataSlot = _crData || new Date().toISOString().slice(0,10);
   const hora = _crHora;
 
   // Remover registro anterior do mesmo dia/hora se existir
   entity.frequencia = (entity.frequencia||[]).filter(r =>
-    !(r.data === hoje && r._chamadaHora === hora)
+    !(r.data === dataSlot && r._chamadaHora === hora)
   );
 
-  // Adicionar novo registro
-  const registro = { tipo, data: hoje, _chamadaHora: hora };
+  // Adicionar novo registro com data real
+  const registro = { tipo, data: dataSlot, _chamadaHora: hora };
   if(tipo === 'reposicao') {
     registro.status = 'pendente';
-    registro.vencimento = new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0,10);
+    registro.vencimento = new Date(dataSlot + 'T12:00:00');
+    registro.vencimento.setDate(registro.vencimento.getDate() + 30);
+    registro.vencimento = registro.vencimento.toISOString().slice(0,10);
     registro._origemHora = hora;
-    registro._origemData = hoje;
+    registro._origemData = dataSlot;
   }
   entity.frequencia.push(registro);
 
