@@ -994,17 +994,20 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 
   <!-- TRIMESTRE VIEW -->
   <div id="d2-trim-view" style="display:none">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+    <!-- HEADER -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
       <button class="btn btn-s btn-sm" onclick="backToPlan()">← Voltar</button>
       <div style="flex:1">
         <div style="font-size:16px;font-weight:600;color:var(--green2)" id="d2-trim-title"></div>
-        <div style="font-size:11px;color:var(--muted)" id="d2-trim-sub">Planejamento trimestral · 13 semanas · Método APJ</div>
+        <div style="font-size:11px;color:var(--muted)" id="d2-trim-sub">Planejamento trimestral · 12 semanas · Método APJ</div>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-s btn-sm" onclick="openTrimPDFModal()" style="color:var(--green2);border-color:rgba(29,158,117,0.35)">📄 Gerar PDF</button>
-        <button class="btn btn-s btn-sm" onclick="clearEntityTrim()" title="Limpar focos do trimestre">🗑 Limpar</button>
+        <button class="btn btn-s btn-sm" onclick="clearEntityTrim()" title="Limpar trimestre ativo">🗑 Limpar</button>
       </div>
     </div>
+    <!-- ABAS DE TRIMESTRES -->
+    <div id="trim-tabs-bar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;align-items:center"></div>
 
     <!-- LEGENDA FASES -->
     <div class="trim-phases" style="margin-bottom:14px">
@@ -1012,7 +1015,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
       <div class="ph-legend"><div class="ph-dot ph-tec"></div><span class="small muted">Técnico</span></div>
       <div class="ph-legend"><div class="ph-dot ph-tac"></div><span class="small muted">Tático</span></div>
       <div class="ph-legend"><div class="ph-dot ph-int"></div><span class="small muted">Integração</span></div>
-      <div class="ph-legend"><div class="ph-dot ph-aval"></div><span class="small muted">Avaliação</span></div>
+      <div class="ph-legend"><div class="ph-dot ph-aval"></div><span class="small muted">Preparação · Avaliação</span></div>
     </div>
 
     <!-- GRID 13 SEMANAS -->
@@ -1045,7 +1048,8 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
           <tr><td>3–6</td><td><span class="badge" style="background:rgba(29,158,117,0.15);color:var(--green2)">Técnico</span></td><td>Bloco técnico · 2 golpes principais</td></tr>
           <tr><td>7–9</td><td><span class="badge" style="background:rgba(155,114,208,0.15);color:var(--purple)">Tático</span></td><td>Padrões e situações de jogo</td></tr>
           <tr><td>10</td><td><span class="badge" style="background:rgba(232,160,48,0.12);color:var(--amber)">Integração</span></td><td>Jogo livre com observação · coleta de dados</td></tr>
-          <tr><td>11–13</td><td><span class="badge" style="background:rgba(224,92,92,0.1);color:var(--red)">Avaliação</span></td><td>Avaliação APJ · Devolutiva · Próximos objetivos</td></tr>
+          <tr><td>11</td><td><span class="badge" style="background:rgba(201,168,76,0.15);color:var(--gold)">Preparação</span></td><td>Aluno informado com 7 dias · sem conteúdo novo</td></tr>
+          <tr><td>12</td><td><span class="badge" style="background:rgba(224,92,92,0.1);color:var(--red)">Avaliação</span></td><td>Avaliação APJ · Devolutiva · 3 objetivos próximo trimestre</td></tr>
         </table>
       </div>
       <div>
@@ -1056,6 +1060,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
           <li>Sessão de devolutiva presencial (30 min)</li>
           <li>3 objetivos do próximo trimestre definidos</li>
           <li>Próxima avaliação já agendada</li>
+          <li>Novo trimestre criado no dashboard</li>
         </ul>
         <div class="wbox" style="margin-top:10px">
           <h4>Sazonalidade Santos</h4>
@@ -2251,19 +2256,18 @@ const MANUAL_SECTIONS = [
 ];
 
 const TRIM_PHASES = [
-  {sem:1,phase:'Fundação',cls:'ph-diag'},
-  {sem:2,phase:'Fundação',cls:'ph-diag'},
-  {sem:3,phase:'Técnico',cls:'ph-tec'},
-  {sem:4,phase:'Técnico',cls:'ph-tec'},
-  {sem:5,phase:'Técnico',cls:'ph-tec'},
-  {sem:6,phase:'Técnico',cls:'ph-tec'},
-  {sem:7,phase:'Tático',cls:'ph-tac'},
-  {sem:8,phase:'Tático',cls:'ph-tac'},
-  {sem:9,phase:'Tático',cls:'ph-tac'},
-  {sem:10,phase:'Integração',cls:'ph-int'},
-  {sem:11,phase:'Avaliação',cls:'ph-aval'},
-  {sem:12,phase:'Avaliação',cls:'ph-aval'},
-  {sem:13,phase:'Avaliação',cls:'ph-aval'},
+  {sem:1, phase:'Fundação',   cls:'ph-diag'},
+  {sem:2, phase:'Fundação',   cls:'ph-diag'},
+  {sem:3, phase:'Técnico',    cls:'ph-tec'},
+  {sem:4, phase:'Técnico',    cls:'ph-tec'},
+  {sem:5, phase:'Técnico',    cls:'ph-tec'},
+  {sem:6, phase:'Técnico',    cls:'ph-tec'},
+  {sem:7, phase:'Tático',     cls:'ph-tac'},
+  {sem:8, phase:'Tático',     cls:'ph-tac'},
+  {sem:9, phase:'Tático',     cls:'ph-tac'},
+  {sem:10,phase:'Integração', cls:'ph-int'},
+  {sem:11,phase:'Preparação', cls:'ph-aval'},
+  {sem:12,phase:'Avaliação',  cls:'ph-aval'},
 ];
 
 // ═══════════════════════════════════════
@@ -2878,8 +2882,13 @@ function showTrimestre() {
   document.getElementById('d2-aval-view').style.display = 'none';
   document.getElementById('d2-trim-view').style.display = 'block';
   const tipo = activeEntity.type === 'group' ? 'Turma' : 'Aluno';
-  document.getElementById('d2-trim-title').textContent = activeEntity.nome + ' — Trimestre';
-  document.getElementById('d2-trim-sub').textContent = activeEntity.nivel + ' · ' + tipo + ' · Planejamento 13 semanas';
+  document.getElementById('d2-trim-title').textContent = activeEntity.nome;
+  document.getElementById('d2-trim-sub').textContent = activeEntity.nivel + ' · ' + tipo + ' · Planejamento 12 semanas';
+  // Inicializar no trimestre ativo
+  const ts = getTrimestres(activeEntity);
+  activeTrimIdx = ts.findIndex(t => t.status === 'ativo');
+  if(activeTrimIdx < 0) activeTrimIdx = ts.length - 1;
+  renderTrimTabs();
   renderEntityTrim();
 }
 
@@ -2902,7 +2911,8 @@ function showAvalEntity() {
 
 function renderEntityTrim() {
   if(!activeEntity) return;
-  const td = activeEntity.trimestre || {};
+  const trim = getActiveTrim(activeEntity);
+  const td = (trim && trim.semanas) ? trim.semanas : (activeEntity.trimestre || {});
 
   // Grid 13 semanas
   const grid = document.getElementById('entity-trim-grid');
@@ -3045,6 +3055,76 @@ let activeEntityWeek = null;
 let ewmAulas = []; // estado local do modal
 let ewmTripe = { footwork:'', tecnica:'', tatico:'' }; // tripé da semana — texto livre
 const TRIPE_LABEL = { footwork:'⚡ Footwork', tecnica:'🎾 Técnica', tatico:'🧩 Tático' };
+let activeTrimIdx = 0; // índice do trimestre ativo na view
+
+// ── HELPERS DE TRIMESTRE MÚLTIPLO ─────
+function getTrimestres(entity) {
+  if(!entity) return [];
+  // Migração automática: se tem trimestre antigo (objeto simples), converte para array
+  if(!entity.trimestres) {
+    entity.trimestres = [{
+      id: 1,
+      label: 'Trimestre 1',
+      inicio: '',
+      status: 'ativo',
+      semanas: entity.trimestre || {}
+    }];
+    // Não apaga entity.trimestre ainda — compatibilidade
+  }
+  return entity.trimestres;
+}
+
+function getActiveTrim(entity) {
+  const ts = getTrimestres(entity);
+  return ts[activeTrimIdx] || ts[0] || null;
+}
+
+function criarNovoTrimestre() {
+  if(!activeEntity) return;
+  const ts = getTrimestres(activeEntity);
+  const n = ts.length + 1;
+  // Marcar todos como concluídos exceto o novo
+  ts.forEach(t => { if(t.status === 'ativo') t.status = 'concluido'; });
+  ts.push({ id: n, label: 'Trimestre ' + n, inicio: new Date().toISOString().slice(0,10), status: 'ativo', semanas: {} });
+  activeTrimIdx = ts.length - 1;
+  activeEntity.trimestres = ts;
+  // Sync no array students
+  const idx = students.findIndex(s => Number(s.id) === Number(activeEntity.id));
+  if(idx !== -1) students[idx] = activeEntity;
+  saveStudents();
+  renderTrimTabs();
+  renderEntityTrim();
+  showToast('✓ Trimestre ' + n + ' criado');
+}
+
+function renderTrimTabs() {
+  const bar = document.getElementById('trim-tabs-bar');
+  if(!bar || !activeEntity) return;
+  const ts = getTrimestres(activeEntity);
+  bar.innerHTML = ts.map((t,i) => {
+    const isActive = i === activeTrimIdx;
+    const dot = t.status === 'ativo' ? '<span style="width:6px;height:6px;background:var(--green2);border-radius:50%;display:inline-block;margin-right:4px;flex-shrink:0"></span>' : '';
+    return `<button onclick="selectTrimIdx(${i})" style="
+      display:flex;align-items:center;gap:4px;
+      background:${isActive ? 'rgba(29,158,117,0.18)' : 'var(--card2)'};
+      border:1px solid ${isActive ? 'var(--green)' : 'var(--border2)'};
+      color:${isActive ? 'var(--green2)' : 'var(--muted)'};
+      font-size:11px;font-weight:${isActive?'700':'500'};
+      padding:5px 12px;border-radius:20px;cursor:pointer;font-family:var(--font);
+      transition:all .15s;white-space:nowrap"
+    >${dot}${t.label}${t.status==='ativo'?' ●':''}</button>`;
+  }).join('') + `<button onclick="criarNovoTrimestre()" style="
+    background:transparent;border:1px dashed rgba(29,158,117,0.35);
+    color:var(--green2);font-size:11px;font-weight:600;
+    padding:5px 12px;border-radius:20px;cursor:pointer;font-family:var(--font)"
+  >+ Novo</button>`;
+}
+
+function selectTrimIdx(i) {
+  activeTrimIdx = i;
+  renderTrimTabs();
+  renderEntityTrim();
+}
 
 function openEntityWeekModal(sem) {
   if(!activeEntity) return;
@@ -3052,8 +3132,9 @@ function openEntityWeekModal(sem) {
   const ph = TRIM_PHASES.find(w=>w.sem===sem);
   document.getElementById('ewm-title').textContent = `Semana ${sem} — ${ph ? ph.phase : ''}`;
 
-  // Carregar aulas existentes — retrocompatível com foco único antigo
-  const td = activeEntity.trimestre || {};
+  // Carregar do trimestre ativo
+  const trim = getActiveTrim(activeEntity);
+  const td = (trim && trim.semanas) ? trim.semanas : (activeEntity.trimestre || {});
   const semData = td[sem];
   if(semData && typeof semData === 'object' && semData.aulas) {
     ewmAulas = semData.aulas.map(a => ({...a}));
@@ -3136,7 +3217,10 @@ function closeEntityWeekModal() {
 
 function saveEntityWeekFocus() {
   if(!activeEntity || activeEntityWeek === null) return;
-  if(!activeEntity.trimestre) activeEntity.trimestre = {};
+  // Garantir estrutura de trimestres
+  const trim = getActiveTrim(activeEntity);
+  if(!trim) return;
+  if(!trim.semanas) trim.semanas = {};
 
   // Filtrar aulas sem foco (vazias)
   const aulasFiltradas = ewmAulas.filter(a => a.foco && a.foco.trim());
@@ -3150,17 +3234,18 @@ function saveEntityWeekFocus() {
   const tripePreenchido = ewmTripe.footwork || ewmTripe.tecnica || ewmTripe.tatico;
 
   if(aulasFiltradas.length === 0 && !tripePreenchido) {
-    // Nada preenchido — limpa a semana
-    delete activeEntity.trimestre[activeEntityWeek];
+    delete trim.semanas[activeEntityWeek];
   } else {
-    // Salva o que tiver — aulas, tripé ou ambos
-    activeEntity.trimestre[activeEntityWeek] = {
+    trim.semanas[activeEntityWeek] = {
       aulas: aulasFiltradas.map((a,i) => ({ num:i+1, foco:a.foco.trim(), tipo:a.tipo })),
       tripe: { ...ewmTripe }
     };
   }
 
-  // Garantir que activeEntity está sincronizado dentro do array students
+  // Manter retrocompatibilidade com campo trimestre antigo
+  activeEntity.trimestre = trim.semanas;
+
+  // Sync no array students
   const idx = students.findIndex(s => Number(s.id) === Number(activeEntity.id));
   if(idx !== -1) students[idx] = activeEntity;
 
@@ -3171,11 +3256,17 @@ function saveEntityWeekFocus() {
 }
 function clearEntityTrim() {
   if(!activeEntity) return;
-  if(!confirm('Limpar todos os focos do trimestre deste aluno?')) return;
+  const trim = getActiveTrim(activeEntity);
+  if(!trim) return;
+  const label = trim.label || 'trimestre';
+  if(!confirm('Limpar todos os focos do ' + label + '?')) return;
+  trim.semanas = {};
   activeEntity.trimestre = {};
+  const idx = students.findIndex(s => Number(s.id) === Number(activeEntity.id));
+  if(idx !== -1) students[idx] = activeEntity;
   saveStudents();
   renderEntityTrim();
-  showToast('✓ Trimestre limpo');
+  showToast('✓ ' + label + ' limpo');
 }
 
 // ─── LAST LESSON ──────────────────────
@@ -7972,10 +8063,11 @@ function deleteProf(id) {
 // ═══════════════════════════════════════
 function openTrimPDFModal() {
   if(!activeEntity) return;
-  document.getElementById('pdf-obj1').value = '';
-  document.getElementById('pdf-obj2').value = '';
-  document.getElementById('pdf-dataav').value = '';
-  document.getElementById('pdf-msg').value = '';
+  const trim = getActiveTrim(activeEntity);
+  document.getElementById('pdf-obj1').value = (trim && trim.obj1) || '';
+  document.getElementById('pdf-obj2').value = (trim && trim.obj2) || '';
+  document.getElementById('pdf-dataav').value = (trim && trim.dataAvaliacao) || '';
+  document.getElementById('pdf-msg').value = (trim && trim.msgProfessor) || '';
   document.getElementById('trimPDFModal').classList.add('open');
 }
 function closeTrimPDFModal() {
@@ -7990,7 +8082,20 @@ function gerarTrimPDF() {
   const msg     = document.getElementById('pdf-msg').value.trim();
   const nome    = activeEntity.nome || 'Aluno';
   const nivel   = activeEntity.nivel || '';
-  const td      = activeEntity.trimestre || {};
+  const trim    = getActiveTrim(activeEntity);
+  const td      = (trim && trim.semanas) ? trim.semanas : (activeEntity.trimestre || {});
+  const trimLabel = trim ? trim.label : 'Trimestre 1';
+
+  // Persistir objetivos e data de avaliação no trimestre ativo
+  if(trim) {
+    if(obj1) trim.obj1 = obj1;
+    if(obj2) trim.obj2 = obj2;
+    if(dataAv) trim.dataAvaliacao = dataAv;
+    if(msg) trim.msgProfessor = msg;
+    const idx = students.findIndex(s => Number(s.id) === Number(activeEntity.id));
+    if(idx !== -1) students[idx] = activeEntity;
+    saveStudents();
+  }
 
   const fmtDataAv = dataAv
     ? new Date(dataAv + 'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})
@@ -8014,8 +8119,7 @@ function gerarTrimPDF() {
     7:'Tático', 8:'Tático', 9:'Tático',
     10:'Integração',
     11:'Preparação',
-    12:'Avaliação',
-    13:'Devolutiva'
+    12:'Avaliação'
   };
 
   const semanasRows = Object.entries(SEM_FASE).map(([sem, fase]) => {
@@ -8117,7 +8221,10 @@ function gerarTrimPDF() {
     </div>
 
     <div style="position:relative">
-      <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:#7a8499;text-transform:uppercase;margin-bottom:6px">Planejamento Trimestral</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:#7a8499;text-transform:uppercase">Planejamento Trimestral</div>
+        <div style="font-size:10px;font-weight:700;background:rgba(29,158,117,0.2);color:#25c491;border:1px solid rgba(29,158,117,0.4);border-radius:10px;padding:1px 8px">${trimLabel}</div>
+      </div>
       <div style="font-size:30px;font-weight:800;color:#fff;letter-spacing:-.5px;line-height:1.1">${nome}</div>
       ${nivel ? `<div style="display:inline-block;margin-top:10px;background:rgba(29,158,117,0.2);border:1px solid rgba(29,158,117,0.4);color:#25c491;font-size:11px;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:.3px">${nivel}</div>` : ''}
     </div>
