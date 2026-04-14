@@ -8440,6 +8440,32 @@ function registrarChamadaRapida(tipo) {
   }
   entity.frequencia.push(registro);
 
+  // Falta justificada → gerar crédito de reposição (vence em 30 dias)
+  if(tipo === 'falta_justificada') {
+    // Remover reposição pendente anterior desta mesma falta (se existir)
+    entity.frequencia = entity.frequencia.filter(r =>
+      !(r.tipo === 'reposicao' && r._origemHora === hora && r._origemData === dataSlot && r.status === 'pendente')
+    );
+    const venc = new Date(dataSlot + 'T12:00:00');
+    venc.setDate(venc.getDate() + 30);
+    entity.frequencia.push({
+      tipo: 'reposicao',
+      status: 'pendente',
+      data: dataSlot,
+      vencimento: venc.toISOString().slice(0,10),
+      _origemHora: hora,
+      _origemData: dataSlot,
+      _chamadaHora: hora,
+    });
+  }
+
+  // Se mudou para presente/falta_simples → limpar reposição pendente desta origem
+  if(tipo === 'presente' || tipo === 'falta_simples') {
+    entity.frequencia = entity.frequencia.filter(r =>
+      !(r.tipo === 'reposicao' && r._origemHora === hora && r._origemData === dataSlot && r.status === 'pendente')
+    );
+  }
+
   // Sync no array students
   const idx = students.findIndex(s => Number(s.id) === Number(entity.id));
   if(idx !== -1) students[idx] = entity;
