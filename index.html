@@ -5585,6 +5585,16 @@ function registrarChamadaRapida(eId, hora, tipo, data) {
   }
 
   saveStudents();
+
+  // Re-sincronizar _freqEntity se este aluno estiver com perfil aberto
+  if(_freqEntity && String(_freqEntity.id) === String(eId)) {
+    _freqEntity.frequencia = aluno.frequencia;
+    const freqView = document.getElementById('d2-freq-view');
+    if(freqView && freqView.style.display !== 'none') {
+      _renderFreqAll();
+      _atualizarFreqBadge();
+    }
+  }
 }
 
 // ── CHAMADA DE TURMA — abrir modal ─────────────────────────────────
@@ -5802,6 +5812,20 @@ function salvarChamadaTurma() {
   const pres   = vals.filter(v => v === 'presente').length;
   const faltaJ = vals.filter(v => v === 'falta_justificada').length;
   showToast(`✓ Chamada salva · ${pres} presente${pres!==1?'s':''}${faltaJ?' · '+faltaJ+' reposição'+(faltaJ!==1?'ões':'')+' gerada'+(faltaJ!==1?'s':''):''}`);
+
+  // Re-sincronizar _freqEntity se algum membro da turma estiver com perfil aberto
+  if(_freqEntity) {
+    const alunoAtualizado = (students||[]).find(s => String(s.id) === String(_freqEntity.id));
+    if(alunoAtualizado && st.membros[String(_freqEntity.id)]) {
+      _freqEntity.frequencia = alunoAtualizado.frequencia;
+      const freqView = document.getElementById('d2-freq-view');
+      if(freqView && freqView.style.display !== 'none') {
+        _renderFreqAll();
+        _atualizarFreqBadge();
+      }
+    }
+  }
+
   renderD3Freq();
 }
 
@@ -8466,11 +8490,27 @@ function registrarChamadaRapida(tipo) {
     );
   }
 
-  // Sync no array students
+  // Sync no array students — mutação direta para preservar referências
   const idx = students.findIndex(s => Number(s.id) === Number(entity.id));
-  if(idx !== -1) students[idx] = entity;
+  if(idx !== -1) {
+    students[idx].frequencia = entity.frequencia;
+  }
 
   saveStudents();
+
+  // Re-sincronizar activeEntity e _freqEntity (referências podem estar desatualizadas)
+  if(activeEntity && String(activeEntity.id) === String(_crEntityId)) {
+    activeEntity.frequencia = entity.frequencia;
+  }
+  if(_freqEntity && String(_freqEntity.id) === String(_crEntityId)) {
+    _freqEntity.frequencia = entity.frequencia;
+    // Atualizar painel de frequência se estiver visível
+    const freqView = document.getElementById('d2-freq-view');
+    if(freqView && freqView.style.display !== 'none') {
+      _renderFreqAll();
+      _atualizarFreqBadge();
+    }
+  }
 
   // Atualizar indicador visual no slot
   atualizarIndicadorSlot(_crEntityId, _crQ, _crD, hora, tipo);
