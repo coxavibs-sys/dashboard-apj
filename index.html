@@ -1265,6 +1265,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 
     <div class="modal-footer" style="margin-top:16px">
       <button class="btn btn-s" onclick="closeModal('chamadaTurmaModal')">Fechar</button>
+      <button class="btn btn-s" style="color:var(--purple);border-color:rgba(155,114,208,0.4)" onclick="abrirRepEmTurma()">🔄 Reposição</button>
       <button class="btn btn-p" id="ctm-salvar-btn" onclick="salvarChamadaTurma()">💾 Salvar Chamada</button>
     </div>
   </div>
@@ -1652,6 +1653,33 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     <div style="display:flex;gap:8px">
       <button class="btn btn-s btn-sm" style="flex:1" onclick="closeModal('chamadaRapidaModal')">Fechar</button>
       <button class="btn btn-s btn-sm" style="flex:1;color:var(--blue);border-color:rgba(91,155,213,0.3)" onclick="abrirAulaDoSlot()">📋 Abrir Aula</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: REPOSIÇÃO EM TURMA (pela grade) -->
+<div class="modal-bg" id="repEmTurmaModal">
+  <div class="modal" style="max-width:400px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--purple)" id="ret-titulo">👥 Reposição na Turma</div>
+        <div style="font-size:11px;color:var(--muted)" id="ret-sub"></div>
+      </div>
+      <button onclick="closeModal('repEmTurmaModal')" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>
+    </div>
+
+    <!-- Lista de alunos com crédito pendente -->
+    <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.5px;margin-bottom:8px">ALUNOS COM REPOSIÇÃO PENDENTE</div>
+    <div id="ret-alunos-list" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;margin-bottom:14px"></div>
+
+    <!-- Alunos já agendados nesta turma/semana -->
+    <div id="ret-ja-agendados-wrap" style="display:none;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--green2);letter-spacing:.5px;margin-bottom:6px">✅ JÁ AGENDADOS NESTA AULA</div>
+      <div id="ret-ja-agendados" style="font-size:12px;color:var(--muted)"></div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-s" onclick="closeModal('repEmTurmaModal')">Fechar</button>
     </div>
   </div>
 </div>
@@ -5465,12 +5493,25 @@ function saveReposicao() {
 
   if(_repTabAtiva === 'turma') {
     if(!_repTurmaSel) { showToast('⚠ Selecione uma turma', true); return; }
-    rep.status = 'agendada';
-    rep.turmaId = _repTurmaSel.entityId;
-    rep.obs = obs;
+    rep.status        = 'agendada';
+    rep.turmaId       = _repTurmaSel.entityId;
+    rep.obs           = obs;
+    // Salvar data/hora da próxima ocorrência da turma para filtro correto na grade
+    const turmaObj = (students||[]).find(s => String(s.id) === String(_repTurmaSel.entityId));
+    if(turmaObj && (turmaObj.horarios||[]).length) {
+      const h0 = turmaObj.horarios[0];
+      // Calcular a data da próxima ocorrência deste dia da semana
+      const hoje2 = new Date(); hoje2.setHours(0,0,0,0);
+      const diasAteFim = ((h0.dia - (hoje2.getDay() === 0 ? 6 : hoje2.getDay()-1)) + 7) % 7;
+      const proxData = new Date(hoje2);
+      proxData.setDate(hoje2.getDate() + (diasAteFim === 0 ? 7 : diasAteFim));
+      rep.dataReposicao = `${proxData.getFullYear()}-${String(proxData.getMonth()+1).padStart(2,'0')}-${String(proxData.getDate()).padStart(2,'0')}`;
+      rep.horaReposicao = h0.hora;
+    }
     saveStudents();
     closeModal('freqRepModal');
     _renderFreqAll();
+    renderGrade();
     showToast(`✓ Reposição agendada na turma ${_repTurmaSel.nome}`);
     return;
   }
@@ -7552,9 +7593,9 @@ function renderGrade() {
     const dateStr = `${dateDia.getFullYear()}-${String(dateDia.getMonth()+1).padStart(2,'0')}-${String(dateDia.getDate()).padStart(2,'0')}`;
     (students||[]).filter(s=>s.type==='student').forEach(s=>{
       (s.frequencia||[]).filter(r=>
-        r.tipo==='reposicao' && r.status==='agendada' && r.turmaId && r.data
+        r.tipo==='reposicao' && r.status==='agendada' && r.turmaId &&
+        r.dataReposicao === dateStr   // ← filtrar pela data exata da semana exibida
       ).forEach(r=>{
-        // Encontrar o dia da semana da turma
         const turma = (students||[]).find(t=>String(t.id)===String(r.turmaId));
         if(!turma) return;
         (turma.horarios||[]).forEach(h=>{
@@ -8594,6 +8635,137 @@ function abrirAulaDoSlot() {
   const entity = (students||[]).find(s => String(s.id) === String(_crEntityId));
   if(!entity) return;
   setTimeout(() => openSlotAula(_crEntityId, _crQ, _crD, _crHora), 150);
+}
+
+// ═══════════════════════════════════════
+// REPOSIÇÃO EM TURMA — pela grade
+// ═══════════════════════════════════════
+
+function abrirRepEmTurma() {
+  if(!_ctmCtx) return;
+  const { eId, hora, data, d } = _ctmCtx;
+  const turma = (students||[]).find(s => String(s.id) === String(eId));
+  if(!turma) return;
+
+  const AG_DIAS_FULL = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  document.getElementById('ret-titulo').textContent = `👥 ${turma.nome}`;
+  document.getElementById('ret-sub').textContent    =
+    `${AG_DIAS_FULL[d]||''} ${data.split('-').reverse().join('/')} · ${hora} · Adicionar aluno de reposição`;
+
+  // Alunos já agendados nesta turma nesta data específica
+  const jaAgendados = (students||[]).filter(s =>
+    s.type === 'student' &&
+    (s.frequencia||[]).some(r =>
+      r.tipo === 'reposicao' && r.status === 'agendada' &&
+      String(r.turmaId) === String(eId) && r.dataReposicao === data
+    )
+  );
+
+  const jaWrap = document.getElementById('ret-ja-agendados-wrap');
+  const jaEl   = document.getElementById('ret-ja-agendados');
+  if(jaAgendados.length) {
+    jaWrap.style.display = 'block';
+    jaEl.innerHTML = jaAgendados.map(a =>
+      `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;margin-bottom:4px">
+        <span>${a.nome.split(' ')[0]} · <span style="color:var(--muted)">${(a.nivel||'').split(' — ')[0]}</span></span>
+        <button onclick="removerRepEmTurma('${a.id}','${eId}','${data}')"
+          style="background:rgba(224,92,92,0.1);border:1px solid rgba(224,92,92,0.3);color:var(--red);font-size:10px;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:inherit">
+          Remover
+        </button>
+      </div>`
+    ).join('');
+  } else {
+    jaWrap.style.display = 'none';
+  }
+
+  // Alunos com reposição pendente (excluindo membros da própria turma e já agendados)
+  const membrosIds = (turma.membros||[]).map(String);
+  const jaIds = jaAgendados.map(a => String(a.id));
+
+  const comPendente = (students||[]).filter(s =>
+    s.type === 'student' &&
+    !membrosIds.includes(String(s.id)) &&
+    !jaIds.includes(String(s.id)) &&
+    (s.frequencia||[]).some(r => r.tipo === 'reposicao' && r.status === 'pendente')
+  );
+
+  const listEl = document.getElementById('ret-alunos-list');
+  if(!comPendente.length) {
+    listEl.innerHTML = `<div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">
+      ${jaAgendados.length ? 'Todos os alunos com reposição pendente já estão agendados.' : 'Nenhum aluno com reposição pendente no momento.'}
+    </div>`;
+  } else {
+    listEl.innerHTML = comPendente.map(s => {
+      const rep = (s.frequencia||[]).find(r => r.tipo === 'reposicao' && r.status === 'pendente');
+      const venc = rep?.vencimento ? new Date(rep.vencimento + 'T12:00:00') : null;
+      const hoje = new Date(); hoje.setHours(0,0,0,0);
+      const diff = venc ? Math.ceil((venc - hoje) / (1000*60*60*24)) : null;
+      const corVenc = diff !== null && diff <= 7 ? 'var(--amber)' : 'var(--muted)';
+      const vencTxt = diff === null ? '' : diff <= 0 ? ' · Vencida' : ` · Vence em ${diff}d`;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border:1px solid var(--border2);border-radius:9px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:var(--text)">${s.nome}</div>
+          <div style="font-size:10px;color:var(--muted)">${(s.nivel||'').split(' — ')[0]}
+            <span style="color:${corVenc}">${vencTxt}</span>
+          </div>
+        </div>
+        <button onclick="agendarRepEmTurma('${s.id}','${eId}','${hora}','${data}',${d})"
+          style="background:rgba(155,114,208,0.15);border:2px solid rgba(155,114,208,0.4);color:var(--purple);font-size:11px;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap">
+          + Agendar
+        </button>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('repEmTurmaModal').classList.add('open');
+}
+
+function agendarRepEmTurma(alunoId, turmaId, hora, data, d) {
+  const aluno = (students||[]).find(s => String(s.id) === String(alunoId));
+  const turma = (students||[]).find(s => String(s.id) === String(turmaId));
+  if(!aluno || !turma) return;
+
+  // Localizar crédito pendente
+  const rep = (aluno.frequencia||[]).find(r => r.tipo === 'reposicao' && r.status === 'pendente');
+  if(!rep) { showToast('⚠ Nenhum crédito pendente encontrado', true); return; }
+
+  rep.status        = 'agendada';
+  rep.turmaId       = String(turmaId);
+  rep.data          = rep.data || data;   // preserva data da falta original
+  rep.dataReposicao = data;
+  rep.horaReposicao = hora;
+
+  saveStudents();
+
+  // Atualizar a lista no modal
+  abrirRepEmTurma();
+  renderGrade();
+
+  showToast(`✓ ${aluno.nome.split(' ')[0]} agendado na ${turma.nome}`);
+}
+
+function removerRepEmTurma(alunoId, turmaId, data) {
+  const aluno = (students||[]).find(s => String(s.id) === String(alunoId));
+  if(!aluno) return;
+
+  const rep = (aluno.frequencia||[]).find(r =>
+    r.tipo === 'reposicao' && r.status === 'agendada' &&
+    String(r.turmaId) === String(turmaId) && r.dataReposicao === data
+  );
+  if(!rep) return;
+
+  rep.status = 'pendente';
+  delete rep.turmaId;
+  delete rep.dataReposicao;
+  delete rep.horaReposicao;
+  const novoVenc = new Date();
+  novoVenc.setDate(novoVenc.getDate() + 30);
+  rep.vencimento = novoVenc.toISOString().slice(0,10);
+
+  saveStudents();
+  abrirRepEmTurma();
+  renderGrade();
+  showToast(`✓ Reposição de ${aluno.nome.split(' ')[0]} removida da turma · crédito voltou pendente`);
 }
 
 // ═══════════════════════════════════════
