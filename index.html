@@ -1265,6 +1265,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 
     <div class="modal-footer" style="margin-top:16px">
       <button class="btn btn-s" onclick="closeModal('chamadaTurmaModal')">Fechar</button>
+      <button class="btn btn-s" style="color:var(--blue);border-color:rgba(91,155,213,0.3)" onclick="abrirAulaDaTurma()">📋 Abrir Aula</button>
       <button class="btn btn-s" style="color:var(--purple);border-color:rgba(155,114,208,0.4)" onclick="abrirRepEmTurma()">🔄 Reposição</button>
       <button class="btn btn-p" id="ctm-salvar-btn" onclick="salvarChamadaTurma()">💾 Salvar Chamada</button>
     </div>
@@ -8628,6 +8629,13 @@ function atualizarIndicadorSlot(entityId, q, d, hora, tipo) {
   const innerSlot = slotEl.querySelector('.ag-slot') || slotEl;
   innerSlot.style.position = 'relative';
   innerSlot.appendChild(dot);
+}
+
+function abrirAulaDaTurma() {
+  if(!_ctmCtx) return;
+  const { eId, hora, q, d } = _ctmCtx;
+  closeModal('chamadaTurmaModal');
+  setTimeout(() => openSlotAula(eId, q, d, hora), 150);
 }
 
 function abrirAulaDoSlot() {
