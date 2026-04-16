@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard APJ · V1.13 · Approach Tennis Academy</title>
+<title>Dashboard APJ · V1.16 · Approach Tennis Academy</title>
 <style>
 :root{
   --bg:#0b1019;--card:#141e2e;--card2:#192236;--card3:#1e293b;
@@ -380,7 +380,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     <div class="logo-mark">APJ</div>
     <div>
       <div class="logo-name">Approach Tennis Academy</div>
-      <div class="logo-sub muted">Dashboard · Módulo 10 · Santos SP</div>
+      <div class="logo-sub muted">Dashboard · V1.16 · Santos SP</div>
     </div>
   </div>
   <nav class="nav">
@@ -765,10 +765,22 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 
     <!-- LESSON FORM -->
     <div id="d2-lesson-form" style="display:none">
-      <div class="card" style="margin-bottom:16px">
-        <h3 style="margin-bottom:14px">📋 Plano de Aula APJ</h3>
 
-        <!-- META -->
+      <!-- ╔══════════════════════════════════════╗ -->
+      <!-- ║  PRÉ-AULA — O professor planeja      ║ -->
+      <!-- ╚══════════════════════════════════════╝ -->
+      <div class="card" style="margin-bottom:12px">
+
+        <!-- CABEÇALHO DA SEÇÃO PRÉ-AULA -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border2)">
+          <div style="width:28px;height:28px;background:rgba(29,158,117,0.15);border:1px solid var(--green);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">📋</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--green2)">Pré-aula — Planejamento</div>
+            <div style="font-size:10px;color:var(--muted)">Preencha antes de entrar na quadra</div>
+          </div>
+        </div>
+
+        <!-- 1. META: Data · Duração · Semana -->
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
           <div class="fg" style="margin:0">
             <label class="fl">Data</label>
@@ -791,83 +803,148 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
               <option>Sem 4</option><option>Sem 5</option><option>Sem 6</option>
               <option>Sem 7</option><option>Sem 8</option><option>Sem 9</option>
               <option>Sem 10</option><option>Sem 11</option><option>Sem 12</option>
-              
             </select>
           </div>
         </div>
 
-        <!-- FOCO DA AULA -->
+        <!-- 2. FOCO DA AULA -->
         <div style="margin-bottom:14px">
           <label class="fl">🎯 Foco da aula (golpe ou elemento tático)</label>
           <input class="fc" id="lf-foco" type="text" placeholder="Ex: Forehand inside-out com padrão tático" oninput="refreshPreLesson()">
         </div>
 
-        <!-- SITUAÇÃO FUNDAMENTAL + FOOTWORK [RFET + CIÊNCIA] -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-          <div>
-            <label class="fl">⚡ Situação fundamental (RFET)</label>
-            <select class="fc" id="lf-situacao">
-              <option value="">— Selecione —</option>
-              <option value="neutro">🔄 Neutro (rally construção)</option>
-              <option value="ofensivo">⚔️ Ofensivo (bola curta/aberta)</option>
-              <option value="defensivo">🛡️ Defensivo (posição ruim)</option>
-              <option value="saque_dev">🎾 Saque / Devolução</option>
-              <option value="duplas">👥 Doubles (FITP)</option>
-            </select>
+        <!-- 3. BLOCOS A · P · J — coração do plano -->
+        <div id="blocos-container"></div>
+
+        <!-- CHECKLIST DOUBLES FITP — aparece ao selecionar situação = duplas no bloco P -->
+        <div id="doubles-checklist" style="display:none;margin-top:10px;background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.3);border-radius:10px;padding:12px 14px">
+          <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:6px">
+            👥 Checklist Doubles FITP — 5 Padrões Fundamentais
+            <span style="font-size:9px;font-weight:600;background:rgba(201,168,76,0.15);color:var(--gold);padding:1px 6px;border-radius:4px">1x por mês</span>
           </div>
-          <div>
-            <label class="fl" style="display:flex;align-items:center;gap:6px">
-              👟 Footwork como foco principal?
-              <span style="font-size:9px;background:rgba(232,160,48,0.15);color:var(--amber);padding:1px 5px;border-radius:4px;font-weight:600">80% dos erros</span>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+            <label style="display:flex;align-items:flex-start;gap:6px;cursor:pointer;font-size:11px;color:var(--text);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:5px 8px">
+              <input type="checkbox" id="db-p1" style="accent-color:var(--gold);flex-shrink:0;margin-top:1px"> <span><strong>Saque + poaching</strong> — net player corta a devolução</span>
             </label>
-            <div style="display:flex;gap:8px;margin-top:6px">
-              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--text)">
-                <input type="radio" name="lf-footwork" id="lf-footwork-sim" value="sim" style="accent-color:var(--amber)"> Sim
-              </label>
-              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--text)">
-                <input type="radio" name="lf-footwork" id="lf-footwork-nao" value="nao" checked style="accent-color:var(--muted)"> Não
-              </label>
-            </div>
+            <label style="display:flex;align-items:flex-start;gap:6px;cursor:pointer;font-size:11px;color:var(--text);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:5px 8px">
+              <input type="checkbox" id="db-p2" style="accent-color:var(--gold);flex-shrink:0;margin-top:1px"> <span><strong>Comunicação antes do ponto</strong> — quem serve, quem cobre</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:6px;cursor:pointer;font-size:11px;color:var(--text);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:5px 8px">
+              <input type="checkbox" id="db-p3" style="accent-color:var(--gold);flex-shrink:0;margin-top:1px"> <span><strong>Formação I</strong> — net player na linha central, saque largo</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:6px;cursor:pointer;font-size:11px;color:var(--text);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:5px 8px">
+              <input type="checkbox" id="db-p4" style="accent-color:var(--gold);flex-shrink:0;margin-top:1px"> <span><strong>Open stance na rede</strong> — cobertura lateral ampla</span>
+            </label>
+            <label style="display:flex;align-items:flex-start;gap:6px;cursor:pointer;font-size:11px;color:var(--text);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:5px 8px">
+              <input type="checkbox" id="db-p5" style="accent-color:var(--gold);flex-shrink:0;margin-top:1px"> <span><strong>Lob defensivo + transição</strong> — ambos voltam ao baseline</span>
+            </label>
           </div>
         </div>
 
-        <!-- HORÁRIO + PRÉ-AULA WhatsApp -->
-        <div style="background:rgba(29,158,117,0.06);border:1px solid rgba(29,158,117,0.25);border-radius:10px;overflow:hidden;margin-bottom:14px">
-          <!-- HEADER -->
-          <div style="background:rgba(29,158,117,0.1);border-bottom:1px solid rgba(29,158,117,0.18);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <!-- 4. FOOTWORK — componentes planejados para esta aula -->
+        <div style="margin-top:14px;padding:12px 14px;background:rgba(232,160,48,0.05);border:1px solid rgba(232,160,48,0.2);border-radius:10px">
+          <label class="fl" style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+            👟 Footwork — componentes a trabalhar nesta aula
+            <span style="font-size:9px;background:rgba(232,160,48,0.15);color:var(--amber);padding:1px 5px;border-radius:4px;font-weight:600">80% dos erros</span>
+          </label>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;color:var(--text);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:5px 8px">
+              <input type="checkbox" id="lf-fw-split" value="split_step" onchange="syncFootworkField()" style="accent-color:var(--amber);flex-shrink:0"> Split Step
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;color:var(--text);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:5px 8px">
+              <input type="checkbox" id="lf-fw-first" value="first_step" onchange="syncFootworkField()" style="accent-color:var(--amber);flex-shrink:0"> First Step
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;color:var(--text);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:5px 8px">
+              <input type="checkbox" id="lf-fw-load" value="load_position" onchange="syncFootworkField()" style="accent-color:var(--amber);flex-shrink:0"> Load Position
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;color:var(--text);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:5px 8px">
+              <input type="checkbox" id="lf-fw-recovery" value="recovery_step" onchange="syncFootworkField()" style="accent-color:var(--amber);flex-shrink:0"> Recovery Step
+            </label>
+          </div>
+          <input type="hidden" id="lf-footwork-hidden" value="">
+        </div>
+
+        <!-- 5. PROTOCOLO MENTAL — o que será treinado no J -->
+        <div style="margin-top:10px;background:rgba(224,92,92,0.06);border:1px solid rgba(224,92,92,0.2);border-radius:10px;padding:12px 14px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+            <span style="font-size:13px">🧠</span>
+            <div style="font-size:11px;font-weight:700;color:var(--red);letter-spacing:.4px">PROTOCOLO MENTAL — o que treinar no Bloco J</div>
+            <span style="font-size:9px;color:var(--muted);margin-left:auto">O Mental = o chão do triângulo</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+            <label id="mental-lbl-0" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
+              <input type="checkbox" id="lf-mental-0" value="respiração" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> respiração
+            </label>
+            <label id="mental-lbl-1" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
+              <input type="checkbox" id="lf-mental-1" value="palavra-âncora" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> palavra-âncora
+            </label>
+            <label id="mental-lbl-2" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
+              <input type="checkbox" id="lf-mental-2" value="ritual pré-ponto" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> ritual pré-ponto
+            </label>
+            <label id="mental-lbl-3" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
+              <input type="checkbox" id="lf-mental-3" value="foco externo" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> foco externo
+            </label>
+            <label id="mental-lbl-4" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
+              <input type="checkbox" id="lf-mental-4" value="aceitar o erro" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> aceitar o erro
+            </label>
+            <label id="mental-lbl-5" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
+              <input type="checkbox" id="lf-mental-5" value="reset 20s" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> reset 20s
+            </label>
+          </div>
+          <input type="hidden" id="lf-mental-sel" value="">
+        </div>
+
+        <!-- PRÉ-AULA WHATSAPP — colapsável, gerada após preencher o plano -->
+        <div style="margin-top:12px;border:1px solid rgba(29,158,117,0.25);border-radius:10px;overflow:hidden">
+          <button onclick="togglePreAulaWA()" style="width:100%;background:rgba(29,158,117,0.07);border:none;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;gap:8px">
             <div style="display:flex;align-items:center;gap:8px">
-              <span style="font-size:15px">📨</span>
-              <div>
+              <span style="font-size:14px">📨</span>
+              <div style="text-align:left">
                 <div style="font-size:12px;font-weight:600;color:var(--green2)">Mensagem pré-aula — enviar 2h antes</div>
-                <div style="font-size:10px;color:var(--muted)">Gerada a partir do plano de aula · confirma presença · reduz faltas</div>
+                <div style="font-size:10px;color:var(--muted)">Confirma presença · reduz faltas · gerada do plano</div>
               </div>
             </div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <label style="font-size:11px;color:var(--muted)">Horário:</label>
-              <input type="time" id="lf-hora" class="fc" style="width:90px;padding:5px 8px;font-size:12px" value="18:00" oninput="refreshPreLesson()">
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+              <div style="display:flex;align-items:center;gap:4px">
+                <label style="font-size:11px;color:var(--muted);white-space:nowrap">Horário:</label>
+                <input type="time" id="lf-hora" class="fc" style="width:82px;padding:4px 7px;font-size:12px" value="18:00" oninput="refreshPreLesson()" onclick="event.stopPropagation()">
+              </div>
+              <span id="pre-wa-arrow" style="font-size:12px;color:var(--muted);transition:transform .2s">▼</span>
             </div>
-          </div>
-          <!-- PREVIEW -->
-          <div style="padding:12px 14px">
-            <textarea id="pl-pre-text" class="fc" style="height:200px;resize:none;font-size:12px;line-height:1.75;background:rgba(255,255,255,0.04)" placeholder="Preencha o Bloco A (Aprende) no plano abaixo para gerar a mensagem automaticamente..."></textarea>
-            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          </button>
+          <div id="pre-wa-body" style="display:none;padding:12px 14px;border-top:1px solid rgba(29,158,117,0.15)">
+            <textarea id="pl-pre-text" class="fc" style="height:160px;resize:none;font-size:12px;line-height:1.75;background:rgba(255,255,255,0.04)" placeholder="Preencha os Blocos A e J acima para gerar a mensagem automaticamente..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
               <button class="btn btn-p btn-sm" onclick="copyPreLesson()" style="flex:1;min-width:140px">📋 Copiar para WhatsApp</button>
               <button class="btn btn-s btn-sm" onclick="refreshPreLesson()" style="color:var(--muted)">↺ Atualizar</button>
             </div>
           </div>
         </div>
 
-        <!-- BLOCOS A P J -->
-        <div id="blocos-container"></div>
+      </div><!-- /card pré-aula -->
 
-        <!-- OBSERVAÇÕES DO J -->
-        <div style="margin-top:14px">
-          <label class="fl">📊 Observações do J (dados para o relatório)</label>
-          <textarea class="fc" id="lf-obs-j" style="height:72px;resize:none" placeholder="Ex: tentou inside-out 6x — 4 dentro. Split step presente em 70% dos pontos. Recovery step falhou após o BH."></textarea>
+      <!-- ╔══════════════════════════════════════╗ -->
+      <!-- ║  PÓS-AULA — O professor registra     ║ -->
+      <!-- ╚══════════════════════════════════════╝ -->
+      <div class="card" style="margin-bottom:12px">
+
+        <!-- CABEÇALHO DA SEÇÃO PÓS-AULA -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border2)">
+          <div style="width:28px;height:28px;background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.4);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">📊</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--blue)">Pós-aula — Registro</div>
+            <div style="font-size:10px;color:var(--muted)">Preencha após a aula · alimenta o radar e o relatório</div>
+          </div>
         </div>
 
-        <!-- SCORE RÁPIDO POR DIMENSÃO [TA — dims_quick] -->
-        <div style="margin-top:12px;background:rgba(29,158,117,0.05);border:1px solid rgba(29,158,117,0.2);border-radius:10px;padding:12px 14px">
+        <!-- 6. OBSERVAÇÕES DO J -->
+        <div style="margin-bottom:12px">
+          <label class="fl">📝 O que aconteceu no J? (observações para o relatório)</label>
+          <textarea class="fc" id="lf-obs-j" style="height:68px;resize:none" placeholder="Ex: tentou inside-out 6x — 4 dentro. Split step presente em 70% dos pontos. Recovery step falhou após o BH."></textarea>
+        </div>
+
+        <!-- 7. SCORE DIMS_QUICK — pós aula -->
+        <div style="background:rgba(29,158,117,0.05);border:1px solid rgba(29,158,117,0.2);border-radius:10px;padding:12px 14px;margin-bottom:12px">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
             <span style="font-size:13px">📈</span>
             <div style="font-size:11px;font-weight:700;color:var(--green2);letter-spacing:.4px">SCORE RÁPIDO — 5 Dimensões APJ</div>
@@ -897,46 +974,30 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
           </div>
         </div>
 
-        <!-- PROTOCOLO MENTAL [PSICO] -->
-        <div style="margin-top:12px;background:rgba(224,92,92,0.06);border:1px solid rgba(224,92,92,0.2);border-radius:10px;padding:12px 14px">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-            <span style="font-size:13px">🧠</span>
-            <div style="font-size:11px;font-weight:700;color:var(--red);letter-spacing:.4px">PROTOCOLO MENTAL — Módulo 6 APJ</div>
-            <span style="font-size:9px;color:var(--muted);margin-left:auto">O Mental = o chão do triângulo</span>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-            <label id="mental-lbl-0" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
-              <input type="checkbox" id="lf-mental-0" value="respiração" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> respiração
-            </label>
-            <label id="mental-lbl-1" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
-              <input type="checkbox" id="lf-mental-1" value="palavra-âncora" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> palavra-âncora
-            </label>
-            <label id="mental-lbl-2" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
-              <input type="checkbox" id="lf-mental-2" value="ritual pré-ponto" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> ritual pré-ponto
-            </label>
-            <label id="mental-lbl-3" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
-              <input type="checkbox" id="lf-mental-3" value="foco externo" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> foco externo
-            </label>
-            <label id="mental-lbl-4" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
-              <input type="checkbox" id="lf-mental-4" value="aceitar o erro" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> aceitar o erro
-            </label>
-            <label id="mental-lbl-5" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
-              <input type="checkbox" id="lf-mental-5" value="reset 20s" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> reset 20s
-            </label>
-          </div>
-          <input type="hidden" id="lf-mental-sel" value="">
+        <!-- 8. SITUAÇÃO FUNDAMENTAL RFET — registrada após ver o jogo -->
+        <div style="margin-bottom:12px">
+          <label class="fl">⚡ Situação fundamental trabalhada (RFET)</label>
+          <select class="fc" id="lf-situacao" onchange="toggleDoublesChecklist()">
+            <option value="">— Selecione —</option>
+            <option value="neutro">🔄 Neutro (rally construção)</option>
+            <option value="ofensivo">⚔️ Ofensivo (bola curta/aberta)</option>
+            <option value="defensivo">🛡️ Defensivo (posição ruim)</option>
+            <option value="saque_dev">🎾 Saque / Devolução</option>
+            <option value="duplas">👥 Doubles (FITP)</option>
+          </select>
         </div>
 
-        <!-- FEEDBACK FECHAMENTO (elogio, foco, pós-aula) -->
-        <div style="margin-top:10px">
+        <!-- 9. ELOGIO + FOCO PRÓXIMA AULA -->
+        <div style="margin-bottom:10px">
           <label class="fl">💬 Elogio específico dado no fechamento</label>
           <input class="fc" id="lf-elogio" type="text" placeholder="Ex: unit turn presente antes do quique — criou espaço no FH" oninput="refreshPostLesson()">
         </div>
-        <div style="margin-top:10px">
+        <div>
           <label class="fl">🎯 Foco para a próxima aula</label>
           <input class="fc" id="lf-prox" type="text" placeholder="Ex: recovery step após o BH — cone no centro" oninput="refreshPostLesson()">
         </div>
-      </div>
+
+      </div><!-- /card pós-aula -->
 
       <!-- ═══════════════════════════════════════
            PÓS-AULA DO ALUNO — PRÉVIA AO VIVO
@@ -1058,6 +1119,18 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     <!-- Histórico -->
     <h3 style="margin-bottom:8px">📈 Histórico de Avaliações</h3>
     <div id="aval-hist-wrap"><p class="muted small">Nenhuma avaliação registrada ainda.</p></div>
+
+    <div class="div" style="margin-top:18px"></div>
+
+    <!-- Radar dims_quick — média das últimas 4 aulas [TA] -->
+    <div style="margin-bottom:18px">
+      <h3 style="margin-bottom:4px">📡 Radar de Aula — Média dims_quick (últimas 4 aulas)</h3>
+      <p class="muted small" style="margin-bottom:10px">Score 0–5 registrado em cada aula · complementa a avaliação trimestral formal</p>
+      <div id="dq-radar-wrap" style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <div style="flex-shrink:0"><svg id="dq-radar-svg" width="160" height="160" viewBox="0 0 160 160"></svg></div>
+        <div id="dq-radar-legend" style="flex:1;min-width:160px"></div>
+      </div>
+    </div>
 
     <div class="div" style="margin-top:18px"></div>
 
@@ -3159,6 +3232,7 @@ function showAvalEntity() {
   activeAvalId = String(activeEntity.id);
   renderDimGrid();
   renderAvalHist();
+  renderDqRadar();
   updateAvalScore();
   loadAvalFromSaved();
 }
@@ -3607,8 +3681,19 @@ function newLesson() {
   // Novos campos APJ v2
   const sitEl = document.getElementById('lf-situacao');
   if(sitEl) sitEl.value = '';
-  const fwNao = document.getElementById('lf-footwork-nao');
-  if(fwNao) fwNao.checked = true;
+  // Reset footwork checkboxes
+  ['lf-fw-split','lf-fw-first','lf-fw-load','lf-fw-recovery'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.checked = false;
+  });
+  const fwHidden = document.getElementById('lf-footwork-hidden');
+  if(fwHidden) fwHidden.value = '';
+  // Reset doubles checklist
+  ['db-p1','db-p2','db-p3','db-p4','db-p5'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.checked = false;
+  });
+  toggleDoublesChecklist();
   for(let i=0;i<6;i++){
     const cb = document.getElementById(`lf-mental-${i}`);
     if(cb) cb.checked = false;
@@ -4324,14 +4409,24 @@ function collectLessonData(isDraft=false) {
     if(cb && cb.checked) mentalSel.push(cb.value);
   }
   // Footwork
-  const footworkEl = document.querySelector('input[name="lf-footwork"]:checked');
   return {
     id: editingLesson ? editingLesson.id : Date.now(),
     data: document.getElementById('lf-data').value,
     hora: document.getElementById('lf-hora')?.value || '',
     foco_aula: document.getElementById('lf-foco')?.value || '',
     situacao_fundamental: document.getElementById('lf-situacao')?.value || '',
-    footwork_foco: footworkEl ? footworkEl.value === 'sim' : false,
+    doubles_padroes: document.getElementById('lf-situacao')?.value === 'duplas'
+      ? ['db-p1','db-p2','db-p3','db-p4','db-p5'].filter(id => document.getElementById(id)?.checked)
+      : [],
+    footwork_foco: (() => {
+      const ids = ['lf-fw-split','lf-fw-first','lf-fw-load','lf-fw-recovery'];
+      return ids.some(id => document.getElementById(id)?.checked);
+    })(),
+    footwork_componentes: (() => {
+      const ids = ['lf-fw-split','lf-fw-first','lf-fw-load','lf-fw-recovery'];
+      return ids.filter(id => document.getElementById(id)?.checked)
+               .map(id => document.getElementById(id).value);
+    })(),
     protocolo_mental: mentalSel,
     dims_quick: {
       bio:    Math.min(5, Math.max(0, parseInt(document.getElementById('lf-dq-bio')?.value)||0)),
@@ -4439,7 +4534,7 @@ function renderHistoryList() {
       <!-- Tags situação/footwork -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
         ${sitLabel?`<span style="font-size:10px;font-weight:600;background:rgba(91,155,213,0.12);color:var(--blue);padding:2px 8px;border-radius:5px;border:1px solid rgba(91,155,213,0.25)">${sitLabel}</span>`:''}
-        ${a.footwork_foco?`<span style="font-size:10px;font-weight:600;background:rgba(232,160,48,0.12);color:var(--amber);padding:2px 8px;border-radius:5px;border:1px solid rgba(232,160,48,0.25)">👟 Footwork foco</span>`:''}
+        ${a.footwork_foco?`<span style="font-size:10px;font-weight:600;background:rgba(232,160,48,0.12);color:var(--amber);padding:2px 8px;border-radius:5px;border:1px solid rgba(232,160,48,0.25)">👟 ${(a.footwork_componentes||[]).length?a.footwork_componentes.map(c=>({'split_step':'Split','first_step':'First','load_position':'Load','recovery_step':'Recovery'}[c]||c)).join(' · '):'Footwork'}</span>`:''}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
         ${BLOCO_CONFIG.map(b=>`<div style="background:var(--card2);border-radius:7px;padding:8px 10px">
@@ -4746,9 +4841,13 @@ function editLesson(id) {
     // Restaurar novos campos APJ v2
     const sitEl = document.getElementById('lf-situacao');
     if(sitEl) sitEl.value = editingLesson.situacao_fundamental||'';
-    const fwVal = editingLesson.footwork_foco ? 'sim' : 'nao';
-    const fwEl = document.querySelector(`input[name="lf-footwork"][value="${fwVal}"]`);
-    if(fwEl) fwEl.checked = true;
+    // Restaurar checkboxes de footwork
+    const fwComp = editingLesson.footwork_componentes || 
+      (editingLesson.footwork_foco ? ['split_step'] : []);
+    ['lf-fw-split','lf-fw-first','lf-fw-load','lf-fw-recovery'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.checked = fwComp.includes(el.value);
+    });
     const mentalArr = editingLesson.protocolo_mental||[];
     for(let i=0;i<6;i++){
       const cb = document.getElementById(`lf-mental-${i}`);
@@ -6657,6 +6756,8 @@ function renderStats() {
 function renderStatsSituacoes(alunos) {
   const el = document.getElementById('stats-situacoes-chart');
   if(!el) return;
+  // [RFET] Metas de distribuição tática
+  const RFET_META = { neutro:40, ofensivo:30, defensivo:20, saque_dev:10 };
   const SITUACOES = {
     neutro:    { label:'🔄 Neutro',           cor:'#5b9bd5' },
     ofensivo:  { label:'⚔️ Ofensivo',         cor:'#e05c5c' },
@@ -6681,15 +6782,34 @@ function renderStatsSituacoes(alunos) {
   }
 
   const ordenadas = Object.entries(contagem).sort((a,b)=>b[1]-a[1]);
-  el.innerHTML = ordenadas.map(([sit, cnt]) => {
+  // [RFET] legenda de metas
+  const metaHtml = `<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+    <span style="font-size:9px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.4px">Meta RFET:</span>
+    ${Object.entries(RFET_META).map(([k,v])=>`<span style="font-size:9px;color:var(--muted)">
+      <span style="color:${SITUACOES[k].cor}">${SITUACOES[k].label.split(' ')[0]}</span> ${v}%
+    </span>`).join('<span style="color:var(--border2)">·</span>')}
+  </div>`;
+
+  el.innerHTML = metaHtml + ordenadas.map(([sit, cnt]) => {
     const cfg = SITUACOES[sit] || { label: sit, cor:'#7a8499' };
     const pct = Math.round((cnt/total)*100);
-    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      <span style="font-size:11px;font-weight:600;color:var(--text);min-width:110px">${cfg.label}</span>
-      <div style="flex:1;height:10px;background:rgba(255,255,255,0.05);border-radius:5px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:${cfg.cor};border-radius:5px"></div>
+    const meta = RFET_META[sit];
+    const diff = meta ? pct - meta : null;
+    const diffLabel = diff !== null
+      ? `<span style="font-size:9px;font-weight:700;color:${diff>=0?'var(--green2)':'var(--red)'}">
+          ${diff>=0?'+':''}${diff}%
+        </span>` : '';
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+        <span style="font-size:11px;font-weight:600;color:var(--text);min-width:110px">${cfg.label}</span>
+        <span style="font-size:10px;color:var(--muted);min-width:42px">${cnt} (${pct}%)</span>
+        ${diffLabel}
+        ${meta ? `<span style="font-size:9px;color:var(--muted);margin-left:auto">meta ${meta}%</span>` : ''}
       </div>
-      <span style="font-size:10px;color:var(--muted);min-width:42px;text-align:right">${cnt} (${pct}%)</span>
+      <div style="flex:1;height:10px;background:rgba(255,255,255,0.05);border-radius:5px;overflow:hidden;position:relative">
+        <div style="height:100%;width:${pct}%;background:${cfg.cor};border-radius:5px;transition:width .4s"></div>
+        ${meta ? `<div style="position:absolute;top:-2px;left:${meta}%;width:2px;height:14px;background:var(--amber);border-radius:1px;opacity:.8" title="Meta RFET: ${meta}%"></div>` : ''}
+      </div>
     </div>`;
   }).join('') + (contagem[''] > 0
     ? `<div style="font-size:10px;color:var(--muted);margin-top:6px">⚠ ${contagem['']} aula${contagem['']!==1?'s':''} sem situação registrada — preencha o campo no plano de aula.</div>`
@@ -7720,6 +7840,7 @@ function saveAval() {
   }
 
   renderAvalHist();
+  renderDqRadar();
   showToast(`✓ Avaliação ${trimNome} salva — Score ${total} pts · ${nivel}`);
 }
 
@@ -7744,6 +7865,74 @@ function loadAvalFromSaved(trimNome) {
   updateAvalScore();
   const prevIdx = arr.indexOf(aval)-1;
   if(prevIdx>=0){ drawRadarCanvas(DIMS_AVAL.map(d=>arr[prevIdx].dims?.[d.key]?.pts||0)); }
+}
+
+function renderDqRadar() {
+  const svgEl  = document.getElementById('dq-radar-svg');
+  const legEl  = document.getElementById('dq-radar-legend');
+  if(!svgEl || !legEl) return;
+  if(!activeAvalId) {
+    svgEl.innerHTML = '';
+    legEl.innerHTML = '<p class="muted small">Selecione um aluno para ver o radar.</p>';
+    return;
+  }
+  const aluno = (students||[]).find(s=>String(s.id)===activeAvalId);
+  if(!aluno) return;
+  const aulas = (aluno.aulas||[]).filter(a=>!a.draft && a.dims_quick);
+  const ultimas = aulas.slice(-4);
+  if(!ultimas.length) {
+    svgEl.innerHTML = '';
+    legEl.innerHTML = '<p class="muted small">Nenhuma aula com dims_quick registrada ainda.<br>Preencha os scores 0–5 no planejador de aula.</p>';
+    return;
+  }
+  // Calcular médias
+  const medias = {};
+  DIMS.forEach(d => {
+    const vals = ultimas.map(a => a.dims_quick?.[d.key]||0);
+    medias[d.key] = vals.reduce((s,v)=>s+v,0)/vals.length;
+  });
+  // Desenhar SVG radar — pentágono 0-5
+  const cx=80, cy=80, R=60, n=DIMS.length;
+  const angulo = i => (Math.PI*2/n)*i - Math.PI/2;
+  const pt = (i, val, max=5) => {
+    const a = angulo(i), r = R*(val/max);
+    return { x: cx+r*Math.cos(a), y: cy+r*Math.sin(a) };
+  };
+  const ptAxis = i => ({ x: cx+R*Math.cos(angulo(i)), y: cy+R*Math.sin(angulo(i)) });
+
+  // Eixos e anéis
+  let rings = '';
+  [1,2,3,4,5].forEach(r => {
+    const pts = DIMS.map((_,i) => { const a=angulo(i),rr=R*(r/5); return `${cx+rr*Math.cos(a)},${cy+rr*Math.sin(a)}`; }).join(' ');
+    rings += `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
+  });
+  const axes = DIMS.map((_,i) => {
+    const p=ptAxis(i);
+    return `<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>`;
+  }).join('');
+
+  // Polígono de dados
+  const polyPts = DIMS.map((d,i) => { const p=pt(i,medias[d.key]); return `${p.x},${p.y}`; }).join(' ');
+  const dots = DIMS.map((d,i) => { const p=pt(i,medias[d.key]); return `<circle cx="${p.x}" cy="${p.y}" r="4" fill="${d.color}"/>`; }).join('');
+
+  svgEl.innerHTML = rings + axes
+    + `<polygon points="${polyPts}" fill="rgba(29,158,117,0.2)" stroke="#25c491" stroke-width="1.5"/>`
+    + dots;
+
+  // Legenda
+  legEl.innerHTML = `<div style="font-size:10px;color:var(--muted);margin-bottom:8px">Média de ${ultimas.length} aula${ultimas.length!==1?'s':''}</div>`
+    + DIMS.map(d => {
+      const v = medias[d.key];
+      const pct = Math.round((v/5)*100);
+      return `<div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${d.color};flex-shrink:0"></div>
+        <span style="font-size:11px;color:var(--text);flex:1">${d.label}</span>
+        <div style="width:60px;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${d.color};border-radius:3px"></div>
+        </div>
+        <span style="font-size:11px;font-weight:700;color:${d.color};min-width:28px;text-align:right">${v.toFixed(1)}</span>
+      </div>`;
+    }).join('');
 }
 
 function renderAvalHist() {
@@ -9401,6 +9590,36 @@ function cancelarReposicaoDireto(alunoId, hora, data) {
 // ═══════════════════════════════════════
 
 // Sincronizar campo oculto do protocolo mental
+function togglePreAulaWA() {
+  const body  = document.getElementById('pre-wa-body');
+  const arrow = document.getElementById('pre-wa-arrow');
+  if(!body) return;
+  const open = body.style.display === 'none' || body.style.display === '';
+  body.style.display  = open ? 'block' : 'none';
+  if(arrow) arrow.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+  if(open) refreshPreLesson();
+}
+
+function toggleDoublesChecklist() {
+  const sit = document.getElementById('lf-situacao')?.value;
+  const box = document.getElementById('doubles-checklist');
+  if(box) box.style.display = (sit === 'duplas') ? 'block' : 'none';
+}
+
+function getDoublesChecked() {
+  const ids = ['db-p1','db-p2','db-p3','db-p4','db-p5'];
+  return ids.filter(id => document.getElementById(id)?.checked).map(id => id);
+}
+
+function syncFootworkField() {
+  const ids = ['lf-fw-split','lf-fw-first','lf-fw-load','lf-fw-recovery'];
+  const selected = ids.map(id => document.getElementById(id))
+    .filter(el => el && el.checked).map(el => el.value);
+  const hidden = document.getElementById('lf-footwork-hidden');
+  if(hidden) hidden.value = selected.join(',');
+  refreshPostLesson();
+}
+
 function syncMentalField() {
   const mentalSel = [];
   for(let i=0;i<6;i++){
@@ -9495,7 +9714,7 @@ function getTempoNoNivel(entity) {
   const dias = Math.floor((hoje - inicio) / (1000*60*60*24));
   if(dias < 30) return `${dias}d no nível`;
   const meses = Math.floor(dias/30);
-  const alertar = meses >= 6 && (entity.nivel||'').includes('APJ 3');
+  const alertar = meses >= 9 && (entity.nivel||'').includes('APJ 3'); // [ITF] plateau threshold: 9 meses
   return { texto: `${meses} ${meses===1?'mês':'meses'} no nível`, alertar };
 }
 
