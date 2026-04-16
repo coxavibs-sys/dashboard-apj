@@ -3635,21 +3635,133 @@ function newLesson() {
 let blocoTimes = {a:9, p:0, j:0};
 
 function renderBlocos(dur) {
-  const nivel = activeEntity.nivel||'APJ 3';
-  const isAdv = nivel.includes('APJ 4')||nivel.includes('APJ 5');
-  const jPct  = isAdv?0.35:0.28;
-  const aTime = 9;
-  const jTime = Math.round((dur-aTime)*jPct);
-  const pTime = dur-aTime-jTime;
-  blocoTimes = {a:aTime, p:pTime, j:jTime};
+  const nivel  = activeEntity.nivel||'APJ 3';
+  const faixa  = activeEntity.faixa_programa || 'adulto';
+  const isAdv  = nivel.includes('APJ 4') || nivel.includes('APJ 5');
 
+  // ── Proporções por faixa [Tennis Canada LTPD] ──────────────────
+  // Kids (FUNdamentals): J ≥ 50% — jogar é aprender
+  // Sênior (Active for Life): P maior, sem P4 Competitivo, J moderado
+  // Teen: igual adulto avançado
+  // Adulto padrão: APJ define por nível
+  let aTime, jPct;
+  if(faixa === 'kids') {
+    aTime = 6;   // Aprende mais curto para Kids
+    jPct  = 0.55; // 55% da aula = Joga (diversão como método)
+  } else if(faixa === 'senior') {
+    aTime = 10;  // Aprende mais longo — mais contexto necessário
+    jPct  = 0.22; // Menos J competitivo para Sênior
+  } else if(faixa === 'teen') {
+    aTime = 9;
+    jPct  = isAdv ? 0.35 : 0.30;
+  } else {
+    // Adulto padrão APJ
+    aTime = 9;
+    jPct  = isAdv ? 0.35 : 0.28;
+  }
+
+  const jTime = Math.round((dur - aTime) * jPct);
+  const pTime = dur - aTime - jTime;
+  blocoTimes = {a: aTime, p: pTime, j: jTime};
+
+  // Placeholder adaptado por faixa
   const placeholders = {
-    a: 'Pergunta ativa + educativo técnico. Aluno sai sabendo o porquê E sentindo o movimento.',
-    p: 'P1 Bloqueado · P2 Variado · P3 Aleatório · P4 Competitivo\nDescreva os exercícios de cada fase.',
-    j: 'J1 Condicionado: restrição que força o foco do A.\nJ2 Livre: professor observa sem interromper.',
+    a: faixa === 'kids'
+      ? 'Pergunta lúdica + demonstração animada. Kids aprendem vendo e sentindo, não ouvindo.'
+      : faixa === 'senior'
+      ? 'Explicação com contexto prático. Conectar ao jogo real — sênior quer entender o porquê.'
+      : 'Pergunta ativa + educativo técnico. Aluno sai sabendo o porquê E sentindo o movimento.',
+    p: faixa === 'kids'
+      ? 'Bloqueado → Variado → Aleatório (sem P4 Competitivo para Kids)\nPriorizar diversão e repetição de qualidade.'
+      : faixa === 'senior'
+      ? 'Bloqueado → Variado → Aleatório (P4 opcional, nunca obrigatório)\nRitmo adaptado — qualidade > velocidade.'
+      : 'P1 Bloqueado · P2 Variado · P3 Aleatório · P4 Competitivo\nDescreva os exercícios de cada fase.',
+    j: faixa === 'kids'
+      ? 'J1 Condicionado (regra simples e divertida)\nJ2 Livre — NUNCA interromper. Jogo é o professor para Kids!'
+      : 'J1 Condicionado: restrição que força o foco do A.\nJ2 Livre: professor observa sem interromper.',
   };
 
-  document.getElementById('blocos-container').innerHTML = BLOCO_CONFIG.map(b=>{
+  // Badge de faixa para indicar ao professor
+  const FAIXA_INFO = {
+    kids:   { emoji:'👧', cor:'#9b72d0', txt:'Kids — J≥50%, sem P4' },
+    senior: { emoji:'🧓', cor:'#c9a84c', txt:'Sênior — ritmo adaptado' },
+    teen:   { emoji:'🧑', cor:'#5b9bd5', txt:'Teen — APJ padrão' },
+    adulto: { emoji:'👤', cor:'#25c491', txt:'' },
+  };
+  const fi = FAIXA_INFO[faixa] || FAIXA_INFO.adulto;
+  const faixaBadge = fi.txt
+    ? `<div style="display:inline-flex;align-items:center;gap:5px;background:${fi.cor}22;border:1px solid ${fi.cor}55;border-radius:6px;padding:3px 10px;margin-bottom:10px;font-size:10px;font-weight:600;color:${fi.cor}">${fi.emoji} ${fi.txt}</div>`
+    : '';
+
+  const blocoEl = document.getElementById('blocos-container');
+  blocoEl.innerHTML = (faixaBadge ? `<div>${faixaBadge}</div>` : '') + BLOCO_CONFIG.map(b=>{
+    return `<div class="blk" style="margin-bottom:10px" id="blk-wrap-${b.key}">
+      <div class="blk-hd">
+        <span class="blk-tag ${b.cls}">${b.label}</span>
+        <div style="display:flex;align-items:center;gap:8px;flex:1">
+          <div style="display:flex;align-items:center;gap:5px">
+            <button onclick="adjustTime('${b.key}',-1)" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:var(--text);width:22px;height:22px;border-radius:5px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;font-family:inherit">−</button>
+            <div style="text-align:center;min-width:52px">
+              <span class="blk-time" id="time-${b.key}">${blocoTimes[b.key]}</span>
+              <span style="font-size:12px;color:var(--muted)"> min</span>
+            </div>
+            <button onclick="adjustTime('${b.key}',1)" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);color:var(--text);width:22px;height:22px;border-radius:5px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;font-family:inherit">+</button>
+          </div>
+          <div id="time-warn-${b.key}" style="font-size:10px;color:var(--red);display:none">⚠ J &lt; 25%</div>
+          <div style="margin-left:auto;font-size:10px;color:var(--muted)">${b.tip}</div>
+        </div>
+      </div>
+
+      <!-- EXERCISE PICKER ROW — categorized -->
+      <div style="background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.05);padding:10px 14px">
+        <div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.4px;margin-bottom:8px">🏋️ ADICIONAR DO BANCO D1</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:flex-end">
+          <div style="display:flex;flex-direction:column;gap:3px;min-width:120px;flex:0 0 auto">
+            <label style="font-size:10px;color:var(--muted)">NÍVEL</label>
+            <select id="ep-nivel-${b.key}" class="fs" style="font-size:11px;padding:5px 8px" onchange="refreshExPicker('${b.key}')">
+              <option value="">Todos</option>
+              <option value="${nivel.split(' — ')[0]}" selected>${nivel.split(' — ')[0]}</option>
+              ${['APJ 1','APJ 2','APJ 3','APJ 4','APJ 5','Kids','Mini','Sênior']
+                .filter(n=>n!==nivel.split(' — ')[0])
+                .map(n=>`<option value="${n}">${n}</option>`).join('')}
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px;min-width:110px;flex:0 0 auto">
+            <label style="font-size:10px;color:var(--muted)">CATEGORIA</label>
+            <select id="ep-cat-${b.key}" class="fs" style="font-size:11px;padding:5px 8px" onchange="refreshExPicker('${b.key}')">
+              <option value="">Todos</option>
+              <option value="FH">FH</option>
+              <option value="BH">BH</option>
+              <option value="Saque">Saque</option>
+              <option value="Voleio">Voleio</option>
+              <option value="Footwork">Footwork</option>
+              <option value="Tático">Tático</option>
+              <option value="Mental">Mental</option>
+              <option value="Físico">Físico</option>
+              <option value="Técnico">Técnico</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:160px">
+            <label style="font-size:10px;color:var(--muted)">EXERCÍCIO</label>
+            <select id="ep-ex-${b.key}" class="fs" style="font-size:11px;padding:5px 8px;width:100%" onchange="previewEx('${b.key}')">
+              <option value="">— selecionar —</option>
+              ${buildExOptionsCategorized(b.key.toUpperCase(), nivel.split(' — ')[0], '')}
+            </select>
+          </div>
+          <button onclick="addExFromCascade('${b.key}')" style="background:var(--green);border:none;color:#fff;font-size:12px;font-weight:500;padding:6px 14px;border-radius:7px;cursor:pointer;white-space:nowrap;height:32px;flex-shrink:0;font-family:inherit">+ Adicionar</button>
+        </div>
+        <!-- PREVIEW -->
+        <div id="ep-preview-${b.key}" style="display:none;margin-top:8px;background:rgba(29,158,117,0.07);border:1px solid rgba(29,158,117,0.18);border-radius:7px;padding:8px 12px;font-size:11px;line-height:1.6"></div>
+        <!-- ADDED TAGS -->
+        <div id="ex-tags-${b.key}" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px"></div>
+      </div>
+
+      <textarea class="fc" id="bloco-${b.key}" style="height:${b.key==='p'?88:60}px;resize:vertical;border-top:none;border-radius:0 0 8px 8px;margin-top:0" placeholder="${placeholders[b.key]}" oninput="refreshPostLesson();refreshPreLesson()"></textarea>
+    </div>`;
+  }).join('');
+
+  updateTotalBar(dur);
+}
     return `<div class="blk" style="margin-bottom:10px" id="blk-wrap-${b.key}">
       <div class="blk-hd">
         <span class="blk-tag ${b.cls}">${b.label}</span>
@@ -4442,6 +4554,20 @@ function buildWhatsAppMsg(nome, nivel, data, foco, elogio, prox, lesson) {
   if(foco && foco !== '—') {
     msg += `📌 *O que trabalhamos hoje*\n${foco}\n\n`;
   }
+
+  // Situação fundamental [RFET]
+  const SIT_WA = {
+    neutro:    'Construção de ponto — rally com intenção tática',
+    ofensivo:  'Jogo ofensivo — explorar bola curta e aberta',
+    defensivo: 'Situação defensiva — recuperação e lob',
+    saque_dev: 'Saque e devolução — padrões de início de ponto',
+    duplas:    'Doubles — posicionamento e comunicação',
+  };
+  const sit = lesson.situacao_fundamental;
+  if(sit && SIT_WA[sit]) {
+    msg += `⚡ *Situação trabalhada*\n${SIT_WA[sit]}\n\n`;
+  }
+
   if(elogio) {
     msg += `⭐ *Destaque da aula*\n${elogio}\n\n`;
   }
@@ -4454,6 +4580,23 @@ function buildWhatsAppMsg(nome, nivel, data, foco, elogio, prox, lesson) {
   if(exLines.length) {
     msg += `🏠 *Para praticar em casa* (10–15 min)\n`;
     exLines.forEach(l => msg += `${l.replace('·','▸').trim()}\n`);
+    msg += '\n';
+  }
+
+  // Protocolo mental [PSICO] — fechamento com ferramenta da aula
+  const mental = lesson.protocolo_mental||[];
+  if(mental.length) {
+    const MENTAL_DICA = {
+      'respiração':       '3 respirações lentas após cada ponto — expira devagar',
+      'palavra-âncora':   'Use sua palavra-âncora entre os pontos para resetar o foco',
+      'ritual pré-ponto': 'Mantenha seu ritual antes de cada ponto — consistência mental',
+      'foco externo':     'Olhe para a bola, não para o adversário — foco externo ativo',
+      'aceitar o erro':   'Erro faz parte — aceite, respire e foque no próximo ponto',
+      'reset 20s':        'Use os 20 segundos entre pontos: respira, ritual, foca',
+    };
+    const dica = MENTAL_DICA[mental[0]] || `Pratique: ${mental[0]}`;
+    msg += `🧠 *Mental da semana*\n${dica}\n`;
+    if(mental.length > 1) msg += `_(também: ${mental.slice(1).join(', ')})_\n`;
     msg += '\n';
   }
 
@@ -4504,6 +4647,40 @@ function renderPostLessonCard(lesson, nome, nivel, data, foco, elogio, prox) {
         <div style="font-size:9px;font-weight:700;color:#e8a030;letter-spacing:.5px;margin-bottom:3px">🎯 FOCO PARA A PRÓXIMA AULA</div>
         <div style="font-size:12px;color:#e8eaf0;font-weight:500;line-height:1.5">${prox}</div>
       </div>` : ''}
+
+      <!-- PROTOCOLO MENTAL [PSICO] -->
+      ${(lesson.protocolo_mental||[]).length ? (() => {
+        const MENTAL_DICA = {
+          'respiração':       '3 respirações lentas após cada ponto',
+          'palavra-âncora':   'Use sua palavra-âncora para resetar o foco',
+          'ritual pré-ponto': 'Mantenha seu ritual antes de cada ponto',
+          'foco externo':     'Olhe para a bola — foco externo ativo',
+          'aceitar o erro':   'Aceite o erro, respire, próximo ponto',
+          'reset 20s':        'Use os 20s: respira → ritual → foca',
+        };
+        const m0 = lesson.protocolo_mental[0];
+        const dica = MENTAL_DICA[m0] || m0;
+        return `<div style="background:rgba(224,92,92,0.07);border-left:3px solid #e05c5c;padding:10px 12px;border-radius:0 8px 8px 0;margin-bottom:10px">
+          <div style="font-size:9px;font-weight:700;color:#e05c5c;letter-spacing:.5px;margin-bottom:3px">🧠 MENTAL DA SEMANA</div>
+          <div style="font-size:12px;color:#e8eaf0;line-height:1.5">${dica}</div>
+          ${lesson.protocolo_mental.length > 1 ? `<div style="font-size:10px;color:#8892a4;margin-top:3px">+ ${lesson.protocolo_mental.slice(1).join(' · ')}</div>` : ''}
+        </div>`;
+      })() : ''}
+
+      <!-- SITUAÇÃO TRABALHADA [RFET] -->
+      ${lesson.situacao_fundamental ? (() => {
+        const SIT_CARD = {
+          neutro:    '🔄 Construção de ponto',
+          ofensivo:  '⚔️ Jogo ofensivo',
+          defensivo: '🛡️ Situação defensiva',
+          saque_dev: '🎾 Saque e devolução',
+          duplas:    '👥 Doubles',
+        };
+        const sitLabel = SIT_CARD[lesson.situacao_fundamental];
+        return sitLabel ? `<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(91,155,213,0.1);border:1px solid rgba(91,155,213,0.25);border-radius:6px;padding:4px 10px;margin-bottom:10px">
+          <span style="font-size:10px;font-weight:600;color:#5b9bd5">Situação: ${sitLabel}</span>
+        </div>` : '';
+      })() : ''}
 
       <!-- EXERCÍCIO EM CASA -->
       ${exLines.length ? `<div style="background:rgba(91,155,213,0.08);border-left:3px solid #5b9bd5;padding:10px 12px;border-radius:0 8px 8px 0;margin-bottom:10px">
