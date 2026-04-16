@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard APJ · V1.12 · Approach Tennis Academy</title>
+<title>Dashboard APJ · V1.13 · Approach Tennis Academy</title>
 <style>
 :root{
   --bg:#0b1019;--card:#141e2e;--card2:#192236;--card3:#1e293b;
@@ -802,6 +802,35 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
           <input class="fc" id="lf-foco" type="text" placeholder="Ex: Forehand inside-out com padrão tático" oninput="refreshPreLesson()">
         </div>
 
+        <!-- SITUAÇÃO FUNDAMENTAL + FOOTWORK [RFET + CIÊNCIA] -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+          <div>
+            <label class="fl">⚡ Situação fundamental (RFET)</label>
+            <select class="fc" id="lf-situacao">
+              <option value="">— Selecione —</option>
+              <option value="neutro">🔄 Neutro (rally construção)</option>
+              <option value="ofensivo">⚔️ Ofensivo (bola curta/aberta)</option>
+              <option value="defensivo">🛡️ Defensivo (posição ruim)</option>
+              <option value="saque_dev">🎾 Saque / Devolução</option>
+              <option value="duplas">👥 Doubles (FITP)</option>
+            </select>
+          </div>
+          <div>
+            <label class="fl" style="display:flex;align-items:center;gap:6px">
+              👟 Footwork como foco principal?
+              <span style="font-size:9px;background:rgba(232,160,48,0.15);color:var(--amber);padding:1px 5px;border-radius:4px;font-weight:600">80% dos erros</span>
+            </label>
+            <div style="display:flex;gap:8px;margin-top:6px">
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--text)">
+                <input type="radio" name="lf-footwork" id="lf-footwork-sim" value="sim" style="accent-color:var(--amber)"> Sim
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;color:var(--text)">
+                <input type="radio" name="lf-footwork" id="lf-footwork-nao" value="nao" checked style="accent-color:var(--muted)"> Não
+              </label>
+            </div>
+          </div>
+        </div>
+
         <!-- HORÁRIO + PRÉ-AULA WhatsApp -->
         <div style="background:rgba(29,158,117,0.06);border:1px solid rgba(29,158,117,0.25);border-radius:10px;overflow:hidden;margin-bottom:14px">
           <!-- HEADER -->
@@ -835,6 +864,23 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
         <div style="margin-top:14px">
           <label class="fl">📊 Observações do J (dados para o relatório)</label>
           <textarea class="fc" id="lf-obs-j" style="height:72px;resize:none" placeholder="Ex: tentou inside-out 6x — 4 dentro. Split step presente em 70% dos pontos. Recovery step falhou após o BH."></textarea>
+        </div>
+
+        <!-- PROTOCOLO MENTAL [PSICO] -->
+        <div style="margin-top:12px;background:rgba(224,92,92,0.06);border:1px solid rgba(224,92,92,0.2);border-radius:10px;padding:12px 14px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+            <span style="font-size:13px">🧠</span>
+            <div style="font-size:11px;font-weight:700;color:var(--red);letter-spacing:.4px">PROTOCOLO MENTAL — Módulo 6 APJ</div>
+            <span style="font-size:9px;color:var(--muted);margin-left:auto">O Mental = o chão do triângulo</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px" id="mental-btns">
+            ${['respiração','palavra-âncora','ritual pré-ponto','foco externo','aceitar o erro','reset 20s'].map((f,i)=>`
+            <label style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s" id="mental-lbl-${i}">
+              <input type="checkbox" id="lf-mental-${i}" value="${f}" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0">
+              ${f}
+            </label>`).join('')}
+          </div>
+          <input type="hidden" id="lf-mental-sel" value="">
         </div>
 
         <!-- FEEDBACK FECHAMENTO (elogio, foco, pós-aula) -->
@@ -1474,7 +1520,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     <div class="fg"><label class="fl">Nome</label><input class="fc" id="ns-nome" type="text" placeholder="Ex: Carlos Mendes"></div>
     <div class="fr">
       <div class="fg"><label class="fl">Nível APJ</label>
-        <select class="fc" id="ns-nivel">
+        <select class="fc" id="ns-nivel" onchange="nsAtualizarDataNivel()">
           <option>APJ 1 — Descoberta</option>
           <option>APJ 2 — Fundação</option>
           <option selected>APJ 3 — Construção</option>
@@ -1490,6 +1536,16 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
           <option>Grupo</option>
         </select>
       </div>
+    </div>
+    <!-- Faixa de Programa [CANADA] -->
+    <div class="fg">
+      <label class="fl">🏷️ Faixa de Programa (LTPD Canada)</label>
+      <select class="fc" id="ns-faixa">
+        <option value="adulto">👤 Adulto (padrão APJ)</option>
+        <option value="kids">👧 Kids (até 12 anos) — foco: diversão + footwork</option>
+        <option value="teen">🧑 Teen (13–17 anos) — foco: técnica + competição</option>
+        <option value="senior">🧓 Sênior (60+) — foco: consistência + mobilidade</option>
+      </select>
     </div>
     <div class="fg"><label class="fl">Observação inicial (opcional)</label><input class="fc" id="ns-obs" type="text" placeholder="Ex: ex-federado, veranista, começa em março"></div>
 
@@ -1934,6 +1990,28 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
       <h3 style="margin-bottom:14px">🕐 Faltas por Horário</h3>
       <div id="stats-hora-chart"></div>
     </div>
+  </div>
+
+  <div class="div" style="margin:8px 0 18px"></div>
+
+  <!-- ── ANÁLISE TÁTICA E FOOTWORK [RFET + CIÊNCIA] ── -->
+  <div class="g2" style="margin-bottom:20px">
+    <div class="card">
+      <h3 style="margin-bottom:14px">⚡ Situações Táticas — Academia</h3>
+      <p class="muted small" style="margin-bottom:12px">Distribuição das situações fundamentais treinadas (RFET)</p>
+      <div id="stats-situacoes-chart"></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:6px">👟 Footwork como Foco</h3>
+      <p class="muted small" style="margin-bottom:12px">80% dos erros têm origem no footwork — meta: min. 20% das aulas</p>
+      <div id="stats-footwork-chart"></div>
+    </div>
+  </div>
+
+  <!-- ── FAIXA DE PROGRAMA [CANADA LTPD] ── -->
+  <div class="card" style="margin-bottom:20px">
+    <h3 style="margin-bottom:14px">🏷️ Distribuição por Faixa de Programa (LTPD Canada)</h3>
+    <div id="stats-faixa-chart"></div>
   </div>
 
   <div class="div" style="margin:8px 0 18px"></div>
@@ -2873,21 +2951,44 @@ function sidebarStudentCard(entity) {
   const cor    = NIVEL_COLOR[nc]||'var(--green)';
   const hs     = entity.horarios||[];
   const horarioStr = hs.length ? hs.map(h=>`${AG_DIAS[h.dia]} ${h.hora}`).join(' · ') : 'Sem horário';
-  return `<div style="display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:8px;cursor:pointer;transition:background .12s;border:1px solid transparent"
+
+  // Tempo no nível [ITF]
+  const tempoObj = getTempoNoNivel(entity);
+  const tempoBadge = tempoObj
+    ? `<span style="font-size:8px;padding:1px 5px;border-radius:4px;font-weight:700;background:${tempoObj.alertar?'rgba(232,160,48,0.15)':'rgba(255,255,255,0.06)'};color:${tempoObj.alertar?'var(--amber)':'var(--muted)'}">${tempoObj.texto||tempoObj}</span>`
+    : '';
+
+  // Sugestão de foco [DESIGN]
+  const sugestao = getSugestaoFoco(entity);
+  const sugestaoHtml = sugestao
+    ? `<div style="font-size:9px;color:var(--amber);margin-top:2px">💡 Focar: ${sugestao.label}</div>`
+    : '';
+
+  // Sparkline dims_quick [TA]
+  const sparkline = getDimsSparkline(entity);
+
+  return `<div style="padding:6px 8px;border-radius:8px;cursor:pointer;transition:background .12s;border:1px solid transparent"
       onclick="selectEntity(${entity.id})"
       onmouseover="this.style.background='rgba(29,158,117,0.08)';this.style.borderColor='rgba(29,158,117,0.2)'"
       onmouseout="this.style.background='';this.style.borderColor='transparent'">
-    <div style="width:26px;height:26px;border-radius:50%;background:${cor};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:10px;flex-shrink:0">${entity.nome.charAt(0).toUpperCase()}</div>
-    <div style="flex:1;min-width:0">
-      <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${entity.nome}</div>
-      <div style="font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${horarioStr}</div>
+    <div style="display:flex;align-items:center;gap:7px">
+      <div style="width:26px;height:26px;border-radius:50%;background:${cor};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:10px;flex-shrink:0">${entity.nome.charAt(0).toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${entity.nome}</div>
+        <div style="font-size:9px;color:var(--muted);display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${horarioStr}</span>
+          ${tempoBadge}
+        </div>
+        ${sugestaoHtml}
+      </div>
+      <div style="display:flex;gap:2px;flex-shrink:0">
+        <button onclick="event.stopPropagation();openEditStudentModal(${entity.id})"
+          style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px;opacity:0.6" title="Editar">✏</button>
+        <button onclick="event.stopPropagation();deleteStudent(${entity.id})"
+          style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:2px;opacity:0.6" title="Excluir">🗑</button>
+      </div>
     </div>
-    <div style="display:flex;gap:2px;flex-shrink:0">
-      <button onclick="event.stopPropagation();openEditStudentModal(${entity.id})"
-        style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px;opacity:0.6" title="Editar">✏</button>
-      <button onclick="event.stopPropagation();deleteStudent(${entity.id})"
-        style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:2px;opacity:0.6" title="Excluir">🗑</button>
-    </div>
+    ${sparkline}
   </div>`;
 }
 
@@ -3449,6 +3550,16 @@ function newLesson() {
   document.getElementById('lf-obs-j').value = '';
   document.getElementById('lf-elogio').value = '';
   document.getElementById('lf-prox').value = '';
+
+  // Novos campos APJ v2
+  const sitEl = document.getElementById('lf-situacao');
+  if(sitEl) sitEl.value = '';
+  const fwNao = document.getElementById('lf-footwork-nao');
+  if(fwNao) fwNao.checked = true;
+  for(let i=0;i<6;i++){
+    const cb = document.getElementById(`lf-mental-${i}`);
+    if(cb) cb.checked = false;
+  }
 
   // Build blocos
   const dur = parseInt(document.getElementById('lf-dur').value)||60;
@@ -4103,11 +4214,22 @@ function printLesson() {
 
 function collectLessonData(isDraft=false) {
   const dur = parseInt(document.getElementById('lf-dur').value)||60;
+  // Protocolo mental — coletar checkboxes marcados
+  const mentalSel = [];
+  for(let i=0;i<6;i++){
+    const cb = document.getElementById(`lf-mental-${i}`);
+    if(cb && cb.checked) mentalSel.push(cb.value);
+  }
+  // Footwork
+  const footworkEl = document.querySelector('input[name="lf-footwork"]:checked');
   return {
     id: editingLesson ? editingLesson.id : Date.now(),
     data: document.getElementById('lf-data').value,
     hora: document.getElementById('lf-hora')?.value || '',
     foco_aula: document.getElementById('lf-foco')?.value || '',
+    situacao_fundamental: document.getElementById('lf-situacao')?.value || '',
+    footwork_foco: footworkEl ? footworkEl.value === 'sim' : false,
+    protocolo_mental: mentalSel,
     duracao: dur,
     semana: document.getElementById('lf-sem').value,
     blocoTimes: {...blocoTimes},
@@ -4416,6 +4538,18 @@ function editLesson(id) {
       const el = document.getElementById('bloco-'+b.key);
       if(el) el.value = editingLesson['bloco_'+b.key]||'';
     });
+
+    // Restaurar novos campos APJ v2
+    const sitEl = document.getElementById('lf-situacao');
+    if(sitEl) sitEl.value = editingLesson.situacao_fundamental||'';
+    const fwVal = editingLesson.footwork_foco ? 'sim' : 'nao';
+    const fwEl = document.querySelector(`input[name="lf-footwork"][value="${fwVal}"]`);
+    if(fwEl) fwEl.checked = true;
+    const mentalArr = editingLesson.protocolo_mental||[];
+    for(let i=0;i<6;i++){
+      const cb = document.getElementById(`lf-mental-${i}`);
+      if(cb) cb.checked = mentalArr.includes(cb.value);
+    }
 
   }, 80);
 }
@@ -4727,12 +4861,15 @@ function saveNewStudent() {
   if(!nome){ showToast('⚠ Informe o nome do aluno',true); return; }
   const id = Date.now();
   const hs = tempHorarios['ns']||[];
+  const hoje = new Date().toISOString().slice(0,10);
   students.push({
     id, type:'student', nome,
-    nivel:   document.getElementById('ns-nivel').value,
-    formato: document.getElementById('ns-formato').value,
-    obs:     document.getElementById('ns-obs').value,
-    aulas:   [], horarios: hs.map(h=>({...h})),
+    nivel:          document.getElementById('ns-nivel').value,
+    formato:        document.getElementById('ns-formato').value,
+    obs:            document.getElementById('ns-obs').value,
+    faixa_programa: document.getElementById('ns-faixa')?.value || 'adulto',
+    data_nivel:     hoje,  // ITF: registra quando entrou no nível atual
+    aulas:          [], horarios: hs.map(h=>({...h})),
   });
   saveStudents();
   applyHorariosToAgenda(id, hs);
@@ -4834,7 +4971,12 @@ function saveEditStudent() {
   removeHorariosFromAgenda(id, students[idx].horarios||[]);
   // Aplicar novos
   students[idx].nome    = nome;
-  students[idx].nivel   = document.getElementById('es-nivel').value;
+  const novoNivel = document.getElementById('es-nivel').value;
+  // ITF: registrar data de entrada no nível se mudou
+  if(students[idx].nivel !== novoNivel) {
+    students[idx].data_nivel = new Date().toISOString().slice(0,10);
+  }
+  students[idx].nivel   = novoNivel;
   students[idx].obs     = document.getElementById('es-obs').value.trim();
   students[idx].horarios = hs.map(h=>({...h}));
   if(students[idx].type === 'group'){
@@ -6248,8 +6390,11 @@ function renderStats() {
     if(!alunos.length) {
       tblEl.innerHTML = '<p class="muted small">Nenhum aluno cadastrado.</p>';
     } else {
-      tblEl.innerHTML = `<table class="tbl">
-        <tr><th>Aluno</th><th>Nível</th><th>Aulas</th><th>Constância</th><th>Reposições</th></tr>
+      tblEl.innerHTML = `<table class="tbl" style="font-size:11px">
+        <tr>
+          <th>Aluno</th><th>Nível</th><th>Faixa</th><th>Tempo no Nível</th>
+          <th>Aulas</th><th>Footwork</th><th>Constância</th><th>Reposições</th>
+        </tr>
         ${alunos.map(s=>{
           const pres  = (s.frequencia||[]).filter(r=>r.tipo==='presente').length;
           const falts = (s.frequencia||[]).filter(r=>r.tipo==='falta_simples'||r.tipo==='falta_justificada').length;
@@ -6257,12 +6402,27 @@ function renderStats() {
           const total = pres+falts;
           const pct   = total>0?Math.round((pres/total)*100):null;
           const cor   = pct===null?'var(--muted)':pct>=80?'var(--green2)':pct>=60?'var(--amber)':'var(--red)';
+          // Footwork
+          const aulasT = (s.aulas||[]).filter(a=>!a.draft).length;
+          const aulasF = (s.aulas||[]).filter(a=>!a.draft&&a.footwork_foco).length;
+          const fwPct  = aulasT>0?Math.round((aulasF/aulasT)*100):null;
+          const fwCor  = fwPct===null?'var(--muted)':fwPct>=20?'var(--green2)':'var(--amber)';
+          // Tempo nível
+          const tempoObj = getTempoNoNivel(s);
+          const tempoTxt = tempoObj ? (tempoObj.texto||tempoObj) : '—';
+          const tempoCor = tempoObj && tempoObj.alertar ? 'var(--amber)' : 'var(--muted)';
+          // Faixa
+          const FAIXAS = {adulto:'👤',kids:'👧',teen:'🧑',senior:'🧓'};
+          const faixaEmoji = FAIXAS[s.faixa_programa||'adulto']||'👤';
           return `<tr>
             <td style="font-weight:500">${s.nome}</td>
             <td><span class="badge b-check" style="font-size:9px">${(s.nivel||'—').split(' — ')[0]}</span></td>
+            <td style="text-align:center">${faixaEmoji}</td>
+            <td style="color:${tempoCor};font-size:10px">${tempoTxt}</td>
             <td>${(s.aulas||[]).length}</td>
+            <td style="color:${fwCor};font-weight:600">${fwPct!==null?fwPct+'%':'—'}</td>
             <td style="color:${cor};font-weight:600">${pct!==null?pct+'%':'—'}</td>
-            <td style="color:${repos>0?'var(--amber)':'var(--muted)'}">${repos>0?repos+' pendente'+(repos!==1?'s':''):'✅'}</td>
+            <td style="color:${repos>0?'var(--amber)':'var(--muted)'}">${repos>0?repos+' pend.':'✅'}</td>
           </tr>`;
         }).join('')}
       </table>`;
@@ -6271,6 +6431,115 @@ function renderStats() {
 
   // ── Frequência (KPIs + ranking + gráficos) ──
   renderStatsFrequencia(stud);
+
+  // ── Situações táticas [RFET] ──
+  renderStatsSituacoes(alunos);
+
+  // ── Footwork chart [CIÊNCIA] ──
+  renderStatsFootwork(alunos);
+
+  // ── Faixa de programa [CANADA] ──
+  renderStatsFaixa(alunos);
+}
+
+function renderStatsSituacoes(alunos) {
+  const el = document.getElementById('stats-situacoes-chart');
+  if(!el) return;
+  const SITUACOES = {
+    neutro:    { label:'🔄 Neutro',           cor:'#5b9bd5' },
+    ofensivo:  { label:'⚔️ Ofensivo',         cor:'#e05c5c' },
+    defensivo: { label:'🛡️ Defensivo',        cor:'#9b72d0' },
+    saque_dev: { label:'🎾 Saque/Dev.',        cor:'#25c491' },
+    duplas:    { label:'👥 Doubles',           cor:'#c9a84c' },
+    '':        { label:'Não registrada',       cor:'#7a8499' },
+  };
+  const contagem = {};
+  let total = 0;
+  alunos.forEach(s=>{
+    (s.aulas||[]).filter(a=>!a.draft).forEach(a=>{
+      const sit = a.situacao_fundamental || '';
+      contagem[sit] = (contagem[sit]||0) + 1;
+      total++;
+    });
+  });
+
+  if(total === 0) {
+    el.innerHTML = '<p class="muted small">Nenhuma aula com situação registrada. Preencha o campo "Situação Fundamental" nas próximas aulas.</p>';
+    return;
+  }
+
+  const ordenadas = Object.entries(contagem).sort((a,b)=>b[1]-a[1]);
+  el.innerHTML = ordenadas.map(([sit, cnt]) => {
+    const cfg = SITUACOES[sit] || { label: sit, cor:'#7a8499' };
+    const pct = Math.round((cnt/total)*100);
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:600;color:var(--text);min-width:110px">${cfg.label}</span>
+      <div style="flex:1;height:10px;background:rgba(255,255,255,0.05);border-radius:5px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${cfg.cor};border-radius:5px"></div>
+      </div>
+      <span style="font-size:10px;color:var(--muted);min-width:42px;text-align:right">${cnt} (${pct}%)</span>
+    </div>`;
+  }).join('') + (contagem[''] > 0
+    ? `<div style="font-size:10px;color:var(--muted);margin-top:6px">⚠ ${contagem['']} aula${contagem['']!==1?'s':''} sem situação registrada — preencha o campo no plano de aula.</div>`
+    : '');
+}
+
+function renderStatsFootwork(alunos) {
+  const el = document.getElementById('stats-footwork-chart');
+  if(!el) return;
+  const dados = alunos.map(s=>{
+    const aulasT = (s.aulas||[]).filter(a=>!a.draft).length;
+    const aulasF = (s.aulas||[]).filter(a=>!a.draft&&a.footwork_foco).length;
+    return { nome: s.nome.split(' ')[0], pct: aulasT>0?Math.round((aulasF/aulasT)*100):null, aulasT };
+  }).filter(d=>d.aulasT>=2).sort((a,b)=>(b.pct||0)-(a.pct||0));
+
+  if(!dados.length) {
+    el.innerHTML = '<p class="muted small">Marque "Footwork como foco principal" nas aulas para ver o gráfico.</p>';
+    return;
+  }
+  el.innerHTML = dados.map(d=>{
+    const cor = d.pct===null?'var(--muted)':d.pct>=20?'var(--green2)':'var(--amber)';
+    const alerta = d.pct!==null && d.pct<20;
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:600;color:var(--text);min-width:70px">${d.nome}</span>
+      <div style="flex:1;height:10px;background:rgba(255,255,255,0.05);border-radius:5px;overflow:hidden">
+        <div style="height:100%;width:${d.pct||0}%;background:${cor};border-radius:5px"></div>
+      </div>
+      <span style="font-size:10px;color:${cor};min-width:36px;text-align:right;font-weight:600">${d.pct!==null?d.pct+'%':'—'}</span>
+      ${alerta?'<span style="font-size:9px;color:var(--amber)">⚠</span>':''}
+    </div>`;
+  }).join('') + `<div style="font-size:10px;color:var(--muted);margin-top:8px;border-top:1px solid var(--border2);padding-top:6px">Meta: ≥ 20% das aulas · Ciência: 80% dos erros têm origem no footwork (Knudson)</div>`;
+}
+
+function renderStatsFaixa(alunos) {
+  const el = document.getElementById('stats-faixa-chart');
+  if(!el) return;
+  const FAIXAS = {
+    adulto: { label:'👤 Adulto',  cor:'#25c491', desc:'Padrão APJ 1–5' },
+    kids:   { label:'👧 Kids',    cor:'#9b72d0', desc:'Até 12 anos · diversão + footwork' },
+    teen:   { label:'🧑 Teen',    cor:'#5b9bd5', desc:'13–17 anos · técnica + competição' },
+    senior: { label:'🧓 Sênior',  cor:'#c9a84c', desc:'60+ anos · consistência + mobilidade' },
+  };
+  const contagem = {};
+  alunos.forEach(s=>{
+    const f = s.faixa_programa||'adulto';
+    contagem[f] = (contagem[f]||0)+1;
+  });
+  const total = alunos.length||1;
+
+  if(!alunos.length){ el.innerHTML = '<p class="muted small">Nenhum aluno cadastrado.</p>'; return; }
+
+  el.innerHTML = `<div style="display:flex;gap:12px;flex-wrap:wrap">` +
+    Object.entries(FAIXAS).filter(([k])=>contagem[k]>0).map(([k,cfg])=>{
+      const cnt = contagem[k]||0;
+      const pct = Math.round((cnt/total)*100);
+      return `<div style="background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:12px 16px;min-width:130px;text-align:center">
+        <div style="font-size:22px;margin-bottom:4px">${cfg.label.split(' ')[0]}</div>
+        <div style="font-size:18px;font-weight:700;color:${cfg.cor}">${cnt}</div>
+        <div style="font-size:10px;font-weight:600;color:var(--text);margin-top:2px">${cfg.label.split(' ').slice(1).join(' ')}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">${pct}% · ${cfg.desc}</div>
+      </div>`;
+    }).join('') + `</div>`;
 }
 
 // ─────────────────────────────────────────────
@@ -6354,6 +6623,32 @@ function renderStatsFrequencia(stud) {
         alertas.push({tipo:'amber',msg:`⏰ <strong>${s.nome}</strong> — reposição vence em ${diff===0?'hoje':diff+' dia'+(diff!==1?'s':'')}. Falta de ${r.data?fmtDate(r.data):'—'}.`});
       }
     });
+  });
+
+  // ── NOVOS ALERTAS v2 ──────────────────────────────────────────
+
+  // Alerta footwork [CIÊNCIA] — < 20% das aulas com footwork como foco
+  alunos.forEach(s=>{
+    const fw = getAlertaFootwork(s);
+    if(fw && fw.alerta){
+      alertas.push({tipo:'amber', msg:`👟 <strong>${s.nome}</strong> — ${fw.msg}`});
+    }
+  });
+
+  // Alerta tempo no nível [ITF] — APJ 3 há mais de 6 meses sem avançar
+  alunos.forEach(s=>{
+    const t = getTempoNoNivel(s);
+    if(t && t.alertar){
+      alertas.push({tipo:'amber', msg:`⏳ <strong>${s.nome}</strong> — ${t.texto} em ${(s.nivel||'').split(' — ')[0]}. Considere avaliação trimestral para revisar progressão.`});
+    }
+  });
+
+  // Sugestão de foco por queda dimensional [DESIGN INSTRUCIONAL]
+  alunos.forEach(s=>{
+    const sg = getSugestaoFoco(s);
+    if(sg){
+      alertas.push({tipo:'green', msg:`💡 <strong>${s.nome}</strong> — sugestão de foco: ${sg.label} <span style="color:var(--muted)">(${sg.motivo})</span>`});
+    }
   });
 
   if(!alertas.length){
@@ -8878,6 +9173,118 @@ function cancelarReposicaoDireto(alunoId, hora, data) {
 
   renderGrade();
   showToast(`✓ Reposição cancelada · crédito voltou como pendente`);
+}
+
+// ═══════════════════════════════════════
+// MELHORIAS APJ v2 — Time 2 + Time 3
+// ═══════════════════════════════════════
+
+// Sincronizar campo oculto do protocolo mental
+function syncMentalField() {
+  const mentalSel = [];
+  for(let i=0;i<6;i++){
+    const cb = document.getElementById(`lf-mental-${i}`);
+    if(cb && cb.checked) {
+      mentalSel.push(cb.value);
+      const lbl = document.getElementById(`mental-lbl-${i}`);
+      if(lbl) { lbl.style.borderColor='rgba(224,92,92,0.5)'; lbl.style.color='var(--red)'; lbl.style.background='rgba(224,92,92,0.1)'; }
+    } else {
+      const lbl = document.getElementById(`mental-lbl-${i}`);
+      if(lbl) { lbl.style.borderColor=''; lbl.style.color=''; lbl.style.background=''; }
+    }
+  }
+  const el = document.getElementById('lf-mental-sel');
+  if(el) el.value = mentalSel.join(',');
+}
+
+// ── SPARKLINE dims_quick [TA] ──────────────────────────────────────
+function getDimsSparkline(entity) {
+  const aulas = (entity.aulas||[]).filter(a=>!a.draft && a.dims_quick);
+  if(!aulas.length) return '';
+  const ultimas = aulas.slice(-4);
+  const DIMS = ['bio','cons','foot','tatic','mental'];
+  const CORES = { bio:'#25c491', cons:'#5b9bd5', foot:'#e8a030', tatic:'#9b72d0', mental:'#e05c5c' };
+  const LABELS = { bio:'Bio', cons:'Cons', foot:'Foot', tatic:'Tat', mental:'Men' };
+
+  const bars = DIMS.map(d => {
+    const vals = ultimas.map(a => (a.dims_quick?.[d]||0));
+    const last = vals[vals.length-1];
+    const prev = vals.length>1 ? vals[vals.length-2] : last;
+    const trend = last > prev ? '↑' : last < prev ? '↓' : '→';
+    const trendCor = last > prev ? '#25c491' : last < prev ? '#e05c5c' : '#7a8499';
+    const pct = Math.round((last/5)*100);
+    return `<div style="flex:1;text-align:center">
+      <div style="font-size:7px;color:${CORES[d]};font-weight:700;margin-bottom:2px">${LABELS[d]}</div>
+      <div style="height:20px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;margin-bottom:2px">
+        <div style="height:100%;width:${pct}%;background:${CORES[d]};opacity:.85;border-radius:3px;transition:width .3s"></div>
+      </div>
+      <div style="font-size:8px;color:${trendCor}">${last>0?last:'—'} <span>${trend}</span></div>
+    </div>`;
+  }).join('');
+
+  return `<div style="display:flex;gap:3px;padding:5px 0;border-top:1px solid rgba(255,255,255,0.06);margin-top:4px">${bars}</div>`;
+}
+
+// ── SUGESTÃO AUTOMÁTICA DE FOCO [DESIGN INSTRUCIONAL] ────────────
+function getSugestaoFoco(entity) {
+  const DIMS = ['bio','cons','foot','tatic','mental'];
+  const LABELS = { bio:'Biomecânica', cons:'Consistência', foot:'Footwork', tatic:'Decisão Tática', mental:'Mental' };
+  const FOCO = {
+    bio:   'biomecânica — corrigir swing/setup',
+    cons:  'consistência — rally com alvo e contador',
+    foot:  'footwork — split step + recovery step',
+    tatic: 'decisão tática — padrões das 4 situações',
+    mental:'protocolo mental — rotina entre pontos',
+  };
+
+  // Pegar últimas 2 avaliações
+  const avals = [];
+  try {
+    const saved = JSON.parse(localStorage.getItem(`apj_aval_${entity.id}`)||'[]');
+    if(saved.length >= 2) {
+      const [prev, last] = saved.slice(-2);
+      DIMS.forEach(d => {
+        const delta = (last.scores?.[d]?.score||0) - (prev.scores?.[d]?.score||0);
+        if(delta <= -1) avals.push({ d, delta });
+      });
+    }
+  } catch(e){}
+
+  if(!avals.length) {
+    // Verificar % de aulas com footwork
+    const aulasTotal = (entity.aulas||[]).filter(a=>!a.draft).length;
+    const aulasFootwork = (entity.aulas||[]).filter(a=>!a.draft && a.footwork_foco).length;
+    if(aulasTotal >= 4 && aulasFootwork/aulasTotal < 0.2) {
+      return { dim: 'foot', label: FOCO['foot'], motivo: `footwork em apenas ${Math.round(aulasFootwork/aulasTotal*100)}% das aulas` };
+    }
+    return null;
+  }
+
+  avals.sort((a,b) => a.delta - b.delta);
+  const pior = avals[0];
+  return { dim: pior.d, label: FOCO[pior.d], motivo: `queda de ${Math.abs(pior.delta)} ponto(s) na última avaliação` };
+}
+
+// ── TEMPO NO NÍVEL [ITF] ───────────────────────────────────────────
+function getTempoNoNivel(entity) {
+  if(!entity.data_nivel) return null;
+  const inicio = new Date(entity.data_nivel + 'T12:00:00');
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const dias = Math.floor((hoje - inicio) / (1000*60*60*24));
+  if(dias < 30) return `${dias}d no nível`;
+  const meses = Math.floor(dias/30);
+  const alertar = meses >= 6 && (entity.nivel||'').includes('APJ 3');
+  return { texto: `${meses} ${meses===1?'mês':'meses'} no nível`, alertar };
+}
+
+// ── ALERTA DE FOOTWORK NO RELATÓRIO [CIÊNCIA] ────────────────────
+function getAlertaFootwork(entity) {
+  const aulas = (entity.aulas||[]).filter(a=>!a.draft);
+  if(aulas.length < 4) return null;
+  const comFoot = aulas.filter(a=>a.footwork_foco).length;
+  const pct = Math.round((comFoot/aulas.length)*100);
+  if(pct < 20) return { pct, alerta: true, msg: `Footwork em apenas ${pct}% das aulas — ciência indica 80% dos erros têm origem no footwork` };
+  return { pct, alerta: false, msg: `Footwork em ${pct}% das aulas ✅` };
 }
 
 // ═══════════════════════════════════════
