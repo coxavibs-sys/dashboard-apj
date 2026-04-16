@@ -1839,7 +1839,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     </div>
 
     <div class="modal-footer">
-      <button class="btn btn-s" onclick="closeModal('newGroupModal')">Cancelar</button>
+      <button class="btn btn-s" onclick="cancelNewGroupModal()">Cancelar</button>
       <button class="btn btn-p" onclick="saveNewGroup()">Salvar Turma</button>
     </div>
   </div>
@@ -4531,18 +4531,29 @@ function ngSincNivel() {
 // Estado temporário dos membros da turma sendo criada
 let ngMembrosTemp = []; // [{id, nome, nivel, isNew}]
 
+function cancelNewGroupModal() {
+  closeModal('newGroupModal');
+  // Se veio de um slot, reabrir o agSlotModal com o contexto original
+  if(window._pendingSlotCtx) {
+    const ctx = window._pendingSlotCtx;
+    setTimeout(() => openSlotModal(ctx.q, ctx.d, ctx.hora), 80);
+    // Não limpar _pendingSlotCtx aqui — será limpo se salvar ou fechar sem salvar
+  }
+}
+
 function openNewGroupFromSlot() {
-  // Salva contexto do slot atual antes de fechar
+  // Salva contexto do slot atual — NÃO fecha o agSlotModal ainda
   const slotCtx = agSlotAtivo ? { ...agSlotAtivo } : null;
-  closeAllModals();
-  // Abre modal completo de nova turma
+  window._pendingSlotCtx = slotCtx || null;
+
+  // Preparar modal de nova turma
   ngMembrosTemp = [];
   tempHorarios['ng'] = [];
+
   // Se veio de um slot, pré-adiciona o horário
   if (slotCtx) {
     const dur = parseInt(document.getElementById('ag-sel-dur')?.value || 60);
     const profId = parseInt(document.getElementById('ag-sel-prof')?.value) || null;
-    const prof = professores.find(p=>p.id===profId);
     tempHorarios['ng'] = [{
       dia: slotCtx.d,
       hora: snapTo15(slotCtx.hora),
@@ -4550,9 +4561,8 @@ function openNewGroupFromSlot() {
       profId: profId || (professores[0]?.id || null),
       durMin: dur || 60
     }];
-    // Guarda slot para alocar depois de salvar
-    window._pendingSlotCtx = slotCtx;
   }
+
   renderHorariosList('ng');
   document.getElementById('ng-horario-form').style.display = 'none';
   populateProfSelect('ng-h-prof');
@@ -4560,6 +4570,9 @@ function openNewGroupFromSlot() {
   document.getElementById('ng-busca-lista').style.display = 'none';
   document.getElementById('ng-novo-nome').value = '';
   ngRenderMembros();
+
+  // Fechar agSlotModal e abrir newGroupModal
+  closeModal('agSlotModal');
   document.getElementById('newGroupModal').classList.add('open');
   setTimeout(()=>document.getElementById('ng-nome').focus(),80);
 }
