@@ -999,46 +999,11 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 
       </div><!-- /card pós-aula -->
 
-      <!-- ═══════════════════════════════════════
-           PÓS-AULA DO ALUNO — PRÉVIA AO VIVO
-      ══════════════════════════════════════════ -->
-      <div style="margin-top:16px;background:var(--card);border:2px solid rgba(29,158,117,0.3);border-radius:12px;overflow:hidden">
-        <!-- HEADER -->
-        <div style="background:rgba(29,158,117,0.1);border-bottom:1px solid rgba(29,158,117,0.2);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:16px">📲</span>
-            <div>
-              <div style="font-size:13px;font-weight:600;color:var(--green2)">Pós-aula para o aluno</div>
-              <div style="font-size:11px;color:var(--muted)">Gerado em tempo real · preencha o elogio e o foco acima</div>
-            </div>
-          </div>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-s btn-sm" id="pl-inline-tab-wa"   onclick="switchInlineTab('wa')"   style="border-color:var(--green);color:var(--green2);font-weight:500">💬 WhatsApp</button>
-            <button class="btn btn-s btn-sm" id="pl-inline-tab-card" onclick="switchInlineTab('card')" style="">🎴 Card</button>
-          </div>
-        </div>
-
-        <!-- WHATSAPP PANEL -->
-        <div id="pl-inline-wa" style="padding:14px 16px">
-          <textarea id="pl-inline-wa-text" class="fc" style="height:220px;resize:none;font-size:12px;line-height:1.7;background:rgba(255,255,255,0.04)" placeholder="Preencha o elogio e o foco acima para gerar a mensagem..."></textarea>
-          <div style="display:flex;gap:8px;margin-top:10px">
-            <button class="btn btn-p btn-sm" onclick="copyInlineWhatsApp()" style="flex:1">📋 Copiar mensagem WhatsApp</button>
-          </div>
-        </div>
-
-        <!-- CARD PANEL -->
-        <div id="pl-inline-card" style="display:none;padding:14px 16px">
-          <div id="pl-inline-card-preview"></div>
-          <div style="display:flex;gap:8px;margin-top:12px">
-            <button class="btn btn-p btn-sm" onclick="printInlineCard()" style="flex:1">🖨 Imprimir / PDF do card</button>
-          </div>
-        </div>
-      </div>
-
+      <!-- AÇÕES DO FORMULÁRIO -->
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
         <button class="btn btn-s" onclick="cancelLesson()">Cancelar</button>
-        <button class="btn btn-s" onclick="saveLessonDraft()">💾 Salvar rascunho</button>
-        <button class="btn btn-s" onclick="printLesson()" title="Imprimir plano completo do professor">🖨 PDF professor</button>
+        <button class="btn btn-s" onclick="saveLessonDraft()">💾 Rascunho</button>
+        <button class="btn btn-s" onclick="printLesson()" title="Imprimir plano completo do professor">🖨 PDF</button>
         <button class="btn btn-p" onclick="saveLesson()">✓ Salvar aula</button>
       </div>
     </div>
@@ -4454,6 +4419,8 @@ function saveLesson() {
   pushLesson(lesson);
   document.getElementById('d2-lesson-form').style.display = 'none';
   renderLastLesson();
+  // Mostrar card de confirmação com botão de pós-aula
+  showSavedConfirmCard(lesson.id);
   showToast('✓ Aula salva com sucesso');
 }
 
@@ -4463,6 +4430,34 @@ function saveLessonDraft() {
   document.getElementById('d2-lesson-form').style.display = 'none';
   renderLastLesson();
   showToast('💾 Rascunho salvo');
+}
+
+function showSavedConfirmCard(lessonId) {
+  // Insere card de confirmação temporário no topo do d2-last-lesson
+  const el = document.getElementById('d2-last-lesson');
+  if(!el) return;
+
+  const confirm = document.createElement('div');
+  confirm.id = 'saved-confirm-card';
+  confirm.style.cssText = 'margin-bottom:14px;background:linear-gradient(135deg,rgba(29,158,117,0.15),rgba(29,158,117,0.08));border:2px solid rgba(29,158,117,0.5);border-radius:12px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;animation:fadeIn .3s ease';
+  confirm.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;background:rgba(29,158,117,0.2);border:1px solid var(--green);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">✅</div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--green2)">Aula salva!</div>
+        <div style="font-size:11px;color:var(--muted)">Envie o resumo para o aluno agora</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-p" onclick="openPostLesson(${lessonId});document.getElementById('saved-confirm-card')?.remove()" style="gap:6px;font-size:12px">
+        📲 Enviar pós-aula ao aluno
+      </button>
+      <button class="btn btn-s btn-sm" onclick="document.getElementById('saved-confirm-card')?.remove()" style="font-size:11px;color:var(--muted)">
+        Depois
+      </button>
+    </div>`;
+
+  el.insertBefore(confirm, el.firstChild);
 }
 
 function pushLesson(lesson) {
