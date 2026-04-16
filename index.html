@@ -873,12 +873,25 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
             <div style="font-size:11px;font-weight:700;color:var(--red);letter-spacing:.4px">PROTOCOLO MENTAL — Módulo 6 APJ</div>
             <span style="font-size:9px;color:var(--muted);margin-left:auto">O Mental = o chão do triângulo</span>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px" id="mental-btns">
-            ${['respiração','palavra-âncora','ritual pré-ponto','foco externo','aceitar o erro','reset 20s'].map((f,i)=>`
-            <label style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s" id="mental-lbl-${i}">
-              <input type="checkbox" id="lf-mental-${i}" value="${f}" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0">
-              ${f}
-            </label>`).join('')}
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+            <label id="mental-lbl-0" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
+              <input type="checkbox" id="lf-mental-0" value="respiração" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> respiração
+            </label>
+            <label id="mental-lbl-1" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
+              <input type="checkbox" id="lf-mental-1" value="palavra-âncora" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> palavra-âncora
+            </label>
+            <label id="mental-lbl-2" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
+              <input type="checkbox" id="lf-mental-2" value="ritual pré-ponto" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> ritual pré-ponto
+            </label>
+            <label id="mental-lbl-3" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
+              <input type="checkbox" id="lf-mental-3" value="foco externo" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> foco externo
+            </label>
+            <label id="mental-lbl-4" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
+              <input type="checkbox" id="lf-mental-4" value="aceitar o erro" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> aceitar o erro
+            </label>
+            <label id="mental-lbl-5" style="display:flex;align-items:center;gap:5px;padding:6px 8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);transition:all .12s">
+              <input type="checkbox" id="lf-mental-5" value="reset 20s" onchange="syncMentalField()" style="accent-color:var(--red);flex-shrink:0"> reset 20s
+            </label>
           </div>
           <input type="hidden" id="lf-mental-sel" value="">
         </div>
@@ -2792,6 +2805,15 @@ const NIVEL_COLOR = {
   'APJ 5': 'var(--red)', 'Kids': 'var(--purple)',
   'Mini': 'var(--purple)', 'Sênior': 'var(--blue)',
 };
+
+// Constante global das 5 dimensões APJ — usada em múltiplos módulos
+const DIMS = [
+  { key:'bio',    label:'Biomecânica',    color:'#25c491' },
+  { key:'cons',   label:'Consistência',   color:'#5b9bd5' },
+  { key:'foot',   label:'Footwork',       color:'#e8a030' },
+  { key:'tatic',  label:'Decisão Tática', color:'#9b72d0' },
+  { key:'mental', label:'Mental',         color:'#e05c5c' },
+];
 
 // Paleta de cores APJ por tipo de slot na grade
 const SLOT_CORES = {
@@ -6335,13 +6357,7 @@ function renderStats() {
   }
 
   // ── Radar APJ — média das avaliações ──
-  const DIMS = [
-    {key:'bio',label:'Biomecânica',color:'#25c491'},
-    {key:'cons',label:'Consistência',color:'#5b9bd5'},
-    {key:'foot',label:'Footwork',color:'#e8a030'},
-    {key:'tatic',label:'Decisão Tática',color:'#9b72d0'},
-    {key:'mental',label:'Mental',color:'#e05c5c'},
-  ];
+  // DIMS já declarado globalmente
   const radarSvg = document.getElementById('stats-radar-svg');
   const radarLeg = document.getElementById('stats-radar-legend');
   const medias = {};
@@ -9202,21 +9218,22 @@ function getDimsSparkline(entity) {
   const aulas = (entity.aulas||[]).filter(a=>!a.draft && a.dims_quick);
   if(!aulas.length) return '';
   const ultimas = aulas.slice(-4);
-  const DIMS = ['bio','cons','foot','tatic','mental'];
+  // DIMS global — usar keys e cores diretamente
   const CORES = { bio:'#25c491', cons:'#5b9bd5', foot:'#e8a030', tatic:'#9b72d0', mental:'#e05c5c' };
   const LABELS = { bio:'Bio', cons:'Cons', foot:'Foot', tatic:'Tat', mental:'Men' };
 
   const bars = DIMS.map(d => {
-    const vals = ultimas.map(a => (a.dims_quick?.[d]||0));
+    const key = d.key || d;
+    const vals = ultimas.map(a => (a.dims_quick?.[key]||0));
     const last = vals[vals.length-1];
     const prev = vals.length>1 ? vals[vals.length-2] : last;
     const trend = last > prev ? '↑' : last < prev ? '↓' : '→';
     const trendCor = last > prev ? '#25c491' : last < prev ? '#e05c5c' : '#7a8499';
     const pct = Math.round((last/5)*100);
     return `<div style="flex:1;text-align:center">
-      <div style="font-size:7px;color:${CORES[d]};font-weight:700;margin-bottom:2px">${LABELS[d]}</div>
+      <div style="font-size:7px;color:${CORES[key]};font-weight:700;margin-bottom:2px">${LABELS[key]}</div>
       <div style="height:20px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;margin-bottom:2px">
-        <div style="height:100%;width:${pct}%;background:${CORES[d]};opacity:.85;border-radius:3px;transition:width .3s"></div>
+        <div style="height:100%;width:${pct}%;background:${CORES[key]};opacity:.85;border-radius:3px;transition:width .3s"></div>
       </div>
       <div style="font-size:8px;color:${trendCor}">${last>0?last:'—'} <span>${trend}</span></div>
     </div>`;
@@ -9227,8 +9244,7 @@ function getDimsSparkline(entity) {
 
 // ── SUGESTÃO AUTOMÁTICA DE FOCO [DESIGN INSTRUCIONAL] ────────────
 function getSugestaoFoco(entity) {
-  const DIMS = ['bio','cons','foot','tatic','mental'];
-  const LABELS = { bio:'Biomecânica', cons:'Consistência', foot:'Footwork', tatic:'Decisão Tática', mental:'Mental' };
+  // DIMS global com objetos {key, label, color}
   const FOCO = {
     bio:   'biomecânica — corrigir swing/setup',
     cons:  'consistência — rally com alvo e contador',
@@ -9243,9 +9259,10 @@ function getSugestaoFoco(entity) {
     const saved = JSON.parse(localStorage.getItem(`apj_aval_${entity.id}`)||'[]');
     if(saved.length >= 2) {
       const [prev, last] = saved.slice(-2);
-      DIMS.forEach(d => {
-        const delta = (last.scores?.[d]?.score||0) - (prev.scores?.[d]?.score||0);
-        if(delta <= -1) avals.push({ d, delta });
+      DIMS.forEach(dim => {
+        const k = dim.key || dim;
+        const delta = (last.scores?.[k]?.score||0) - (prev.scores?.[k]?.score||0);
+        if(delta <= -1) avals.push({ d: k, delta });
       });
     }
   } catch(e){}
