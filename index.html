@@ -7704,9 +7704,9 @@ function renderGrade() {
           const isReserva  = slotTipo === 'reserva';
           const isReposicao= slotTipo === 'reposicao';
 
-          // ── Cor = cor do professor (fallback: reserva=azul, reposição=âmbar) ──
+          // ── Cor = cor do professor (fallback: reserva=azul, reposição=laranja fixo) ──
           const bg = isReserva   ? '#4a7fa8'
-                   : isReposicao ? '#b07830'
+                   : isReposicao ? '#e8a030'
                    : prof        ? prof.cor
                    : '#1D9E75';
 
@@ -7797,8 +7797,7 @@ function renderGrade() {
           const top    = ((inicioMin - START_MIN) / BASE) * ROW_H;
           const height = (durMin / BASE) * ROW_H;
           const nomes  = repos.map(r => r.nome.split(' ')[0]).join(' · ');
-          const prof   = repos[0]?.profId ? professores.find(p=>p.id===repos[0].profId) : null;
-          const bg     = prof ? prof.cor : '#b07830';
+          const bg     = '#e8a030'; // sempre laranja — identidade visual de reposição
           // Data real deste slot
           const dataDiaRep = diasSemana[d];
           const dataRep = dataDiaRep
@@ -7875,7 +7874,7 @@ function renderGrade() {
           <span style="font-size:10px;color:var(--muted)">Reserva</span>
         </div>
         <div style="display:flex;align-items:center;gap:4px">
-          <div style="width:10px;height:10px;border-radius:3px;background:#b07830;flex-shrink:0"></div>
+          <div style="width:10px;height:10px;border-radius:3px;background:#e8a030;flex-shrink:0"></div>
           <span style="font-size:10px;color:var(--muted)">Reposição</span>
         </div>
         <span style="font-size:10px;color:var(--muted);margin-left:8px">👤 Individual &nbsp; 👥 Grupo</span>
