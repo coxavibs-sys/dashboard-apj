@@ -866,6 +866,37 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
           <textarea class="fc" id="lf-obs-j" style="height:72px;resize:none" placeholder="Ex: tentou inside-out 6x — 4 dentro. Split step presente em 70% dos pontos. Recovery step falhou após o BH."></textarea>
         </div>
 
+        <!-- SCORE RÁPIDO POR DIMENSÃO [TA — dims_quick] -->
+        <div style="margin-top:12px;background:rgba(29,158,117,0.05);border:1px solid rgba(29,158,117,0.2);border-radius:10px;padding:12px 14px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+            <span style="font-size:13px">📈</span>
+            <div style="font-size:11px;font-weight:700;color:var(--green2);letter-spacing:.4px">SCORE RÁPIDO — 5 Dimensões APJ</div>
+            <span style="font-size:9px;color:var(--muted);margin-left:auto">1 = fraco · 5 = excelente · 0 = não avaliado</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+            <div style="text-align:center">
+              <div style="font-size:9px;font-weight:700;color:#25c491;margin-bottom:4px">🎾 Bio</div>
+              <input type="number" id="lf-dq-bio" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:14px;font-weight:700;color:#25c491">
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:9px;font-weight:700;color:#5b9bd5;margin-bottom:4px">🎯 Cons</div>
+              <input type="number" id="lf-dq-cons" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:14px;font-weight:700;color:#5b9bd5">
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:9px;font-weight:700;color:#e8a030;margin-bottom:4px">⚡ Foot</div>
+              <input type="number" id="lf-dq-foot" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:14px;font-weight:700;color:#e8a030">
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:9px;font-weight:700;color:#9b72d0;margin-bottom:4px">🧩 Tát</div>
+              <input type="number" id="lf-dq-tatic" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:14px;font-weight:700;color:#9b72d0">
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:9px;font-weight:700;color:#e05c5c;margin-bottom:4px">🧠 Men</div>
+              <input type="number" id="lf-dq-mental" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:14px;font-weight:700;color:#e05c5c">
+            </div>
+          </div>
+        </div>
+
         <!-- PROTOCOLO MENTAL [PSICO] -->
         <div style="margin-top:12px;background:rgba(224,92,92,0.06);border:1px solid rgba(224,92,92,0.2);border-radius:10px;padding:12px 14px">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
@@ -3582,6 +3613,11 @@ function newLesson() {
     const cb = document.getElementById(`lf-mental-${i}`);
     if(cb) cb.checked = false;
   }
+  // Reset dims_quick
+  ['bio','cons','foot','tatic','mental'].forEach(k=>{
+    const el = document.getElementById(`lf-dq-${k}`);
+    if(el) el.value = 0;
+  });
 
   // Build blocos
   const dur = parseInt(document.getElementById('lf-dur').value)||60;
@@ -4252,6 +4288,13 @@ function collectLessonData(isDraft=false) {
     situacao_fundamental: document.getElementById('lf-situacao')?.value || '',
     footwork_foco: footworkEl ? footworkEl.value === 'sim' : false,
     protocolo_mental: mentalSel,
+    dims_quick: {
+      bio:    Math.min(5, Math.max(0, parseInt(document.getElementById('lf-dq-bio')?.value)||0)),
+      cons:   Math.min(5, Math.max(0, parseInt(document.getElementById('lf-dq-cons')?.value)||0)),
+      foot:   Math.min(5, Math.max(0, parseInt(document.getElementById('lf-dq-foot')?.value)||0)),
+      tatic:  Math.min(5, Math.max(0, parseInt(document.getElementById('lf-dq-tatic')?.value)||0)),
+      mental: Math.min(5, Math.max(0, parseInt(document.getElementById('lf-dq-mental')?.value)||0)),
+    },
     duracao: dur,
     semana: document.getElementById('lf-sem').value,
     blocoTimes: {...blocoTimes},
@@ -4310,7 +4353,28 @@ function renderHistoryList() {
     el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--muted)">Nenhuma aula registrada.</div>`;
     return;
   }
-  el.innerHTML = aulas.map(a=>`
+  el.innerHTML = aulas.map(a=>{
+    // Labels para situação fundamental
+    const SIT_LABEL = { neutro:'🔄 Neutro', ofensivo:'⚔️ Ofensivo', defensivo:'🛡️ Defensivo', saque_dev:'🎾 Saque/Dev.', duplas:'👥 Doubles' };
+    const sitLabel = a.situacao_fundamental ? (SIT_LABEL[a.situacao_fundamental] || a.situacao_fundamental) : '';
+
+    // Dims quick mini-barras
+    const dq = a.dims_quick;
+    const dimsHtml = dq && Object.values(dq).some(v=>v>0) ? `
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+        ${DIMS.map(d=>{
+          const v = dq[d.key]||0;
+          if(!v) return '';
+          return `<span style="font-size:10px;font-weight:700;color:${d.color};background:${d.color}22;padding:1px 6px;border-radius:4px">${d.label.split(' ')[0]} ${v}/5</span>`;
+        }).join('')}
+      </div>` : '';
+
+    // Protocolo mental
+    const mentalHtml = (a.protocolo_mental||[]).length
+      ? `<div style="font-size:10px;color:var(--red);margin-top:4px">🧠 Mental: ${a.protocolo_mental.join(' · ')}</div>`
+      : '';
+
+    return `
     <div class="card" style="margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
         <div>
@@ -4327,6 +4391,11 @@ function renderHistoryList() {
           <button class="btn btn-s btn-sm" style="color:var(--red);border-color:rgba(224,92,92,0.3)" onclick="deleteLesson(${a.id})">🗑</button>
         </div>
       </div>
+      <!-- Tags situação/footwork -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        ${sitLabel?`<span style="font-size:10px;font-weight:600;background:rgba(91,155,213,0.12);color:var(--blue);padding:2px 8px;border-radius:5px;border:1px solid rgba(91,155,213,0.25)">${sitLabel}</span>`:''}
+        ${a.footwork_foco?`<span style="font-size:10px;font-weight:600;background:rgba(232,160,48,0.12);color:var(--amber);padding:2px 8px;border-radius:5px;border:1px solid rgba(232,160,48,0.25)">👟 Footwork foco</span>`:''}
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
         ${BLOCO_CONFIG.map(b=>`<div style="background:var(--card2);border-radius:7px;padding:8px 10px">
           <div style="font-size:10px;font-weight:600;color:${b.color};margin-bottom:3px">${b.label}</div>
@@ -4334,8 +4403,11 @@ function renderHistoryList() {
         </div>`).join('')}
       </div>
       ${a.obs_j?`<div style="font-size:11px;color:var(--green2);margin-bottom:4px">📊 <strong>J:</strong> ${a.obs_j}</div>`:''}
-      ${a.foco_prox?`<div style="font-size:11px;color:var(--amber)">🎯 Próxima: ${a.foco_prox}</div>`:''}
-    </div>`).join('');
+      ${dq ? dimsHtml : ''}
+      ${mentalHtml}
+      ${a.foco_prox?`<div style="font-size:11px;color:var(--amber);margin-top:4px">🎯 Próxima: ${a.foco_prox}</div>`:''}
+    </div>`;
+  }).join('');
 }
 
 // ─── PÓS-AULA DO ALUNO ────────────────────────────────────
@@ -4572,6 +4644,12 @@ function editLesson(id) {
       const cb = document.getElementById(`lf-mental-${i}`);
       if(cb) cb.checked = mentalArr.includes(cb.value);
     }
+    // Restaurar dims_quick
+    const dq = editingLesson.dims_quick || {};
+    ['bio','cons','foot','tatic','mental'].forEach(k=>{
+      const el = document.getElementById(`lf-dq-${k}`);
+      if(el) el.value = dq[k] || 0;
+    });
 
   }, 80);
 }
@@ -4966,6 +5044,11 @@ function openEditStudentModal(id) {
   document.getElementById('es-nivel').value = entity.nivel || '';
   document.getElementById('es-obs').value   = entity.obs || '';
   document.getElementById('es-type').value  = entity.type;
+  // Faixa de programa — só para alunos individuais
+  const faixaRow = document.getElementById('es-faixa-row');
+  const faixaSel = document.getElementById('es-faixa');
+  if(faixaRow) faixaRow.style.display = entity.type === 'group' ? 'none' : 'block';
+  if(faixaSel) faixaSel.value = entity.faixa_programa || 'adulto';
   const grpRow = document.getElementById('es-grp-row');
   if(grpRow) {
     grpRow.style.display = entity.type === 'group' ? 'block' : 'none';
@@ -4998,8 +5081,11 @@ function saveEditStudent() {
   if(students[idx].nivel !== novoNivel) {
     students[idx].data_nivel = new Date().toISOString().slice(0,10);
   }
-  students[idx].nivel   = novoNivel;
-  students[idx].obs     = document.getElementById('es-obs').value.trim();
+  students[idx].nivel          = novoNivel;
+  students[idx].obs            = document.getElementById('es-obs').value.trim();
+  if(students[idx].type === 'student') {
+    students[idx].faixa_programa = document.getElementById('es-faixa')?.value || students[idx].faixa_programa || 'adulto';
+  }
   students[idx].horarios = hs.map(h=>({...h}));
   if(students[idx].type === 'group'){
     const membros = getSelectedMembers('es-alunos-list');
@@ -7166,6 +7252,15 @@ Essa ação não pode ser desfeita.`)) {
         <option>Kids APJ</option>
         <option>Mini Tennis</option>
         <option>Sênior APJ</option>
+      </select>
+    </div>
+    <div class="fg" id="es-faixa-row">
+      <label class="fl">🏷️ Faixa de Programa (LTPD Canada)</label>
+      <select class="fc" id="es-faixa">
+        <option value="adulto">👤 Adulto (padrão APJ)</option>
+        <option value="kids">👧 Kids (até 12 anos)</option>
+        <option value="teen">🧑 Teen (13–17 anos)</option>
+        <option value="senior">🧓 Sênior (60+ anos)</option>
       </select>
     </div>
     <div id="es-grp-row">
