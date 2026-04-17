@@ -5444,37 +5444,59 @@ function _renderFreqCal() {
   const inicioGrid = primeiro.getDay(); // 0=Dom
   const hoje = new Date().toISOString().slice(0,10);
 
-  // Mapear datas com registro
-  const freqMap = {};
+  // Mapear datas → array de registros (suporta múltiplas aulas no mesmo dia)
+  const freqMapArr = {};
   (_freqEntity.frequencia||[]).forEach(r => {
-    if(r.data) freqMap[r.data] = r.tipo;
+    if(!r.data) return;
+    if(!freqMapArr[r.data]) freqMapArr[r.data] = [];
+    freqMapArr[r.data].push(r.tipo);
   });
 
-  // Dias de aula previstos (horários recorrentes)
-  const diasAula = new Set((_freqEntity.horarios||[]).map(h => h.dia)); // 0=Seg...5=Sab
+  // Dias de aula previstos: mapa dia→quantidade (2 horários na Seg = {0:2})
+  const diasAulaCount = {};
+  (_freqEntity.horarios||[]).forEach(h => {
+    diasAulaCount[h.dia] = (diasAulaCount[h.dia] || 0) + 1;
+  });
 
   let html = '';
-  // Células vazias iniciais (mantém o grid 7 colunas alinhado)
   for(let i = 0; i < inicioGrid; i++) html += '<div style="aspect-ratio:1;min-width:0"></div>';
 
   for(let dia = 1; dia <= ultimo.getDate(); dia++) {
     const dateStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
-    const dow = new Date(dateStr + 'T12:00:00').getDay(); // 0=Dom
-    const diaIdx = dow === 0 ? -1 : dow - 1; // -1=Dom, 0=Seg...5=Sab
-    const tipo  = freqMap[dateStr];
-    const ehPrevisto = diaIdx >= 0 && diasAula.has(diaIdx);
-    const ehHoje = dateStr === hoje;
+    const dow    = new Date(dateStr + 'T12:00:00').getDay();
+    const diaIdx = dow === 0 ? -1 : dow - 1;
+    const registros  = freqMapArr[dateStr] || [];
+    const qtdPrev    = diaIdx >= 0 ? (diasAulaCount[diaIdx] || 0) : 0;
+    const ehHoje     = dateStr === hoje;
+    const temReg     = registros.length > 0;
+
+    // Determinar cor predominante (prioridade: falta > justificada > presente)
+    const temFaltaS  = registros.includes('falta_simples');
+    const temFaltaJ  = registros.includes('falta_justificada');
+    const temPresente= registros.includes('presente');
+    const qtdPresente= registros.filter(t=>t==='presente').length;
 
     let bg = 'transparent', border = '1px solid transparent', color = 'var(--muted)';
-    if(tipo === 'presente')           { bg = 'var(--green)';               color = '#fff'; border = 'none'; }
-    else if(tipo === 'falta_justificada') { bg = 'rgba(232,160,48,0.9)';   color = '#fff'; border = 'none'; }
-    else if(tipo === 'falta_simples') { bg = 'var(--red)';                 color = '#fff'; border = 'none'; }
-    else if(ehPrevisto)               { bg = 'rgba(91,155,213,0.15)';      color = 'var(--blue)'; border = '1px dashed rgba(91,155,213,0.4)'; }
-    if(ehHoje && !tipo)               { border = '1px solid var(--green2)'; color = 'var(--green2)'; }
 
-    const cursor = tipo ? 'cursor:pointer' : '';
-    const onclick = tipo ? `onclick="openFreqDetail('${dateStr}')"` : '';
-    html += `<div style="aspect-ratio:1;border-radius:5px;background:${bg};border:${border};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:${tipo?'700':'400'};color:${color};${cursor};min-width:0" ${onclick} title="${dateStr}">${dia}</div>`;
+    if(temReg) {
+      if(temFaltaS)        { bg = 'var(--red)';              color = '#fff'; border = 'none'; }
+      else if(temFaltaJ)   { bg = 'rgba(232,160,48,0.9)';    color = '#fff'; border = 'none'; }
+      else if(temPresente) { bg = 'var(--green)';             color = '#fff'; border = 'none'; }
+    } else if(qtdPrev > 0) {
+      bg = 'rgba(91,155,213,0.15)'; color = 'var(--blue)'; border = '1px dashed rgba(91,155,213,0.4)';
+    }
+    if(ehHoje && !temReg) { border = '1px solid var(--green2)'; color = 'var(--green2)'; }
+
+    // Badge de contagem: mostra nº de aulas se > 1 (previstas ou registradas)
+    const qtdTotal  = Math.max(qtdPrev, registros.length);
+    const badgeHtml = qtdTotal > 1
+      ? '<span style="position:absolute;top:1px;right:2px;font-size:7px;font-weight:700;color:' + (temReg ? 'rgba(255,255,255,0.85)' : 'rgba(91,155,213,0.9)') + '">' + qtdTotal + '</span>'
+      : '';
+
+    const cursor  = temReg ? 'cursor:pointer' : '';
+    const onclick = temReg ? `onclick="openFreqDetail('${dateStr}')"` : '';
+
+    html += `<div style="aspect-ratio:1;border-radius:5px;background:${bg};border:${border};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:${temReg?'700':'400'};color:${color};${cursor};min-width:0;position:relative" ${onclick} title="${dateStr}${qtdTotal>1?' ('+qtdTotal+' aulas)':''}">${dia}${badgeHtml}</div>`;
   }
 
   el.innerHTML = html;
