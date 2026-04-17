@@ -4195,93 +4195,6 @@ function printInlineCard() {
   <button class="print-btn no-print" onclick="window.print()">🖨 Imprimir / Salvar como PDF</button>
   ${cardHTML}
   
-<!-- ═══════════════════════════════════════════════════════════
-     MODAL PÓS-AULA PROFESSOR — Registro após salvar a aula
-════════════════════════════════════════════════════════════ -->
-<div class="modal-bg" id="posAulaRegModal">
-  <div class="modal" style="max-width:520px;max-height:92vh;overflow-y:auto">
-
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:36px;height:36px;background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.4);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">📊</div>
-        <div>
-          <div style="font-size:15px;font-weight:700;color:var(--blue)">Pós-aula — Registro</div>
-          <div style="font-size:11px;color:var(--muted)">Preencha enquanto a aula está fresca na memória</div>
-        </div>
-      </div>
-      <button onclick="closePosAulaReg(false)" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1">×</button>
-    </div>
-
-    <!-- OBS DO J -->
-    <div style="margin-bottom:14px">
-      <label class="fl">📝 O que aconteceu no J?</label>
-      <textarea class="fc" id="par-obs-j" style="height:72px;resize:none" placeholder="Ex: tentou inside-out 6x — 4 dentro. Split step em 70% dos pontos. Recovery step falhou após o BH."></textarea>
-    </div>
-
-    <!-- SITUAÇÃO RFET -->
-    <div style="margin-bottom:14px">
-      <label class="fl">⚡ Situação fundamental trabalhada (RFET)</label>
-      <select class="fc" id="par-situacao">
-        <option value="">— Selecione —</option>
-        <option value="neutro">🔄 Neutro (rally construção)</option>
-        <option value="ofensivo">⚔️ Ofensivo (bola curta/aberta)</option>
-        <option value="defensivo">🛡️ Defensivo (posição ruim)</option>
-        <option value="saque_dev">🎾 Saque / Devolução</option>
-        <option value="duplas">👥 Doubles (FITP)</option>
-      </select>
-    </div>
-
-    <!-- SCORE DIMS_QUICK -->
-    <div style="background:rgba(29,158,117,0.05);border:1px solid rgba(29,158,117,0.2);border-radius:10px;padding:12px 14px;margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-        <span style="font-size:13px">📈</span>
-        <div style="font-size:11px;font-weight:700;color:var(--green2)">SCORE RÁPIDO — 5 Dimensões</div>
-        <span style="font-size:9px;color:var(--muted);margin-left:auto">0 = não avaliado · 5 = excelente</span>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
-        <div style="text-align:center">
-          <div style="font-size:9px;font-weight:700;color:#25c491;margin-bottom:4px">🎾 Bio</div>
-          <input type="number" id="par-dq-bio" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#25c491">
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:9px;font-weight:700;color:#5b9bd5;margin-bottom:4px">🎯 Cons</div>
-          <input type="number" id="par-dq-cons" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#5b9bd5">
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:9px;font-weight:700;color:#e8a030;margin-bottom:4px">⚡ Foot</div>
-          <input type="number" id="par-dq-foot" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#e8a030">
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:9px;font-weight:700;color:#9b72d0;margin-bottom:4px">🧩 Tát</div>
-          <input type="number" id="par-dq-tatic" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#9b72d0">
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:9px;font-weight:700;color:#e05c5c;margin-bottom:4px">🧠 Men</div>
-          <input type="number" id="par-dq-mental" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#e05c5c">
-        </div>
-      </div>
-    </div>
-
-    <!-- ELOGIO -->
-    <div style="margin-bottom:12px">
-      <label class="fl">💬 Elogio específico dado no fechamento</label>
-      <input class="fc" id="par-elogio" type="text" placeholder="Ex: unit turn presente antes do quique — criou espaço no FH">
-    </div>
-
-    <!-- FOCO PRÓXIMA -->
-    <div style="margin-bottom:18px">
-      <label class="fl">🎯 Foco para a próxima aula</label>
-      <input class="fc" id="par-prox" type="text" placeholder="Ex: recovery step após o BH — cone no centro">
-    </div>
-
-    <!-- AÇÕES -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-p" onclick="savePosAulaReg()" style="flex:1">💾 Salvar registro pós-aula</button>
-      <button class="btn btn-s" onclick="closePosAulaReg(false)" style="color:var(--muted)">Pular por agora</button>
-    </div>
-
-  </div>
-</div>
 
 </body></html>`);
   win.document.close();
@@ -9858,5 +9771,95 @@ function showPostLessonPrompt(lessonId) {
     '</div>';
 }
 </script>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL PÓS-AULA PROFESSOR — Registro após salvar a aula
+════════════════════════════════════════════════════════════ -->
+<div class="modal-bg" id="posAulaRegModal">
+  <div class="modal" style="max-width:520px;max-height:92vh;overflow-y:auto">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.4);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">📊</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--blue)">Pós-aula — Registro</div>
+          <div style="font-size:11px;color:var(--muted)">Preencha enquanto a aula está fresca na memória</div>
+        </div>
+      </div>
+      <button onclick="closePosAulaReg(false)" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1">×</button>
+    </div>
+
+    <!-- OBS DO J -->
+    <div style="margin-bottom:14px">
+      <label class="fl">📝 O que aconteceu no J?</label>
+      <textarea class="fc" id="par-obs-j" style="height:72px;resize:none" placeholder="Ex: tentou inside-out 6x — 4 dentro. Split step em 70% dos pontos. Recovery step falhou após o BH."></textarea>
+    </div>
+
+    <!-- SITUAÇÃO RFET -->
+    <div style="margin-bottom:14px">
+      <label class="fl">⚡ Situação fundamental trabalhada (RFET)</label>
+      <select class="fc" id="par-situacao">
+        <option value="">— Selecione —</option>
+        <option value="neutro">🔄 Neutro (rally construção)</option>
+        <option value="ofensivo">⚔️ Ofensivo (bola curta/aberta)</option>
+        <option value="defensivo">🛡️ Defensivo (posição ruim)</option>
+        <option value="saque_dev">🎾 Saque / Devolução</option>
+        <option value="duplas">👥 Doubles (FITP)</option>
+      </select>
+    </div>
+
+    <!-- SCORE DIMS_QUICK -->
+    <div style="background:rgba(29,158,117,0.05);border:1px solid rgba(29,158,117,0.2);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+        <span style="font-size:13px">📈</span>
+        <div style="font-size:11px;font-weight:700;color:var(--green2)">SCORE RÁPIDO — 5 Dimensões</div>
+        <span style="font-size:9px;color:var(--muted);margin-left:auto">0 = não avaliado · 5 = excelente</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+        <div style="text-align:center">
+          <div style="font-size:9px;font-weight:700;color:#25c491;margin-bottom:4px">🎾 Bio</div>
+          <input type="number" id="par-dq-bio" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#25c491">
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;font-weight:700;color:#5b9bd5;margin-bottom:4px">🎯 Cons</div>
+          <input type="number" id="par-dq-cons" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#5b9bd5">
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;font-weight:700;color:#e8a030;margin-bottom:4px">⚡ Foot</div>
+          <input type="number" id="par-dq-foot" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#e8a030">
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;font-weight:700;color:#9b72d0;margin-bottom:4px">🧩 Tát</div>
+          <input type="number" id="par-dq-tatic" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#9b72d0">
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;font-weight:700;color:#e05c5c;margin-bottom:4px">🧠 Men</div>
+          <input type="number" id="par-dq-mental" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#e05c5c">
+        </div>
+      </div>
+    </div>
+
+    <!-- ELOGIO -->
+    <div style="margin-bottom:12px">
+      <label class="fl">💬 Elogio específico dado no fechamento</label>
+      <input class="fc" id="par-elogio" type="text" placeholder="Ex: unit turn presente antes do quique — criou espaço no FH">
+    </div>
+
+    <!-- FOCO PRÓXIMA -->
+    <div style="margin-bottom:18px">
+      <label class="fl">🎯 Foco para a próxima aula</label>
+      <input class="fc" id="par-prox" type="text" placeholder="Ex: recovery step após o BH — cone no centro">
+    </div>
+
+    <!-- AÇÕES -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-p" onclick="savePosAulaReg()" style="flex:1">💾 Salvar registro pós-aula</button>
+      <button class="btn btn-s" onclick="closePosAulaReg(false)" style="color:var(--muted)">Pular por agora</button>
+    </div>
+
+  </div>
+</div>
+
 </body>
 </html>
