@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard APJ · V1.16 · Approach Tennis Academy</title>
+<title>Dashboard APJ · V1.17 · Approach Tennis Academy</title>
 <style>
 :root{
   --bg:#0b1019;--card:#141e2e;--card2:#192236;--card3:#1e293b;
@@ -380,7 +380,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     <div class="logo-mark">APJ</div>
     <div>
       <div class="logo-name">Approach Tennis Academy</div>
-      <div class="logo-sub muted">Dashboard · V1.16 · Santos SP</div>
+      <div class="logo-sub muted">Dashboard · V1.17 · Santos SP</div>
     </div>
   </div>
   <nav class="nav">
@@ -923,81 +923,16 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 
       </div><!-- /card pré-aula -->
 
-      <!-- ╔══════════════════════════════════════╗ -->
-      <!-- ║  PÓS-AULA — O professor registra     ║ -->
-      <!-- ╚══════════════════════════════════════╝ -->
-      <div class="card" style="margin-bottom:12px">
-
-        <!-- CABEÇALHO DA SEÇÃO PÓS-AULA -->
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border2)">
-          <div style="width:28px;height:28px;background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.4);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">📊</div>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:var(--blue)">Pós-aula — Registro</div>
-            <div style="font-size:10px;color:var(--muted)">Preencha após a aula · alimenta o radar e o relatório</div>
-          </div>
-        </div>
-
-        <!-- 6. OBSERVAÇÕES DO J -->
-        <div style="margin-bottom:12px">
-          <label class="fl">📝 O que aconteceu no J? (observações para o relatório)</label>
-          <textarea class="fc" id="lf-obs-j" style="height:68px;resize:none" placeholder="Ex: tentou inside-out 6x — 4 dentro. Split step presente em 70% dos pontos. Recovery step falhou após o BH."></textarea>
-        </div>
-
-        <!-- 7. SCORE DIMS_QUICK — pós aula -->
-        <div style="background:rgba(29,158,117,0.05);border:1px solid rgba(29,158,117,0.2);border-radius:10px;padding:12px 14px;margin-bottom:12px">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-            <span style="font-size:13px">📈</span>
-            <div style="font-size:11px;font-weight:700;color:var(--green2);letter-spacing:.4px">SCORE RÁPIDO — 5 Dimensões APJ</div>
-            <span style="font-size:9px;color:var(--muted);margin-left:auto">1 = fraco · 5 = excelente · 0 = não avaliado</span>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
-            <div style="text-align:center">
-              <div style="font-size:9px;font-weight:700;color:#25c491;margin-bottom:4px">🎾 Bio</div>
-              <input type="number" id="lf-dq-bio" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:14px;font-weight:700;color:#25c491">
-            </div>
-            <div style="text-align:center">
-              <div style="font-size:9px;font-weight:700;color:#5b9bd5;margin-bottom:4px">🎯 Cons</div>
-              <input type="number" id="lf-dq-cons" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:14px;font-weight:700;color:#5b9bd5">
-            </div>
-            <div style="text-align:center">
-              <div style="font-size:9px;font-weight:700;color:#e8a030;margin-bottom:4px">⚡ Foot</div>
-              <input type="number" id="lf-dq-foot" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:14px;font-weight:700;color:#e8a030">
-            </div>
-            <div style="text-align:center">
-              <div style="font-size:9px;font-weight:700;color:#9b72d0;margin-bottom:4px">🧩 Tát</div>
-              <input type="number" id="lf-dq-tatic" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:14px;font-weight:700;color:#9b72d0">
-            </div>
-            <div style="text-align:center">
-              <div style="font-size:9px;font-weight:700;color:#e05c5c;margin-bottom:4px">🧠 Men</div>
-              <input type="number" id="lf-dq-mental" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:14px;font-weight:700;color:#e05c5c">
-            </div>
-          </div>
-        </div>
-
-        <!-- 8. SITUAÇÃO FUNDAMENTAL RFET — registrada após ver o jogo -->
-        <div style="margin-bottom:12px">
-          <label class="fl">⚡ Situação fundamental trabalhada (RFET)</label>
-          <select class="fc" id="lf-situacao" onchange="toggleDoublesChecklist()">
-            <option value="">— Selecione —</option>
-            <option value="neutro">🔄 Neutro (rally construção)</option>
-            <option value="ofensivo">⚔️ Ofensivo (bola curta/aberta)</option>
-            <option value="defensivo">🛡️ Defensivo (posição ruim)</option>
-            <option value="saque_dev">🎾 Saque / Devolução</option>
-            <option value="duplas">👥 Doubles (FITP)</option>
-          </select>
-        </div>
-
-        <!-- 9. ELOGIO + FOCO PRÓXIMA AULA -->
-        <div style="margin-bottom:10px">
-          <label class="fl">💬 Elogio específico dado no fechamento</label>
-          <input class="fc" id="lf-elogio" type="text" placeholder="Ex: unit turn presente antes do quique — criou espaço no FH" oninput="refreshPostLesson()">
-        </div>
-        <div>
-          <label class="fl">🎯 Foco para a próxima aula</label>
-          <input class="fc" id="lf-prox" type="text" placeholder="Ex: recovery step após o BH — cone no centro" oninput="refreshPostLesson()">
-        </div>
-
-      </div><!-- /card pós-aula -->
+      <!-- Campos pós-aula — preenchidos via modal após salvar -->
+      <input type="hidden" id="lf-obs-j" value="">
+      <input type="hidden" id="lf-elogio" value="">
+      <input type="hidden" id="lf-prox" value="">
+      <input type="hidden" id="lf-situacao" value="">
+      <input type="hidden" id="lf-dq-bio" value="0">
+      <input type="hidden" id="lf-dq-cons" value="0">
+      <input type="hidden" id="lf-dq-foot" value="0">
+      <input type="hidden" id="lf-dq-tatic" value="0">
+      <input type="hidden" id="lf-dq-mental" value="0">
 
       <!-- AÇÕES DO FORMULÁRIO -->
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
@@ -4259,7 +4194,96 @@ function printInlineCard() {
   </style></head><body>
   <button class="print-btn no-print" onclick="window.print()">🖨 Imprimir / Salvar como PDF</button>
   ${cardHTML}
-  </body></html>`);
+  
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL PÓS-AULA PROFESSOR — Registro após salvar a aula
+════════════════════════════════════════════════════════════ -->
+<div class="modal-bg" id="posAulaRegModal">
+  <div class="modal" style="max-width:520px;max-height:92vh;overflow-y:auto">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.4);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">📊</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--blue)">Pós-aula — Registro</div>
+          <div style="font-size:11px;color:var(--muted)">Preencha enquanto a aula está fresca na memória</div>
+        </div>
+      </div>
+      <button onclick="closePosAulaReg(false)" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px;line-height:1">×</button>
+    </div>
+
+    <!-- OBS DO J -->
+    <div style="margin-bottom:14px">
+      <label class="fl">📝 O que aconteceu no J?</label>
+      <textarea class="fc" id="par-obs-j" style="height:72px;resize:none" placeholder="Ex: tentou inside-out 6x — 4 dentro. Split step em 70% dos pontos. Recovery step falhou após o BH."></textarea>
+    </div>
+
+    <!-- SITUAÇÃO RFET -->
+    <div style="margin-bottom:14px">
+      <label class="fl">⚡ Situação fundamental trabalhada (RFET)</label>
+      <select class="fc" id="par-situacao">
+        <option value="">— Selecione —</option>
+        <option value="neutro">🔄 Neutro (rally construção)</option>
+        <option value="ofensivo">⚔️ Ofensivo (bola curta/aberta)</option>
+        <option value="defensivo">🛡️ Defensivo (posição ruim)</option>
+        <option value="saque_dev">🎾 Saque / Devolução</option>
+        <option value="duplas">👥 Doubles (FITP)</option>
+      </select>
+    </div>
+
+    <!-- SCORE DIMS_QUICK -->
+    <div style="background:rgba(29,158,117,0.05);border:1px solid rgba(29,158,117,0.2);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+        <span style="font-size:13px">📈</span>
+        <div style="font-size:11px;font-weight:700;color:var(--green2)">SCORE RÁPIDO — 5 Dimensões</div>
+        <span style="font-size:9px;color:var(--muted);margin-left:auto">0 = não avaliado · 5 = excelente</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+        <div style="text-align:center">
+          <div style="font-size:9px;font-weight:700;color:#25c491;margin-bottom:4px">🎾 Bio</div>
+          <input type="number" id="par-dq-bio" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#25c491">
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;font-weight:700;color:#5b9bd5;margin-bottom:4px">🎯 Cons</div>
+          <input type="number" id="par-dq-cons" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#5b9bd5">
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;font-weight:700;color:#e8a030;margin-bottom:4px">⚡ Foot</div>
+          <input type="number" id="par-dq-foot" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#e8a030">
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;font-weight:700;color:#9b72d0;margin-bottom:4px">🧩 Tát</div>
+          <input type="number" id="par-dq-tatic" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#9b72d0">
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;font-weight:700;color:#e05c5c;margin-bottom:4px">🧠 Men</div>
+          <input type="number" id="par-dq-mental" min="0" max="5" value="0" class="fc" style="text-align:center;padding:4px;font-size:16px;font-weight:700;color:#e05c5c">
+        </div>
+      </div>
+    </div>
+
+    <!-- ELOGIO -->
+    <div style="margin-bottom:12px">
+      <label class="fl">💬 Elogio específico dado no fechamento</label>
+      <input class="fc" id="par-elogio" type="text" placeholder="Ex: unit turn presente antes do quique — criou espaço no FH">
+    </div>
+
+    <!-- FOCO PRÓXIMA -->
+    <div style="margin-bottom:18px">
+      <label class="fl">🎯 Foco para a próxima aula</label>
+      <input class="fc" id="par-prox" type="text" placeholder="Ex: recovery step após o BH — cone no centro">
+    </div>
+
+    <!-- AÇÕES -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-p" onclick="savePosAulaReg()" style="flex:1">💾 Salvar registro pós-aula</button>
+      <button class="btn btn-s" onclick="closePosAulaReg(false)" style="color:var(--muted)">Pular por agora</button>
+    </div>
+
+  </div>
+</div>
+
+</body></html>`);
   win.document.close();
 }
 
@@ -4433,31 +4457,36 @@ function saveLessonDraft() {
 }
 
 function showSavedConfirmCard(lessonId) {
-  // Insere card de confirmação temporário no topo do d2-last-lesson
   const el = document.getElementById('d2-last-lesson');
   if(!el) return;
 
-  const confirm = document.createElement('div');
-  confirm.id = 'saved-confirm-card';
-  confirm.style.cssText = 'margin-bottom:14px;background:linear-gradient(135deg,rgba(29,158,117,0.15),rgba(29,158,117,0.08));border:2px solid rgba(29,158,117,0.5);border-radius:12px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;animation:fadeIn .3s ease';
-  confirm.innerHTML = `
+  // Remover card anterior se existir
+  document.getElementById('saved-confirm-card')?.remove();
+
+  const card = document.createElement('div');
+  card.id = 'saved-confirm-card';
+  card.style.cssText = 'margin-bottom:14px;background:linear-gradient(135deg,rgba(29,158,117,0.15),rgba(29,158,117,0.08));border:2px solid rgba(29,158,117,0.5);border-radius:12px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;animation:fadeIn .3s ease';
+  card.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px">
       <div style="width:36px;height:36px;background:rgba(29,158,117,0.2);border:1px solid var(--green);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">✅</div>
       <div>
         <div style="font-size:13px;font-weight:700;color:var(--green2)">Aula salva!</div>
-        <div style="font-size:11px;color:var(--muted)">Envie o resumo para o aluno agora</div>
+        <div style="font-size:11px;color:var(--muted)">Registre o que aconteceu na aula</div>
       </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-p" onclick="openPostLesson(${lessonId});document.getElementById('saved-confirm-card')?.remove()" style="gap:6px;font-size:12px">
-        📲 Enviar pós-aula ao aluno
+      <button class="btn btn-p btn-sm" onclick="openPosAulaReg(${lessonId})" style="font-size:12px">
+        📊 Registrar pós-aula
+      </button>
+      <button class="btn btn-s btn-sm" onclick="showPostLessonPrompt(${lessonId})" style="font-size:11px">
+        📲 Enviar ao aluno
       </button>
       <button class="btn btn-s btn-sm" onclick="document.getElementById('saved-confirm-card')?.remove()" style="font-size:11px;color:var(--muted)">
-        Depois
+        Fechar
       </button>
     </div>`;
 
-  el.insertBefore(confirm, el.firstChild);
+  el.insertBefore(card, el.firstChild);
 }
 
 function pushLesson(lesson) {
@@ -9750,6 +9779,84 @@ function getAlertaFootwork(entity) {
   renderManual();
   renderStudentGrid();
 })();
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// MODAL PÓS-AULA REGISTRO — abre após salvar aula
+// ═══════════════════════════════════════════════════════════
+let _posAulaLessonId = null;
+
+function openPosAulaReg(lessonId) {
+  _posAulaLessonId = lessonId;
+  // Limpar campos
+  ['par-obs-j','par-elogio','par-prox'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  ['par-dq-bio','par-dq-cons','par-dq-foot','par-dq-tatic','par-dq-mental'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = 0;
+  });
+  const sit = document.getElementById('par-situacao');
+  if(sit) sit.value = '';
+  document.getElementById('posAulaRegModal').classList.add('open');
+}
+
+function savePosAulaReg() {
+  if(!_posAulaLessonId || !activeEntity) return;
+  const aulas = activeEntity.aulas || [];
+  const idx = aulas.findIndex(a => a.id === _posAulaLessonId);
+  if(idx === -1) { showToast('⚠ Aula não encontrada', true); return; }
+
+  // Coletar dados do modal
+  aulas[idx].obs_j          = document.getElementById('par-obs-j')?.value || '';
+  aulas[idx].elogio         = document.getElementById('par-elogio')?.value || '';
+  aulas[idx].foco_prox      = document.getElementById('par-prox')?.value || '';
+  aulas[idx].situacao_fundamental = document.getElementById('par-situacao')?.value || '';
+  aulas[idx].dims_quick = {
+    bio:    Math.min(5, Math.max(0, parseInt(document.getElementById('par-dq-bio')?.value)||0)),
+    cons:   Math.min(5, Math.max(0, parseInt(document.getElementById('par-dq-cons')?.value)||0)),
+    foot:   Math.min(5, Math.max(0, parseInt(document.getElementById('par-dq-foot')?.value)||0)),
+    tatic:  Math.min(5, Math.max(0, parseInt(document.getElementById('par-dq-tatic')?.value)||0)),
+    mental: Math.min(5, Math.max(0, parseInt(document.getElementById('par-dq-mental')?.value)||0)),
+  };
+
+  saveStudents();
+  renderLastLesson();
+  document.getElementById('posAulaRegModal').classList.remove('open');
+  showToast('✓ Pós-aula salvo');
+
+  // Perguntar se quer enviar pós-aula ao aluno
+  showToast('✓ Pós-aula salvo — clique em "📲 Pós-aula aluno" no histórico para enviar');
+  // Mostrar card de envio ao aluno
+  showPostLessonPrompt(_posAulaLessonId);
+}
+
+function closePosAulaReg(saved) {
+  document.getElementById('posAulaRegModal').classList.remove('open');
+  if(!saved) {
+    // Mesmo pulando, mostrar opção de enviar pós-aula
+    showPostLessonPrompt(_posAulaLessonId);
+  }
+}
+
+function showPostLessonPrompt(lessonId) {
+  const el = document.getElementById('saved-confirm-card');
+  if(!el) return;
+  el.innerHTML =
+    '<div style="display:flex;align-items:center;gap:10px">' +
+      '<div style="width:36px;height:36px;background:rgba(29,158,117,0.2);border:1px solid var(--green);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">✅</div>' +
+      '<div>' +
+        '<div style="font-size:13px;font-weight:700;color:var(--green2)">Aula registrada!</div>' +
+        '<div style="font-size:11px;color:var(--muted)">Envie o resumo para o aluno</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      '<button class="btn btn-p btn-sm" onclick="openPostLesson(' + lessonId + ');document.getElementById(&quot;saved-confirm-card&quot;)?.remove()" style="font-size:12px">📲 Enviar pós-aula ao aluno</button>' +
+      '<button class="btn btn-s btn-sm" onclick="document.getElementById(&quot;saved-confirm-card&quot;)?.remove()" style="font-size:11px;color:var(--muted)">Fechar</button>' +
+    '</div>';
+}
 </script>
 </body>
 </html>
