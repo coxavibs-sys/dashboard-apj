@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%231D9E75'/><text y='24' x='5' font-size='22'>🎾</text></svg>">
 
-<title>Dashboard APJ · V1.17 · Approach Tennis Academy</title>
+<title>Dashboard APJ · V1.17-Paulo · Tennis by Paulo</title>
 <style>
 :root{
   --bg:#0b1019;--card:#141e2e;--card2:#192236;--card3:#1e293b;
@@ -250,10 +250,10 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 .ag-qtab:hover{color:var(--green2)}
 .ag-qtab.on{color:var(--green2);border-bottom-color:var(--green2)}
 .ag-table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
-.ag-table th{background:var(--card2);color:var(--muted);font-weight:700;text-align:center;padding:8px 4px;border:1px solid var(--border2);font-size:10px;text-transform:uppercase;letter-spacing:.4px}
-.ag-table th.ag-th-hora{width:52px;background:var(--card);color:var(--muted)}
+.ag-table th{background:var(--card2);color:var(--muted);font-weight:700;text-align:center;padding:10px 6px;border:1px solid var(--border2);font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+.ag-table th.ag-th-hora{width:68px;background:var(--card);color:var(--muted)}
 .ag-table td{border:1px solid rgba(255,255,255,0.05);padding:0;height:20px;vertical-align:top;position:relative}
-.ag-table td.ag-hora{background:var(--card);color:var(--muted);font-size:11px;font-weight:600;text-align:center;vertical-align:top;padding:2px 4px 0;white-space:nowrap;width:52px;border-right:2px solid var(--border2)}
+.ag-table td.ag-hora{background:var(--card);color:var(--muted);font-size:11px;font-weight:600;text-align:center;vertical-align:top;padding:2px 4px 0;white-space:nowrap;width:68px;border-right:2px solid var(--border2)}
 .ag-table td.ag-fora{background:rgba(0,0,0,0.3);cursor:not-allowed}
 .ag-table td.ag-livre{background:var(--bg);cursor:pointer;transition:background .12s}
 .ag-table td.ag-livre:hover{background:rgba(29,158,117,0.1);border-color:rgba(29,158,117,0.3)}
@@ -317,7 +317,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
   p{font-size:12px}
   .score-total-num{font-size:32px}
   .dim-score-input{width:48px;font-size:16px}
-  .ag-table td{height:64px}
+  .ag-table td{height:80px}
   .ag-slot-nome{font-size:13px}
   .ag-slot-prof,.ag-slot-dur,.ag-slot-nivel{font-size:11px}
   .g4{grid-template-columns:1fr 1fr}
@@ -381,8 +381,8 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
   <div class="logo">
     <div class="logo-mark">APJ</div>
     <div>
-      <div class="logo-name">Approach Tennis Academy</div>
-      <div class="logo-sub muted">Dashboard · V1.17 · Santos SP</div>
+      <div class="logo-name">Tennis by Paulo</div>
+      <div class="logo-sub muted">Dashboard · V1.17-Paulo · Tennis by Paulo</div>
     </div>
   </div>
   <nav class="nav">
@@ -412,7 +412,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
         <span style="font-size:12px;color:var(--muted)">Escalabilidade e Formação</span>
       </div>
       <h1>Dashboard APJ</h1>
-      <p class="muted small" style="margin-top:4px">Approach Tennis Academy · Santos, SP · Marcos Habenschus · 2026</p>
+      <p class="muted small" style="margin-top:4px">Tennis by Paulo · Santos, SP · Paulo Venchiarutti · 2026</p>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <div class="card2" style="text-align:center;min-width:80px">
@@ -687,17 +687,15 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
         <!-- Legenda -->
         <div id="ag-legend" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px"></div>
 
-        <!-- Quadras tabs -->
+        <!-- Unidades tabs (Paulo) -->
         <div style="display:flex;gap:2px;border-bottom:1px solid var(--border2)">
-          <button class="ag-qtab on" id="qtab-0" onclick="switchQuadra(0)">🎾 Q1</button>
-          <button class="ag-qtab" id="qtab-1" onclick="switchQuadra(1)">🎾 Q2</button>
-          <button class="ag-qtab" id="qtab-2" onclick="switchQuadra(2)">🎾 Q3</button>
-          <button class="ag-qtab" id="qtab-3" onclick="switchQuadra(3)">🎾 Q4</button>
+          <button class="ag-qtab on" id="utab-0" onclick="switchUnidade(0)">🏢 Unidade 1</button>
+          <button class="ag-qtab"    id="utab-1" onclick="switchUnidade(1)">🏢 Unidade 2</button>
         </div>
 
         <!-- Grade -->
         <div style="overflow-x:auto">
-          <div id="ag-grade" style="min-width:400px"></div>
+          <div id="ag-grade" style="min-width:1170px"></div>
           <div id="ag-legenda-cores" style="margin-top:8px"></div>
         </div>
       </div>
@@ -1178,6 +1176,9 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
         <div style="font-size:9px;color:var(--muted)">pendentes</div>
       </div>
     </div>
+
+    <!-- AVISO HORÁRIOS CADASTRADOS -->
+    <div id="freq-horarios-aviso" style="display:none;margin-bottom:14px"></div>
 
     <!-- GRÁFICO DE CONSTÂNCIA + CALENDÁRIO -->
     <div class="g2" style="margin-bottom:16px;align-items:start">
@@ -4299,7 +4300,7 @@ function printLesson() {
     </div>
   </div>
 
-  <div class="footer">MÉTODO APJ · Approach Tennis Academy · Santos, SP · Marcos Habenschus · 2026</div>
+  <div class="footer">MÉTODO APJ · Tennis by Paulo · Santos, SP · Paulo Venchiarutti · 2026</div>
   </body></html>`);
   win.document.close();
 }
@@ -4835,7 +4836,7 @@ function printSavedLesson(id) {
   ${lesson.obs_j?`<div class="obs-box"><div class="obs-label">📊 Observações do J</div><div style="font-size:12px;line-height:1.6">${lesson.obs_j}</div></div>`:''}
   ${lesson.elogio?`<div class="obs-box" style="border-color:#25c491"><div class="obs-label">💬 Elogio específico</div><div style="font-size:12px">${lesson.elogio}</div></div>`:''}
   ${lesson.foco_prox?`<div class="obs-box" style="border-color:#e8a030"><div class="obs-label">🎯 Próxima aula</div><div style="font-size:12px;font-weight:600;color:#e8a030">${lesson.foco_prox}</div></div>`:''}
-  <div class="footer">MÉTODO APJ · Approach Tennis Academy · Santos, SP · Marcos Habenschus · 2026</div>
+  <div class="footer">MÉTODO APJ · Tennis by Paulo · Santos, SP · Paulo Venchiarutti · 2026</div>
   </body></html>`);
   win.document.close();
 }
@@ -5364,6 +5365,41 @@ function _renderFreqKpis() {
   const lbl = document.getElementById('freq-const-pct-lbl');
   if(bar) bar.style.width = (constancia ?? 0) + '%';
   if(lbl){ lbl.textContent = constancia !== null ? constancia + '%' : '—'; lbl.style.color = corConst; }
+
+  // Aviso de horários cadastrados
+  const avisoEl = document.getElementById('freq-horarios-aviso');
+  if(avisoEl) {
+    const horarios = _freqEntity.horarios || [];
+    const nomeAluno = _freqEntity.nome || '';
+    if(horarios.length === 0) {
+      avisoEl.style.display = 'block';
+      avisoEl.innerHTML = `<div style="background:rgba(232,160,48,0.08);border:1px solid rgba(232,160,48,0.3);border-radius:9px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:14px">⚠️</span>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--amber)">Nenhum horário cadastrado</div>
+            <div style="font-size:11px;color:var(--muted)">Adicione os horários do aluno para ver as previsões no calendário</div>
+          </div>
+        </div>
+        <button class="btn btn-s btn-sm" onclick="openEditStudentModal(${_freqEntity.id})" style="color:var(--amber);border-color:rgba(232,160,48,0.4);white-space:nowrap">✏️ Editar horários</button>
+      </div>`;
+    } else {
+      // Mostrar horários cadastrados com botão de edição
+      const DIAS_LABEL = ['Seg','Ter','Qua','Qui','Sex','Sáb'];
+      const horariosStr = horarios.map(h => `${DIAS_LABEL[h.dia]||'?'} ${h.hora||''}`).join(' · ');
+      avisoEl.style.display = 'block';
+      avisoEl.innerHTML = `<div style="background:rgba(29,158,117,0.05);border:1px solid rgba(29,158,117,0.2);border-radius:9px;padding:9px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:13px">📅</span>
+          <div>
+            <span style="font-size:11px;font-weight:600;color:var(--green2)">${horarios.length} horário${horarios.length!==1?'s':''} cadastrado${horarios.length!==1?'s':''}</span>
+            <span style="font-size:11px;color:var(--muted);margin-left:6px">${horariosStr}</span>
+          </div>
+        </div>
+        <button class="btn btn-s btn-sm" onclick="openEditStudentModal(${_freqEntity.id})" style="font-size:11px;color:var(--muted)">✏️ Editar</button>
+      </div>`;
+    }
+  }
 }
 
 // ── GRÁFICO DE SEMANAS ─────────────────────────────────────────────
@@ -8220,14 +8256,17 @@ function renderLegenda() {
 function renderGrade() {
   const el = document.getElementById('ag-grade');
   if(!el) return;
-  const q = agQuadraAtiva;
+  // No modo Paulo: renderizar 2 quadras da unidade ativa lado a lado
+  const q0 = agUnidadeAtiva * 2;     // Q1 da unidade (0 ou 2)
+  const q1 = agUnidadeAtiva * 2 + 1; // Q2 da unidade (1 ou 3)
+  const q  = q0; // compatibilidade com código legado abaixo
   const BASE = 15;
   const slotMin = parseInt(document.getElementById('ag-slot-dur')?.value||60);
 
   function toMin(h){ const [hh,mm]=h.split(':').map(Number); return hh*60+mm; }
   function minToH(m){ return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; }
 
-  const ROW_H = 20;
+  const ROW_H = 32;
   const START_MIN = 6*60;
   const END_MIN_WEEK = 22*60;
   const END_MIN_SAT  = 13*60;
@@ -8303,18 +8342,27 @@ function renderGrade() {
   const numRows = (d) => (endMin(d) - START_MIN) / BASE;
   const totalRows = Math.max(...[0,1,2,3,4,5].map(d => numRows(d)));
 
-  // Cabeçalho com data e destaque do dia atual
-  let html = `<table class="ag-table" style="table-layout:fixed"><thead><tr>
-    <th class="ag-th-hora">Hora</th>
-    ${diasSemana.map((dateDia, dIdx) => {
-      const isHoje = dateDia.getTime() === hoje.getTime();
-      const ehPassado = dateDia < hoje;
-      return `<th style="${isHoje?'color:var(--green2);background:rgba(29,158,117,0.08)':''}${ehPassado?'opacity:.5':''}">
-        <div style="font-size:10px;font-weight:700">${AG_DIAS[dIdx]}</div>
-        <div style="font-size:9px;font-weight:${isHoje?'700':'400'};color:${isHoje?'var(--green2)':'var(--muted)'}">${fmtDiaMes(dateDia)}</div>
-      </th>`;
-    }).join('')}
-  </tr></thead><tbody>`;
+  // ── Cabeçalho duplo: cada dia tem Q1 e Q2 lado a lado ──
+  const unNome = agUnidadeAtiva === 0 ? 'Unidade 1' : 'Unidade 2';
+  let html = `<table class="ag-table" style="table-layout:fixed"><thead>
+    <tr>
+      <th class="ag-th-hora" rowspan="2">Hora</th>
+      ${diasSemana.map((dateDia, dIdx) => {
+        const isHoje = dateDia.getTime() === hoje.getTime();
+        const ehPassado = dateDia < hoje;
+        return `<th colspan="2" style="${isHoje?'color:var(--green2);background:rgba(29,158,117,0.08)':''}${ehPassado?'opacity:.5':''}">
+          <div style="font-size:10px;font-weight:700">${AG_DIAS[dIdx]}</div>
+          <div style="font-size:9px;font-weight:${isHoje?'700':'400'};color:${isHoje?'var(--green2)':'var(--muted)'}">${fmtDiaMes(dateDia)}</div>
+        </th>`;
+      }).join('')}
+    </tr>
+    <tr>
+      ${diasSemana.map((_,dIdx) => {
+        return '<th style="font-size:9px;color:var(--muted);font-weight:600;padding:2px 0;border-top:1px solid rgba(255,255,255,0.05)">Q1</th>' +
+               '<th style="font-size:9px;color:var(--muted);font-weight:600;padding:2px 0;border-top:1px solid rgba(255,255,255,0.05);border-left:1px solid rgba(255,255,255,0.04)">Q2</th>';
+      }).join('')}
+    </tr>
+  </thead><tbody>`;
 
   // Linhas de 15min
   for(let row=0; row<totalRows; row++){
@@ -8327,13 +8375,25 @@ function renderGrade() {
     // Coluna de hora
     html += `<td class="ag-hora" style="padding:0 4px;font-size:${showLabel?'10':'8'}px;color:${showLabel?'var(--muted)':showHalf?'rgba(122,132,153,0.5)':'rgba(122,132,153,0.15)'};vertical-align:top;padding-top:1px;border-top:${showLabel?'1px solid rgba(255,255,255,0.06)':showHalf?'1px solid rgba(255,255,255,0.03)':'none'}">${showLabel||showHalf?h:''}</td>`;
 
-    // Colunas de cada dia
+    // Colunas de cada dia — renderizar Q1 e Q2 lado a lado
     for(let d=0;d<6;d++){
-      // Só renderizar td na primeira linha do dia — o resto usa position:absolute dentro
+      // Renderizar 2 células por dia (Q1 e Q2 da unidade)
+      for(let qOffset=0; qOffset<2; qOffset++){
+        const qAtual = q0 + qOffset; // q0=quadra base da unidade
       if(row===0){
         const totalH = numRows(d) * ROW_H;
-        // Encontrar slots deste dia
-        const slotsD = slotsQ.filter(s=>s.d===d);
+        // Slots desta quadra neste dia
+        const slotsD = (() => {
+          const result = [];
+          Object.entries(agendaData).forEach(([key,slot])=>{
+            const m = key.match(/^q(\d+)_d(\d+)_(.+)$/);
+            if(!m || parseInt(m[1])!==qAtual) return;
+            const dd = parseInt(m[2]), hora = m[3];
+            const durMin = slot.durMin || slotMin;
+            result.push({ d:dd, hora, inicioMin: toMin(hora), durMin, slot, key });
+          });
+          return result.filter(s=>s.d===d);
+        })();
 
         // Construir blocos absolutos
         let blocos = '';
@@ -8361,7 +8421,7 @@ function renderGrade() {
             const proxOcup = slotsD.filter(s=>s.inicioMin>m).sort((a,b)=>a.inicioMin-b.inicioMin)[0];
             const fimLivre = proxOcup ? Math.min(proxOcup.inicioMin, m+slotMin) : m+slotMin;
             const alturaH  = Math.max(BASE, fimLivre-m);
-            blocos += `<div class="ag-livre" onclick="openSlotModal(${q},${d},'${hora_ancora}')"
+            blocos += `<div class="ag-livre" onclick="openSlotModal(${qAtual},${d},'${hora_ancora}')"
               style="position:absolute;left:0;right:0;top:${top}px;height:${alturaH/BASE*ROW_H}px;z-index:2;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .12s"
               onmouseenter="this.style.opacity='1';this.style.background='rgba(29,158,117,0.08)'"
               onmouseleave="this.style.opacity='0';this.style.background=''"
@@ -8404,23 +8464,25 @@ function renderGrade() {
             ? `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.7);margin-right:3px;vertical-align:middle"></span>${prof.nome.split(' ')[0]}`
             : '';
 
-          // Linha 3 — nome(s) do(s) aluno(s)
+          // Linha 3 — nome(s) do(s) aluno(s) — sempre visíveis, empilhados
           const membrosSlot = isGroup && (entity.membros||[]).length
             ? entity.membros.map(mid=>{ const m=students.find(s=>Number(s.id)===Number(mid)); return m?m.nome.split(' ')[0]:null; }).filter(Boolean)
             : [];
-          const linha3 = isReserva || isReposicao
-            ? (slot.obs||'')
-            : isGroup
-              ? membrosSlot.join(' · ') || nome.split(' ')[0]
-              : nome.split(' ')[0];
+          // Para grupo: cada membro em linha separada
+          const linha3Html = isReserva || isReposicao
+            ? `<div style="font-size:10px;color:rgba(255,255,255,0.85);line-height:1.4;margin-top:1px">${slot.obs||''}</div>`
+            : isGroup && membrosSlot.length
+              ? membrosSlot.map(n => `<div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.95);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n}</div>`).join('')
+              : `<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.95);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nome.split(' ')[0]}</div>`;
+          const linha3 = nome.split(' ')[0]; // legado
 
           const onclick = isReserva
-            ? `openSlotModal(${q},${d},'${hora}')`
+            ? `openSlotModal(${qAtual},${d},'${hora}')`
             : entity
               ? (entity.type === 'group'
-                  ? `openChamadaTurma('${entity.id}','${hora}',${q},${d})`
-                  : `abrirChamadaRapida(${entity.id}, ${q}, ${d}, '${hora}')`)
-              : `openSlotModal(${q},${d},'${hora}')`;
+                  ? `openChamadaTurma('${entity.id}','${hora}',${qAtual},${d})`
+                  : `abrirChamadaRapida(${entity.id}, ${qAtual}, ${d}, '${hora}')`)
+              : `openSlotModal(${qAtual},${d},'${hora}')`;
 
           // ── Badge falta justificada (hoje) ──
           const hoje = new Date().toISOString().slice(0,10);
@@ -8448,19 +8510,19 @@ function renderGrade() {
           })() : '';
 
           blocos += `
-            <div class="ag-slot-wrap" data-slot-key="q${q}_d${d}_${hora}" style="position:absolute;left:2px;right:2px;top:${top+2}px;height:${height-4}px;z-index:10;border-radius:7px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.4)"
+            <div class="ag-slot-wrap" data-slot-key="q${qAtual}_d${d}_${hora}" style="position:absolute;left:2px;right:2px;top:${top+2}px;height:${height-4}px;z-index:10;border-radius:7px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.4)"
               onmouseenter="this.querySelector('.ag-edit-btn-abs')&&(this.querySelector('.ag-edit-btn-abs').style.opacity='1');this.querySelector('.ag-del-btn-abs')&&(this.querySelector('.ag-del-btn-abs').style.opacity='1')"
               onmouseleave="this.querySelector('.ag-edit-btn-abs')&&(this.querySelector('.ag-edit-btn-abs').style.opacity='0');this.querySelector('.ag-del-btn-abs')&&(this.querySelector('.ag-del-btn-abs').style.opacity='0')">
-              <div class="ag-slot" style="background:${bg};height:100%;border-radius:7px;position:relative;border-left:3px solid rgba(255,255,255,0.2);padding:4px 5px 3px" onclick="${onclick}">
+              <div class="ag-slot" style="background:${bg};height:100%;border-radius:7px;position:relative;border-left:3px solid rgba(255,255,255,0.2);padding:6px 7px 5px" onclick="${onclick}">
                 ${badgeFalta}${_freqDot}
-                <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3">${linha1}</div>
-                ${linha2 ? `<div style="font-size:11px;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-top:1px">${linha2}</div>` : ''}
-                ${linha3 ? `<div style="font-size:11px;color:rgba(255,255,255,0.95);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-top:1px">${linha3}</div>` : ''}
+                <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4">${linha1}</div>
+                ${linha2 ? `<div style="font-size:11px;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;margin-top:2px">${linha2}</div>` : ''}
+                ${linha3Html}
               </div>
-              <button class="ag-edit-btn-abs" onclick="event.stopPropagation();openSlotModal(${q},${d},'${hora}')"
+              <button class="ag-edit-btn-abs" onclick="event.stopPropagation();openSlotModal(${qAtual},${d},'${hora}')"
                 style="position:absolute;top:3px;right:24px;background:rgba(0,0,0,0.4);border:none;color:#fff;border-radius:4px;width:19px;height:19px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;opacity:0;transition:opacity .15s"
                 title="Editar">✎</button>
-              <button class="ag-del-btn-abs" onclick="event.stopPropagation();deleteSlot(${q},${d},'${hora}')"
+              <button class="ag-del-btn-abs" onclick="event.stopPropagation();deleteSlot(${qAtual},${d},'${hora}')"
                 style="position:absolute;top:3px;right:3px;background:rgba(180,30,30,0.55);border:none;color:#fff;border-radius:4px;width:19px;height:19px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;opacity:0;transition:opacity .15s"
                 title="Remover">×</button>
             </div>`;
@@ -8489,8 +8551,8 @@ function renderGrade() {
               onmouseleave="this.querySelector('.rg-del-btn')&&(this.querySelector('.rg-del-btn').style.opacity='0')">
               <div class="ag-slot" style="background:${bg};height:100%;border-radius:7px;position:relative;border-left:3px solid rgba(255,255,255,0.4);padding:4px 5px 3px;opacity:.92;cursor:pointer"
                 onclick="openReposicaoGestao('${alunoId}','${hora}','${dataRep}',${q},${d})">
-                <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.95);line-height:1.3">🔄 Reposição</div>
-                <div style="font-size:11px;color:rgba(255,255,255,0.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-top:1px">${nomes}</div>
+                <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.8);line-height:1.3">↩ Reposição</div>
+                ${repos.map(r=>`<div style="font-size:11px;font-weight:700;color:#fff;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><strong>${r.nome.split(' ')[0]}</strong></div>`).join('')}
               </div>
               <button class="rg-del-btn" onclick="event.stopPropagation();cancelarReposicaoDireto('${alunoId}','${hora}','${dataRep}')"
                 style="position:absolute;top:3px;right:3px;background:rgba(180,30,30,0.55);border:none;color:#fff;border-radius:4px;width:19px;height:19px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;opacity:0;transition:opacity .15s"
@@ -8511,9 +8573,15 @@ function renderGrade() {
           const top = ((slotTurma.inicioMin - START_MIN) / BASE) * ROW_H;
           const height = (slotTurma.durMin / BASE) * ROW_H;
           const nomes = alunosExtra.map(a=>a.nome).join(', ');
+          // M3: reposição de turma — nomes em negrito + badge visual
+          const nomesHtmlRep = alunosExtra.map(a =>
+            `<div style="font-size:9px;font-weight:700;color:#fff;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">↩ <strong>${a.nome}</strong></div>`
+          ).join('');
           blocos += `
-            <div style="position:absolute;left:4px;right:4px;top:${top+2}px;height:${Math.min(20,height-4)}px;z-index:15;pointer-events:none">
-              <div style="position:absolute;bottom:3px;right:3px;background:rgba(155,114,208,0.95);color:#fff;font-size:8px;font-weight:700;padding:2px 5px;border-radius:5px;white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis" title="Reposição: ${nomes}">+${alunosExtra.length} rep${alunosExtra.length>1?'.':' '+nomes}</div>
+            <div style="position:absolute;left:4px;right:4px;top:${top+height-Math.min(alunosExtra.length*16+8,height-4)-2}px;z-index:15;pointer-events:none">
+              <div style="background:rgba(155,114,208,0.92);border:1px solid rgba(155,114,208,0.6);border-radius:5px;padding:2px 6px;max-width:100%" title="Reposição: ${nomes}">
+                ${nomesHtmlRep}
+              </div>
             </div>`;
         });
 
@@ -8522,13 +8590,14 @@ function renderGrade() {
           ? `<div style="position:absolute;left:0;right:0;top:${numRows(d)*ROW_H}px;bottom:0;background:rgba(0,0,0,0.3);cursor:not-allowed;z-index:3"></div>`
           : '';
 
-        html += `<td rowspan="${totalRows}" style="padding:0;position:relative;vertical-align:top;height:${totalH}px">
+        html += `<td rowspan="${totalRows}" style="padding:0;position:relative;vertical-align:top;height:${totalH}px${qOffset===0?';border-right:1px solid rgba(255,255,255,0.06)':''}">
           ${blocos}
           ${zonaFora}
         </td>`;
       }
       // rows > 0: célula já coberta pelo rowspan — não emitir td
-    }
+      } // fecha for qOffset
+    } // fecha for d
     html += `</tr>`;
   }
 
@@ -8561,11 +8630,25 @@ function renderGrade() {
   }
 }
 
-// ─── SWITCH QUADRA ────────────────────
+// ─── SWITCH UNIDADE (Paulo) ────────────────────
+let agUnidadeAtiva = 0; // 0=Unidade1, 1=Unidade2
+
+function switchUnidade(u) {
+  agUnidadeAtiva = u;
+  // Unidade 1 → quadras 0 e 1; Unidade 2 → quadras 2 e 3
+  agQuadraAtiva = u * 2;
+  for(let i=0;i<2;i++){
+    const tab = document.getElementById('utab-'+i);
+    if(tab) tab.classList.toggle('on', i===u);
+  }
+  renderGrade();
+}
+
+// ─── SWITCH QUADRA (legado — mantido para compatibilidade) ────────────────────
 function switchQuadra(q) {
   agQuadraAtiva = q;
   for(let i=0;i<AG_QUADRAS;i++){
-    const tab = document.getElementById(`qtab-${i}`);
+    const tab = document.getElementById('qtab-'+i);
     if(tab) tab.classList.toggle('on', i===q);
   }
   renderGrade();
