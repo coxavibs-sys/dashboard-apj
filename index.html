@@ -387,12 +387,11 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     </div>
   </div>
   <nav class="nav">
-    <button class="nb on" onclick="showPane(0)">🏠 <span class="nl">Visão Geral</span></button>
-    <button class="nb" onclick="showPane(1)">📋 <span class="nl">Manual 10.1</span></button>
-    <button class="nb" onclick="showPane(2)">🏋️ <span class="nl">D1 Exercícios</span></button>
-    <button class="nb" onclick="showPane(3)">🎾 <span class="nl">D2 Coord.</span></button>
-    <button class="nb" id="nb-d3-freq" onclick="showPane(4)">📅 <span class="nl">D3 Frequência</span></button>
-    <button class="nb" onclick="showPane(5)">📊 <span class="nl">D5 Stats</span></button>
+    <button class="nb on" id="nb-coord" onclick="showPane(3)">🎾 <span class="nl">Coordenação</span></button>
+    <button class="nb" id="nb-d3-freq" onclick="showPane(4)">📅 <span class="nl">Frequência</span></button>
+    <button class="nb" id="nb-stats" onclick="showPane(5)">📊 <span class="nl">Stats</span></button>
+    <button class="nb" id="nb-alunos" onclick="showPaneAlunos()">👤 <span class="nl">Alunos</span></button>
+    <button class="nb" id="nb-turmas" onclick="showPaneTurmas()">👥 <span class="nl">Turmas</span></button>
   </nav>
   <button onclick="openSyncModal()" style="background:rgba(29,158,117,0.15);border:1px solid rgba(29,158,117,0.3);color:var(--green2);font-size:12px;font-weight:500;padding:6px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;font-family:var(--font);transition:all .15s;flex-shrink:0" title="Exportar ou importar tudo — sincronizar entre celular e computador" onmouseover="this.style.background='rgba(29,158,117,0.25)'" onmouseout="this.style.background='rgba(29,158,117,0.15)'">
     ⇅ Sincronizar
@@ -405,7 +404,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 <!-- ══════════════════════════════════════════════
      PANE 0 — VISÃO GERAL
 ══════════════════════════════════════════════ -->
-<div class="pane on" id="p0">
+<div class="pane" id="p0">
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap">
     <div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
@@ -637,7 +636,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 <!-- ══════════════════════════════════════════════
      PANE 3 — D2 PLANEJADOR DE AULA
 ══════════════════════════════════════════════ -->
-<div class="pane" id="p3">
+<div class="pane on" id="p3">
 
   <!-- VIEWS: lista / novo plano / histórico -->
   <div id="d2-list-view">
@@ -752,16 +751,13 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
         <div style="font-size:11px;color:var(--muted)" id="d2-plan-sub"></div>
       </div>
       <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-s btn-sm" onclick="showAvalEntity()">🏆 Avaliação</button>
         <button class="btn btn-s btn-sm" onclick="showTrimestre()">📅 Trimestre</button>
-        <button class="btn btn-s btn-sm" onclick="showHistory()">📋 Histórico</button>
-        <button class="btn btn-s btn-sm" id="freq-nav-btn" onclick="showFreqView()" style="position:relative">📊 Frequência</button>
-        <button class="btn btn-p btn-sm" onclick="newLesson()">+ Nova Aula</button>
+        <button class="btn btn-p btn-sm" id="freq-nav-btn" onclick="showFreqView()" style="position:relative">📊 Frequência</button>
       </div>
     </div>
 
-    <!-- LAST LESSON SUMMARY -->
-    <div id="d2-last-lesson"></div>
+    <!-- LAST LESSON SUMMARY (oculto para Paulo) -->
+    <div id="d2-last-lesson" style="display:none"></div>
 
     <!-- LESSON FORM -->
     <div id="d2-lesson-form" style="display:none">
@@ -1931,54 +1927,13 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap">
     <div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-        <span class="badge b-green">D4</span>
-        <span class="badge b-check">Estatísticas</span>
+        <span class="badge b-green">Stats</span>
+        <span class="badge b-check">Frequência</span>
       </div>
-      <h2 style="margin-bottom:2px">Visão Analítica APJ</h2>
-      <p class="muted small">Dados em tempo real — alunos, aulas, exercícios e avaliações.</p>
+      <h2 style="margin-bottom:2px">📊 Frequência e Constância</h2>
+      <p class="muted small">Dados em tempo real — presenças, faltas, reposições e alertas.</p>
     </div>
     <button class="btn btn-s btn-sm" onclick="renderStats()">↺ Atualizar</button>
-  </div>
-
-  <!-- KPIs -->
-  <div id="stats-kpis" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:24px"></div>
-
-  <div class="g2" style="margin-bottom:20px">
-    <div class="card">
-      <h3 style="margin-bottom:14px">👥 Distribuição por Nível APJ</h3>
-      <div id="stats-nivel-chart"></div>
-    </div>
-    <div class="card">
-      <h3 style="margin-bottom:14px">📈 Aulas Registradas por Mês</h3>
-      <div id="stats-aulas-chart"></div>
-    </div>
-  </div>
-
-  <div class="g2" style="margin-bottom:20px">
-    <div class="card">
-      <h3 style="margin-bottom:14px">🏋️ Top 8 Exercícios Mais Usados</h3>
-      <div id="stats-ex-chart"></div>
-    </div>
-    <div class="card">
-      <h3 style="margin-bottom:14px">🎾 Banco por Golpe</h3>
-      <div id="stats-golpe-chart"></div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-bottom:20px">
-    <h3 style="margin-bottom:6px">🕸 Radar APJ — Média das Últimas Avaliações</h3>
-    <p class="muted small" style="margin-bottom:16px">Média das 5 dimensões considerando a avaliação mais recente de cada aluno avaliado.</p>
-    <div style="display:flex;align-items:center;gap:32px;flex-wrap:wrap">
-      <div id="stats-radar-svg" style="flex-shrink:0"></div>
-      <div id="stats-radar-legend"></div>
-    </div>
-  </div>
-
-  <!-- ── FREQUÊNCIA: KPIs ── -->
-  <div class="div" style="margin:24px 0 18px"></div>
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-    <h2 style="margin:0">📊 Frequência e Constância</h2>
-    <span class="badge b-blue">Novo</span>
   </div>
 
   <!-- KPIs frequência -->
@@ -2012,38 +1967,73 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     </div>
   </div>
 
-  <div class="div" style="margin:8px 0 18px"></div>
-
-  <!-- ── ANÁLISE TÁTICA E FOOTWORK [RFET + CIÊNCIA] ── -->
-  <div class="g2" style="margin-bottom:20px">
-    <div class="card">
-      <h3 style="margin-bottom:14px">⚡ Situações Táticas — Academia</h3>
-      <p class="muted small" style="margin-bottom:12px">Distribuição das situações fundamentais treinadas (RFET)</p>
-      <div id="stats-situacoes-chart"></div>
-    </div>
-    <div class="card">
-      <h3 style="margin-bottom:6px">👟 Footwork como Foco</h3>
-      <p class="muted small" style="margin-bottom:12px">80% dos erros têm origem no footwork — meta: min. 20% das aulas</p>
-      <div id="stats-footwork-chart"></div>
-    </div>
-  </div>
-
-  <!-- ── FAIXA DE PROGRAMA [CANADA LTPD] ── -->
-  <div class="card" style="margin-bottom:20px">
-    <h3 style="margin-bottom:14px">🏷️ Distribuição por Faixa de Programa (LTPD Canada)</h3>
-    <div id="stats-faixa-chart"></div>
-  </div>
-
-  <div class="div" style="margin:8px 0 18px"></div>
-
-  <!-- ── RESUMO POR ALUNO (já existia) ── -->
+  <!-- Resumo por aluno -->
   <div class="card">
     <h3 style="margin-bottom:14px">📋 Resumo por Aluno</h3>
     <div id="stats-alunos-table" style="overflow-x:auto"></div>
   </div>
 
+  <!-- IDs ocultos para manter compatibilidade com renderStats() -->
+  <div style="display:none">
+    <div id="stats-kpis"></div>
+    <div id="stats-nivel-chart"></div>
+    <div id="stats-aulas-chart"></div>
+    <div id="stats-ex-chart"></div>
+    <div id="stats-golpe-chart"></div>
+    <div id="stats-radar-svg"></div>
+    <div id="stats-radar-legend"></div>
+    <div id="stats-situacoes-chart"></div>
+    <div id="stats-footwork-chart"></div>
+    <div id="stats-faixa-chart"></div>
+  </div>
+
 </div>
 </div><!-- /p5 -->
+
+<!-- ══════════════════════════════════════════════
+     PANE 6 — ALUNOS
+══════════════════════════════════════════════ -->
+<div class="pane" id="p6">
+<div class="dash">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap">
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span class="badge b-green">👤</span>
+        <span class="badge b-check">Alunos</span>
+      </div>
+      <h2 style="margin-bottom:2px">Lista de Alunos</h2>
+      <p class="muted small">Todos os alunos cadastrados na academia.</p>
+    </div>
+    <button class="btn btn-s btn-sm" onclick="openNewStudentModal()">+ Novo Aluno</button>
+  </div>
+  <div class="card" style="margin-bottom:12px">
+    <input class="fc" id="p6-search" type="text" placeholder="🔍 Buscar aluno..." style="margin-bottom:12px" oninput="renderP6Alunos()">
+    <div id="p6-alunos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px"></div>
+  </div>
+</div>
+</div><!-- /p6 -->
+
+<!-- ══════════════════════════════════════════════
+     PANE 7 — TURMAS
+══════════════════════════════════════════════ -->
+<div class="pane" id="p7">
+<div class="dash">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap">
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <span class="badge b-green">👥</span>
+        <span class="badge b-check">Turmas</span>
+      </div>
+      <h2 style="margin-bottom:2px">Lista de Turmas</h2>
+      <p class="muted small">Todas as turmas cadastradas na academia.</p>
+    </div>
+    <button class="btn btn-s btn-sm" onclick="openNewGroupModal()">+ Nova Turma</button>
+  </div>
+  <div class="card" style="margin-bottom:12px">
+    <div id="p7-turmas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px"></div>
+  </div>
+</div>
+</div><!-- /p7 -->
 
 <!-- MODAL: ADICIONAR ALUNO À TURMA -->
 <div class="modal-bg" id="addMemberModal">
@@ -2572,17 +2562,18 @@ function saveTrim() {
 // ═══════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════
+// Mapa de IDs de botões nav por pane (Paulo)
+const PAULO_NAV_MAP = { 3:'nb-coord', 4:'nb-d3-freq', 5:'nb-stats', 6:'nb-alunos', 7:'nb-turmas' };
+
 function showPane(n) {
   document.querySelectorAll('.pane').forEach((p,i)=>p.classList.toggle('on',i===n));
-  document.querySelectorAll('.nb').forEach((b,i)=>b.classList.toggle('on',i===n));
+  // Atualizar nav: limpar todos, ativar o correto
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  const nbId = PAULO_NAV_MAP[n];
+  if(nbId) { const nb=document.getElementById(nbId); if(nb) nb.classList.add('on'); }
 
-  // Resetar cada aba para sua página inicial
-  if(n===2) {
-    // D1 Exercícios — sem sub-views, só renderizar
-    renderExercises();
-  }
+  if(n===2) { renderExercises(); }
   if(n===3) {
-    // D2 Coordenação — voltar para lista de alunos/turmas
     const views = ['d2-plan-view','d2-history-view','d2-trim-view','d2-aval-view','d2-freq-view'];
     views.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
     const list = document.getElementById('d2-list-view');
@@ -2591,14 +2582,74 @@ function showPane(n) {
     renderAgendaInline();
     renderStudentGrid();
   }
-  if(n===4) {
-    // D3 Frequência — voltar para chamada do dia
-    renderD3Freq();
+  if(n===4) { renderD3Freq(); }
+  if(n===5) { renderStats(); }
+  if(n===6) { renderP6Alunos(); }
+  if(n===7) { renderP7Turmas(); }
+}
+
+function showPaneAlunos() { showPane(6); }
+function showPaneTurmas() { showPane(7); }
+
+function renderP6Alunos() {
+  loadData();
+  const search = (document.getElementById('p6-search')?.value||'').toLowerCase();
+  const el = document.getElementById('p6-alunos-grid');
+  if(!el) return;
+  const alunos = (students||[]).filter(s=>s.type==='student')
+    .filter(s=>!search || (s.nome||'').toLowerCase().includes(search))
+    .sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+  if(!alunos.length){
+    el.innerHTML='<p class="muted small">Nenhum aluno encontrado.</p>';
+    return;
   }
-  if(n===5) {
-    // D5 Stats — página inicial
-    renderStats();
+  el.innerHTML = alunos.map(s=>{
+    const nc = Object.keys(NIVEL_COLOR).find(k=>(s.nivel||'').includes(k))||'APJ 1';
+    const cor = NIVEL_COLOR[nc]||'var(--green)';
+    const nivel = (s.nivel||'—').split(' — ')[0];
+    const hs = (s.horarios||[]).length;
+    return `<div class="card2" style="cursor:pointer;transition:background .12s" onclick="openEditStudentModal(${s.id})"
+      onmouseover="this.style.background='var(--card3)'" onmouseout="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px">
+        <div style="width:32px;height:32px;border-radius:50%;background:${cor};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0">${(s.nome||'?').charAt(0).toUpperCase()}</div>
+        <div style="min-width:0">
+          <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.nome||'—'}</div>
+          <div style="font-size:10px;color:var(--muted)">${nivel} · ${s.formato||'—'}</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted)">${hs} horário${hs!==1?'s':''} cadastrado${hs!==1?'s':''}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderP7Turmas() {
+  loadData();
+  const el = document.getElementById('p7-turmas-grid');
+  if(!el) return;
+  const turmas = (students||[]).filter(s=>s.type==='group')
+    .sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+  if(!turmas.length){
+    el.innerHTML='<p class="muted small">Nenhuma turma cadastrada.</p>';
+    return;
   }
+  el.innerHTML = turmas.map(g=>{
+    const membros = (g.membros||[]).map(mid=>{
+      const m=(students||[]).find(s=>Number(s.id)===Number(mid));
+      return m?m.nome.split(' ')[0]:null;
+    }).filter(Boolean);
+    const hs = (g.horarios||[]).length;
+    return `<div class="card2" style="cursor:pointer;transition:background .12s" onclick="openEditStudentModal(${g.id})"
+      onmouseover="this.style.background='var(--card3)'" onmouseout="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-shrink:0">👥</div>
+        <div style="min-width:0">
+          <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.nome||'—'}</div>
+          <div style="font-size:10px;color:var(--muted)">${membros.length} membro${membros.length!==1?'s':''} · ${hs} horário${hs!==1?'s':''}</div>
+        </div>
+      </div>
+      ${membros.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${membros.map(n=>`<span style="font-size:9px;background:rgba(155,114,208,0.15);color:var(--purple);border:1px solid rgba(155,114,208,0.3);border-radius:4px;padding:1px 6px">${n}</span>`).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 // ═══════════════════════════════════════
@@ -3083,7 +3134,8 @@ function selectEntity(id) {
   document.getElementById('d2-plan-sub').textContent = activeEntity.nivel
     + (activeEntity.type==='group' ? membros : '')
     + (activeEntity.formato ? ' · '+activeEntity.formato : '');
-  renderLastLesson();
+  // Paulo: abrir direto na frequência
+  showFreqView();
 }
 
 function backToList() {
@@ -9798,6 +9850,8 @@ function getAlertaFootwork(entity) {
   renderExercises();
   renderManual();
   renderStudentGrid();
+  // Paulo: iniciar na Coordenação
+  showPane(3);
 })();
 </script>
 
