@@ -1286,9 +1286,16 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
         <span class="badge b-blue">Frequência</span>
       </div>
       <h2 style="margin-bottom:2px">Chamada do Dia</h2>
-      <p class="muted small" id="d3-subtitulo">Aulas de hoje · registre presenças e faltas em 1 toque</p>
+      <p class="muted small" id="d3-subtitulo">Aulas de hoje · agrupadas por horário · registre em 1 toque</p>
     </div>
-    <button class="btn btn-s btn-sm" onclick="renderD3Freq()">↺ Atualizar</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select class="fs" id="d3-unidade-filter" onchange="renderD3Freq()" style="font-size:11px;padding:4px 8px">
+        <option value="all">Todas as Unidades</option>
+        <option value="0">Unidade 1 (Q1 e Q2)</option>
+        <option value="1">Unidade 2 (Q1 e Q2)</option>
+      </select>
+      <button class="btn btn-s btn-sm" onclick="renderD3Freq()">↺ Atualizar</button>
+    </div>
   </div>
 
   <div id="d3-chamada-wrap"></div>
@@ -6436,10 +6443,16 @@ function renderD3Freq() {
 
   if(subEl) subEl.textContent = `${dataStr} · registre presenças e faltas em 1 toque`;
 
-  // Coletar slots de hoje em TODAS as quadras
+  // Filtro de unidade (Paulo)
+  const unidadeFil = document.getElementById('d3-unidade-filter')?.value || 'all';
+
+  // Coletar slots de hoje agrupados por horário
   const slotsHoje = [];
   if(diaIdx >= 0){
     for(let q=0;q<4;q++){
+      // Filtro unidade: U1=q0,q1 / U2=q2,q3
+      if(unidadeFil==='0' && q>1) continue;
+      if(unidadeFil==='1' && q<2) continue;
       Object.entries(agendaData).forEach(([key,slot])=>{
         const m = key.match(/^q(\d+)_d(\d+)_(.+)$/);
         if(!m) return;
@@ -6450,8 +6463,16 @@ function renderD3Freq() {
         slotsHoje.push({q, d:diaIdx, hora:m[3], entity, slot, prof, key});
       });
     }
-    slotsHoje.sort((a,b)=>a.hora.localeCompare(b.hora));
+    slotsHoje.sort((a,b)=>a.hora.localeCompare(b.hora)||(a.q-b.q));
   }
+
+  // Agrupar por horário
+  const horariosMap = {};
+  slotsHoje.forEach(s=>{
+    if(!horariosMap[s.hora]) horariosMap[s.hora]=[];
+    horariosMap[s.hora].push(s);
+  });
+  const horariosOrdenados = Object.keys(horariosMap).sort();
 
   const horaAtual = `${String(hoje.getHours()).padStart(2,'0')}:${String(hoje.getMinutes()).padStart(2,'0')}`;
   const total  = slotsHoje.length;
@@ -6467,23 +6488,43 @@ function renderD3Freq() {
       return;
   }
 
-  // Barra de progresso + chamada
+  // Barra de progresso geral
   const barColor = feitos===total && total>0 ? 'var(--green2)' : 'var(--amber)';
   let html = `
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
         <div>
           <div style="font-size:13px;font-weight:700;color:var(--green2)">${dataStr}</div>
-          <div style="font-size:11px;color:var(--muted)">${total} aula${total!==1?'s':''} hoje</div>
+          <div style="font-size:11px;color:var(--muted)">${total} slot${total!==1?'s':''} hoje · ${horariosOrdenados.length} horário${horariosOrdenados.length!==1?'s':''}</div>
         </div>
         <span class="badge ${feitos===total&&total>0?'b-check':'b-pause'}">${feitos}/${total} ${feitos===total&&total>0?'✅ Completa':'⏳ Pendente'}</span>
       </div>
       <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;margin-bottom:16px;overflow:hidden">
         <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width .5s ease"></div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px">`;
+      </div>`;
 
-  slotsHoje.forEach(s=>{
+  // Renderizar agrupado por horário
+  horariosOrdenados.forEach(hora => {
+    const slotsHora = horariosMap[hora];
+    const feitosHora = slotsHora.filter(s=>chamadaState[String(s.entity.id)+s.hora]).length;
+    const [hh2,mm2] = hora.split(':').map(Number);
+    const durHora = slotsHora[0]?.slot?.durMin || 60;
+    const inicioH = hh2*60+mm2, fimH = inicioH+durHora;
+    const agoraH  = hoje.getHours()*60+hoje.getMinutes();
+    const isNowH  = agoraH>=inicioH && agoraH<fimH;
+
+    html += `<div style="margin-bottom:14px">
+      <!-- HEADER DO HORÁRIO -->
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:${isNowH?'rgba(29,158,117,0.12)':'rgba(255,255,255,0.04)'};border-radius:10px 10px 0 0;border:1px solid ${isNowH?'rgba(29,158,117,0.3)':'rgba(255,255,255,0.07)'};border-bottom:none">
+        <div style="font-size:18px;font-weight:800;color:${isNowH?'var(--green2)':'var(--text)'};min-width:52px">${hora}</div>
+        <div style="font-size:11px;color:var(--muted)">${durHora}min · ${slotsHora.length} quadra${slotsHora.length!==1?'s':''}</div>
+        ${isNowH?'<span style="font-size:9px;background:rgba(29,158,117,0.2);color:var(--green2);padding:2px 8px;border-radius:8px;font-weight:700;margin-left:auto">🟢 AGORA</span>':''}
+        <span style="font-size:10px;color:var(--muted);margin-left:auto">${feitosHora}/${slotsHora.length} ✓</span>
+      </div>
+      <!-- SLOTS DESTE HORÁRIO -->
+      <div style="border:1px solid ${isNowH?'rgba(29,158,117,0.3)':'rgba(255,255,255,0.07)'};border-radius:0 0 10px 10px;overflow:hidden">`;
+
+    slotsHora.forEach((s, idx) => {
     const eId     = String(s.entity.id);
     const stKey   = eId + s.hora;
     const st      = chamadaState[stKey];
@@ -6524,18 +6565,25 @@ function renderD3Freq() {
           <button class="ch-btn ch-btn-fj${st==='falta_justificada'?' sel':''}" title="Justificada" onclick="registrarChamadaRapida('${eId}','${s.hora}','falta_justificada','${hojeSt}');renderD3Freq()">⚠️</button>
         </div>`;
 
-    html += `<div class="ch-slot" style="${isNow?'border-color:var(--green2);box-shadow:0 0 0 2px rgba(29,158,117,0.2)':''}">
-      <div class="ch-avatar" style="background:${isGroup?'var(--purple)':cor};font-size:${isGroup?'14px':'16px'}">${isGroup?'👥':s.entity.nome.charAt(0).toUpperCase()}</div>
+    // Quadra label para Paulo: q0,q1=U1Q1/Q2; q2,q3=U2Q1/Q2
+    const unLabel = s.q < 2 ? `U1·Q${s.q+1}` : `U2·Q${s.q-1}`;
+    html += `<div class="ch-slot" style="border-radius:0;border-bottom:${idx<slotsHora.length-1?'1px solid rgba(255,255,255,0.05)':'none'}">
+      <div style="display:flex;align-items:center;gap:5px;min-width:52px">
+        <div class="ch-avatar" style="background:${isGroup?'var(--purple)':cor};font-size:${isGroup?'13px':'15px'}">${isGroup?'👥':s.entity.nome.charAt(0).toUpperCase()}</div>
+        <span style="font-size:9px;font-weight:700;color:var(--muted);white-space:nowrap">${unLabel}</span>
+      </div>
       <div class="ch-info">
-        <div class="ch-nome">${s.entity.nome}${isNow?` <span style="font-size:9px;background:rgba(29,158,117,0.2);color:var(--green2);padding:1px 6px;border-radius:8px;font-weight:700">AGORA</span>`:''}</div>
-        <div class="ch-meta">Q${s.q+1} · ${s.hora} · ${durMin}min${prof?' · '+prof:''}${isGroup&&membros.length?' · '+membros.length+' aluno'+(membros.length!==1?'s':''):''}</div>
-        ${st?`<div style="margin-top:4px">${stBadge}</div>`:''}
+        <div class="ch-nome">${s.entity.nome}</div>
+        <div class="ch-meta">${durMin}min${prof?' · '+prof:''}${isGroup&&membros.length?' · '+membros.length+' aluno'+(membros.length!==1?'s':''):''}</div>
+        ${st?`<div style="margin-top:3px">${stBadge}</div>`:''}
       </div>
       ${btnArea}
     </div>`;
-  });
+    }); // fecha slotsHora.forEach
+    html += `</div></div>`; // fecha slots-container e grupo horário
+  }); // fecha horariosOrdenados.forEach
 
-  html += `</div>`;
+  html += `</div>`; // fecha card principal
 
   // Resumo final se completa
   if(feitos===total && total>0){
