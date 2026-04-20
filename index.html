@@ -1334,7 +1334,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 
     <div class="modal-footer" style="margin-top:16px">
       <button class="btn btn-s" onclick="closeModal('chamadaTurmaModal')">Fechar</button>
-      <button class="btn btn-s" style="color:var(--blue);border-color:rgba(91,155,213,0.3)" onclick="abrirAulaDaTurma()">📋 Abrir Aula</button>
+
       <button class="btn btn-s" style="color:var(--purple);border-color:rgba(155,114,208,0.4)" onclick="abrirRepEmTurma()">🔄 Reposição</button>
       <button class="btn btn-p" id="ctm-salvar-btn" onclick="salvarChamadaTurma()">💾 Salvar Chamada</button>
     </div>
@@ -8756,43 +8756,21 @@ function switchQuadra(q) {
 
 // ─── CLIQUE NO SLOT → NOVA AULA ───────
 function openSlotAula(entityId, q, d, hora) {
-  // Abrir o perfil do aluno direto no formulário de nova aula
+  // Paulo: ao clicar no slot, abrir direto na frequência do aluno
   const entity = (students||[]).find(s=>String(s.id)===String(entityId));
   if(!entity) return;
 
-  // Navegar para o D2 (pane 3) se não estiver lá
   showPane(3);
-
-  // Esconder list-view, mostrar plan-view
+  activeEntity = entity;
   document.getElementById('d2-list-view').style.display = 'none';
   document.getElementById('d2-plan-view').style.display = 'block';
-  document.getElementById('d2-history-view').style.display = 'none';
-  document.getElementById('d2-trim-view').style.display = 'none';
-  document.getElementById('d2-aval-view').style.display = 'none';
-  document.getElementById('d2-lesson-form').style.display = 'none';
-
-  activeEntity = entity;
   document.getElementById('d2-plan-title').textContent = entity.nome;
-  document.getElementById('d2-plan-sub').textContent   = entity.nivel
+  document.getElementById('d2-plan-sub').textContent = entity.nivel
     + (entity.type==='group' ? ' · '+entity.num+' alunos' : '')
     + (entity.formato ? ' · '+entity.formato : '')
     + ` · Q${q+1} · ${AG_DIAS_FULL[d]} ${hora}`;
-  renderLastLesson();
-
-  // Abrir nova aula imediatamente com data de hoje e hora do slot
-  setTimeout(() => {
-    newLesson();
-    // Pré-preencher data de hoje e horário do slot
-    const today = new Date();
-    const ymd = today.toISOString().slice(0,10);
-    const lfData = document.getElementById('lf-data');
-    const lfHora = document.getElementById('lf-hora');
-    if(lfData) lfData.value = ymd;
-    if(lfHora) lfHora.value = hora;
-    // Pré-preencher semana do trimestre se possível
-    refreshPreLesson();
-    showToast(`✓ Nova aula para ${entity.nome.split(' ')[0]} · Q${q+1} · ${AG_DIAS_FULL[d]} ${hora}`);
-  }, 80);
+  // Ir direto para frequência
+  showFreqView();
 }
 
 // ─── MODAL SLOT ───────────────────────
@@ -9505,14 +9483,14 @@ function abrirAulaDaTurma() {
   if(!_ctmCtx) return;
   const { eId, hora, q, d } = _ctmCtx;
   closeModal('chamadaTurmaModal');
-  setTimeout(() => openSlotAula(eId, q, d, hora), 150);
+  // Paulo: não abre plano de aula após chamada
 }
 
 function abrirAulaDoSlot() {
   closeModal('chamadaRapidaModal');
   const entity = (students||[]).find(s => String(s.id) === String(_crEntityId));
   if(!entity) return;
-  setTimeout(() => openSlotAula(_crEntityId, _crQ, _crD, _crHora), 150);
+  // Paulo: não abre plano de aula após chamada
 }
 
 // ═══════════════════════════════════════
