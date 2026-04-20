@@ -249,11 +249,11 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 .ag-qtab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:12px;font-family:var(--font);font-weight:600;padding:8px 14px 10px;cursor:pointer;transition:all .15s;white-space:nowrap}
 .ag-qtab:hover{color:var(--green2)}
 .ag-qtab.on{color:var(--green2);border-bottom-color:var(--green2)}
-.ag-table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
+.ag-table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;min-width:100%}
 .ag-table th{background:var(--card2);color:var(--muted);font-weight:700;text-align:center;padding:10px 6px;border:1px solid var(--border2);font-size:10px;text-transform:uppercase;letter-spacing:.4px}
-.ag-table th.ag-th-hora{width:68px;background:var(--card);color:var(--muted)}
+.ag-table th.ag-th-hora{width:52px;background:var(--card);color:var(--muted)}
 .ag-table td{border:1px solid rgba(255,255,255,0.05);padding:0;height:20px;vertical-align:top;position:relative}
-.ag-table td.ag-hora{background:var(--card);color:var(--muted);font-size:11px;font-weight:600;text-align:center;vertical-align:top;padding:2px 4px 0;white-space:nowrap;width:68px;border-right:2px solid var(--border2)}
+.ag-table td.ag-hora{background:var(--card);color:var(--muted);font-size:11px;font-weight:600;text-align:center;vertical-align:top;padding:2px 4px 0;white-space:nowrap;width:52px;border-right:2px solid var(--border2)}
 .ag-table td.ag-fora{background:rgba(0,0,0,0.3);cursor:not-allowed}
 .ag-table td.ag-livre{background:var(--bg);cursor:pointer;transition:background .12s}
 .ag-table td.ag-livre:hover{background:rgba(29,158,117,0.1);border-color:rgba(29,158,117,0.3)}
@@ -694,8 +694,8 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
         </div>
 
         <!-- Grade -->
-        <div style="overflow-x:auto">
-          <div id="ag-grade" style="min-width:1170px"></div>
+        <div style="overflow-x:auto;width:100%">
+          <div id="ag-grade" style="width:100%"></div>
           <div id="ag-legenda-cores" style="margin-top:8px"></div>
         </div>
       </div>
