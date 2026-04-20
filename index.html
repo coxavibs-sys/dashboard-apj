@@ -36,6 +36,7 @@ html,body{background:var(--bg);color:var(--text);font-family:var(--font);min-hei
 
 /* ── LAYOUT ── */
 .dash{max-width:1100px;margin:0 auto;padding:24px 16px 80px}
+#p3.pane.on{max-width:100%;padding:16px 16px 80px}
 .pane{display:none}
 .pane.on{display:block}
 
@@ -657,8 +658,8 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
       </div>
     </div>
 
-    <!-- ─── LAYOUT: GRADE + SIDEBAR ─── -->
-    <div style="display:grid;grid-template-columns:1fr 200px;gap:12px;align-items:start">
+    <!-- ─── LAYOUT: GRADE FULL WIDTH + SIDEBAR COLAPSÁVEL ─── -->
+    <div style="display:flex;flex-direction:column;gap:12px">
 
       <!-- GRADE -->
       <div class="card" style="padding:14px 14px 10px;min-width:0">
@@ -700,13 +701,13 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
         </div>
       </div>
 
-      <!-- SIDEBAR: DUAS ABAS COLAPSÁVEIS -->
-      <div style="position:sticky;top:64px;display:flex;flex-direction:column;gap:6px">
+      <!-- SIDEBAR HORIZONTAL: Alunos + Turmas em linha -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
 
-        <!-- ABA: ALUNOS -->
-        <div>
+        <!-- ALUNOS -->
+        <div style="flex:1;min-width:260px">
           <button id="sidebar-toggle" onclick="toggleSidebar()"
-            style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px 10px 0 0;padding:9px 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:var(--font);transition:background .15s"
+            style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px 10px 0 0;padding:8px 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:var(--font);transition:background .15s"
             onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background='var(--card)'">
             <span style="font-size:11px;font-weight:600;color:var(--green2)">👤 Alunos</span>
             <div style="display:flex;align-items:center;gap:5px">
@@ -716,16 +717,15 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
           </button>
           <div id="sidebar-panel" style="display:none;background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:9px">
             <input class="fc" id="sidebar-search" type="text" placeholder="🔍 buscar..." style="font-size:11px;padding:5px 8px;margin-bottom:7px" oninput="renderSidebar()">
-            <!-- Filtro por nível -->
             <div id="sidebar-niveis" style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:7px"></div>
-            <div id="d2-students-grid" style="display:flex;flex-direction:column;gap:3px;max-height:230px;overflow-y:auto"></div>
+            <div id="d2-students-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:4px;max-height:200px;overflow-y:auto"></div>
           </div>
         </div>
 
-        <!-- ABA: TURMAS -->
-        <div>
+        <!-- TURMAS -->
+        <div style="flex:1;min-width:260px">
           <button id="sidebar-groups-toggle" onclick="toggleSidebarGroups()"
-            style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px 10px 0 0;padding:9px 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:var(--font);transition:background .15s"
+            style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px 10px 0 0;padding:8px 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-family:var(--font);transition:background .15s"
             onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background='var(--card)'">
             <span style="font-size:11px;font-weight:600;color:var(--purple)">👥 Turmas</span>
             <div style="display:flex;align-items:center;gap:5px">
@@ -734,7 +734,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
             </div>
           </button>
           <div id="sidebar-groups-panel" style="display:none;background:var(--card);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;padding:9px">
-            <div id="d2-groups-grid" style="display:flex;flex-direction:column;gap:3px;max-height:280px;overflow-y:auto"></div>
+            <div id="d2-groups-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:4px;max-height:200px;overflow-y:auto"></div>
           </div>
         </div>
 
