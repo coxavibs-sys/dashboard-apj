@@ -1636,7 +1636,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     <!-- lista de aulas -->
     <div id="ewm-aulas-list" style="margin-bottom:12px"></div>
     <!-- botão adicionar aula -->
-    <button class="btn btn-s btn-sm" onclick="ewmAddAula()" style="width:100%;margin-bottom:14px;border-style:dashed">+ Adicionar Aula</button>
+
     <!-- TRIPÉ APJ -->
     <div style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;margin-bottom:14px">
       <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px">Tripé APJ</div>
@@ -1731,8 +1731,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     </div>
 
     <div style="display:flex;gap:8px">
-      <button class="btn btn-s btn-sm" style="flex:1" onclick="closeModal('chamadaRapidaModal')">Fechar</button>
-      <button class="btn btn-s btn-sm" style="flex:1;color:var(--blue);border-color:rgba(91,155,213,0.3)" onclick="abrirAulaDoSlot()">📋 Abrir Aula</button>
+      <button class="btn btn-p btn-sm" style="flex:1" onclick="closeModal('chamadaRapidaModal')">Fechar</button>
     </div>
   </div>
 </div>
@@ -3598,7 +3597,7 @@ function renderLastLesson() {
     ? `<div style="text-align:center;padding:24px;color:var(--muted);background:var(--card);border:1px dashed var(--border);border-radius:12px;margin-bottom:16px">
         <div style="font-size:24px;margin-bottom:8px">📋</div>
         <div>Nenhuma aula registrada ainda</div>
-        <div style="font-size:12px;margin-top:4px">Clique em "Nova Aula" para começar</div>
+        <div style="font-size:12px;margin-top:4px">Acesse a aba Frequência para registrar presenças</div>
       </div>`
     : (() => {
         const ult = aulas[aulas.length-1];
@@ -4524,9 +4523,6 @@ function renderHistoryList() {
           ${a.draft?`<span class="badge b-pause" style="margin-left:8px">rascunho</span>`:''}
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn btn-s btn-sm" onclick="openPostLesson(${a.id})">📲 Pós-aula aluno</button>
-          <button class="btn btn-s btn-sm" onclick="printSavedLesson(${a.id})">🖨 PDF</button>
-          <button class="btn btn-s btn-sm" onclick="editLesson(${a.id})">Editar</button>
           <button class="btn btn-s btn-sm" style="color:var(--red);border-color:rgba(224,92,92,0.3)" onclick="deleteLesson(${a.id})">🗑</button>
         </div>
       </div>
