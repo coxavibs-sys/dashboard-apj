@@ -5266,7 +5266,12 @@ function openEditStudentModal(id) {
   if(grpRow) {
     grpRow.style.display = entity.type === 'group' ? 'block' : 'none';
     if(entity.type === 'group'){
-      populateGroupMembersList('es-alunos-list', 'es-members-count', entity.membros||[]);
+      // Garantir dados carregados e usar setTimeout para DOM estar pronto
+      loadData();
+      const membrosAtuais = (entity.membros||[]).map(Number);
+      setTimeout(() => {
+        populateGroupMembersList('es-alunos-list', 'es-members-count', membrosAtuais);
+      }, 50);
     }
   }
   // Carregar horários existentes
@@ -5301,7 +5306,16 @@ function saveEditStudent() {
   }
   students[idx].horarios = hs.map(h=>({...h}));
   if(students[idx].type === 'group'){
-    const membros = getSelectedMembers('es-alunos-list');
+    // Leitura direta dos checkboxes marcados — mais robusta
+    const listEl = document.getElementById('es-alunos-list');
+    const membros = listEl
+      ? [...listEl.querySelectorAll('input[type=checkbox]:checked')]
+          .map(cb => parseInt(cb.value))
+          .filter(mid => {
+            const st = (students||[]).find(s => Number(s.id) === mid);
+            return st && st.type === 'student';
+          })
+      : (students[idx].membros || []);
     students[idx].membros = membros;
     students[idx].num     = membros.length;
   }
