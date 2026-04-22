@@ -8642,7 +8642,8 @@ function renderGrade() {
         });
 
         // ── Feature 2: Reposições agendadas neste dia (do perfil do aluno) ──
-        const chavesRepos = Object.keys(reposSemana).filter(k => k.startsWith(`${d}_`));
+        // Só renderizar na primeira quadra (qOffset===0) para evitar duplicação
+        const chavesRepos = qOffset === 0 ? Object.keys(reposSemana).filter(k => k.startsWith(`${d}_`)) : [];
         chavesRepos.forEach(chave => {
           const hora = chave.split('_').slice(1).join('_');
           const repos = reposSemana[chave];
@@ -8650,7 +8651,11 @@ function renderGrade() {
           const durMin = repos[0]?.durMin || 60;
           const top    = ((inicioMin - START_MIN) / BASE) * ROW_H;
           const height = (durMin / BASE) * ROW_H;
-          const nomes  = repos.map(r => r.nome.split(' ')[0]).join(' · ');
+          // Buscar nome atualizado de students (fallback para r.nome)
+          const nomes = repos.map(r => {
+            const stu = (students||[]).find(s=>String(s.id)===String(r.alunoId));
+            return (stu?.nome || r.nome || 'Aluno').split(' ')[0];
+          }).join(' · ');
           const bg     = '#e8a030'; // sempre laranja — identidade visual de reposição
           // Data real deste slot
           const dataDiaRep = diasSemana[d];
@@ -8665,7 +8670,11 @@ function renderGrade() {
               <div class="ag-slot" style="background:${bg};height:100%;border-radius:7px;position:relative;border-left:3px solid rgba(255,255,255,0.4);padding:4px 5px 3px;opacity:.92;cursor:pointer"
                 onclick="openReposicaoGestao('${alunoId}','${hora}','${dataRep}',${q},${d})">
                 <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.8);line-height:1.3">↩ Reposição</div>
-                ${repos.map(r=>`<div style="font-size:11px;font-weight:700;color:#fff;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><strong>${r.nome.split(' ')[0]}</strong></div>`).join('')}
+                ${repos.map(r=>{
+                  const stu2=(students||[]).find(s=>String(s.id)===String(r.alunoId));
+                  const nm=(stu2?.nome||r.nome||'Aluno').split(' ')[0];
+                  return `<div style="font-size:11px;font-weight:700;color:#fff;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><strong>${nm}</strong></div>`;
+                }).join('')}
               </div>
               <button class="rg-del-btn" onclick="event.stopPropagation();cancelarReposicaoDireto('${alunoId}','${hora}','${dataRep}')"
                 style="position:absolute;top:3px;right:3px;background:rgba(180,30,30,0.55);border:none;color:#fff;border-radius:4px;width:19px;height:19px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;opacity:0;transition:opacity .15s"
@@ -8674,8 +8683,7 @@ function renderGrade() {
         });
 
         // ── Feature 3: Badge de aluno em reposição de turma neste dia ──
-        // Adicionar badge +N no slot do grupo correspondente
-        // (já renderizado acima — injetar via dataset seria complexo; usamos overlay)
+        // Só renderizar na quadra correta (onde a turma está alocada)
         const turmasCom = Object.keys(reposTurma).filter(k => k.endsWith(`_${d}`));
         turmasCom.forEach(chave => {
           const turmaId = chave.split('_')[0];
