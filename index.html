@@ -6040,7 +6040,24 @@ function saveReposicao() {
     closeModal('freqRepModal');
     _renderFreqAll();
     renderGrade();
-    showToast(`✓ Reposição agendada na turma ${_repTurmaSel.nome}`);
+
+    // Notificar professor da turma via WhatsApp
+    const turmaEnt = (students||[]).find(t=>String(t.id)===String(_repTurmaSel.entityId));
+    const profIdTurma = turmaEnt?.horarios?.[0]?.profId || null;
+    if(profIdTurma) {
+      const diaIdxT = turmaEnt?.horarios?.[0]?.dia ?? 0;
+      const horaT   = turmaEnt?.horarios?.[0]?.hora ?? '';
+      const quadraT = `Q${(turmaEnt?.horarios?.[0]?.quadra??0)+1}`;
+      const dataFmtT = rep.dataReposicao ? rep.dataReposicao.split('-').reverse().join('/') : '—';
+      const btnNotifT = criarBotaoNotif(profIdTurma, 'reposicao', {
+        nomeAluno: (students||[]).find(s=>String(s.id)===String(rep._alunoId||_freqEntity?.id))?.nome || _freqEntity?.nome || 'Aluno',
+        dia: diaIdxT, horaSlot: horaT, dataRep: dataFmtT, quadra: quadraT
+      });
+      if(btnNotifT) showToastComBotao(`✓ Reposição agendada na turma ${_repTurmaSel.nome}`, btnNotifT);
+      else showToast(`✓ Reposição agendada na turma ${_repTurmaSel.nome}`);
+    } else {
+      showToast(`✓ Reposição agendada na turma ${_repTurmaSel.nome}`);
+    }
     return;
   }
 
@@ -8400,14 +8417,17 @@ function renderGrade() {
   const ancoras = {};
   for(let d=0;d<6;d++) ancoras[d] = new Set(agSlots(d, slotMin));
 
-  // Slots fixos da quadra ativa
+  // Slots de AMBAS as quadras da unidade (para badge reposTurma encontrar slot)
   const slotsQ = [];
   Object.entries(agendaData).forEach(([key,slot])=>{
     const m = key.match(/^q(\d+)_d(\d+)_(.+)$/);
-    if(!m || parseInt(m[1])!==q) return;
+    if(!m) return;
+    const qNum = parseInt(m[1]);
+    // Incluir ambas as quadras da unidade ativa (q0+q1 ou q2+q3)
+    if(qNum !== q0 && qNum !== q1) return;
     const d = parseInt(m[2]), hora = m[3];
     const durMin = slot.durMin || slotMin;
-    slotsQ.push({ d, hora, inicioMin: toMin(hora), durMin, slot, key });
+    slotsQ.push({ q: qNum, d, hora, inicioMin: toMin(hora), durMin, slot, key });
   });
 
   // Reposições agendadas para esta semana (do perfil do aluno)
@@ -8689,7 +8709,8 @@ function renderGrade() {
           const turmaId = chave.split('_')[0];
           const alunosExtra = reposTurma[chave];
           // Encontrar o slot desta turma neste dia para posicionar o badge
-          const slotTurma = slotsQ.find(s => s.d===d && String(s.slot?.entityId)===String(turmaId));
+          // Buscar slot da turma na quadra atual (qAtual)
+          const slotTurma = slotsQ.find(s => s.d===d && String(s.slot?.entityId)===String(turmaId) && s.q===qAtual);
           if(!slotTurma) return;
           const top = ((slotTurma.inicioMin - START_MIN) / BASE) * ROW_H;
           const height = (slotTurma.durMin / BASE) * ROW_H;
