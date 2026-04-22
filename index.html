@@ -5126,35 +5126,51 @@ function populateGroupMembersList(listId, countId, selectedIds) {
   const listEl  = document.getElementById(listId);
   const countEl = document.getElementById(countId);
   if(!listEl) return;
-  const alunos = (students||[]).filter(s=>s.type==='student');
+  loadData(); // garantir dados frescos
+  const alunos = (students||[]).filter(s=>s.type==='student').sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
   if(!alunos.length){
-    listEl.innerHTML = `<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px">Nenhum aluno cadastrado ainda</div>`;
+    listEl.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px">Nenhum aluno cadastrado ainda</div>';
+    if(countEl) countEl.textContent = '0 selecionados';
     return;
   }
+  // Normalizar selectedIds para string para comparação segura
+  const selSet = new Set((selectedIds||[]).map(x=>String(x)));
   const updateCount = () => {
-    const checked = listEl.querySelectorAll('input[type=checkbox]:checked').length;
-    if(countEl) countEl.textContent = `${checked} selecionado${checked!==1?'s':''}`;
+    const cnt = listEl.querySelectorAll('input[type=checkbox]:checked').length;
+    if(countEl) countEl.textContent = cnt+' selecionado'+(cnt!==1?'s':'');
   };
-  listEl.innerHTML = alunos.map(a => {
+  function renderMemberItem(a) {
     const nc  = Object.keys(NIVEL_COLOR).find(k=>(a.nivel||'').includes(k))||'APJ 1';
     const cor = NIVEL_COLOR[nc]||'var(--green)';
-    const selectedNums = selectedIds.map(Number);
-    const chk = selectedNums.includes(Number(a.id)) ? 'checked' : '';
-    return `<label style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;cursor:pointer;transition:background .1s"
-        onmouseover="this.style.background='rgba(29,158,117,0.07)'" onmouseout="this.style.background=''">
-      <input type="checkbox" value="${a.id}" ${chk} onchange="(function(el){
-        const cnt=el.closest('[id]').querySelectorAll('input:checked').length;
-        const cid=el.closest('[id]').id.replace('-list','-count').replace('alunos','members');
-        const cel=document.getElementById(cid);
-        if(cel) cel.textContent=cnt+' selecionado'+(cnt!==1?'s':'');
-      })(this)" style="accent-color:var(--green);width:14px;height:14px;flex-shrink:0">
-      <div style="width:22px;height:22px;border-radius:50%;background:${cor};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:10px;flex-shrink:0">${a.nome.charAt(0).toUpperCase()}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.nome}</div>
-        <div style="font-size:10px;color:${cor}">${(a.nivel||'').split(' — ')[0]}</div>
-      </div>
-    </label>`;
-  }).join('');
+    const isSel = selSet.has(String(a.id));
+    const div = document.createElement('label');
+    div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:background .1s;border:1px solid '+(isSel?'rgba(29,158,117,0.3)':'transparent');
+    div.addEventListener('mouseover', function(){ this.style.background='rgba(29,158,117,0.07)'; });
+    div.addEventListener('mouseout',  function(){ this.style.background=''; });
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = a.id;
+    cb.checked = isSel;
+    cb.style.cssText = 'accent-color:var(--green);width:15px;height:15px;flex-shrink:0';
+    cb.addEventListener('change', function(){
+      div.style.borderColor = this.checked ? 'rgba(29,158,117,0.3)' : 'transparent';
+      const cnt = listEl.querySelectorAll('input[type=checkbox]:checked').length;
+      if(countEl) countEl.textContent = cnt+' selecionado'+(cnt!==1?'s':'');
+    });
+    div.appendChild(cb);
+    const avatar = document.createElement('div');
+    avatar.style.cssText = 'width:24px;height:24px;border-radius:50%;background:'+cor+';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:10px;flex-shrink:0';
+    avatar.textContent = a.nome.charAt(0).toUpperCase();
+    div.appendChild(avatar);
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1;min-width:0';
+    info.innerHTML = '<div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.nome+'</div>'
+      +'<div style="font-size:10px;color:'+cor+'">'+((a.nivel||'').split(' — ')[0])+'</div>';
+    div.appendChild(info);
+    return div;
+  }
+  listEl.innerHTML = '';
+  alunos.forEach(a => listEl.appendChild(renderMemberItem(a)));
   updateCount();
 }
 
@@ -5266,12 +5282,7 @@ function openEditStudentModal(id) {
   if(grpRow) {
     grpRow.style.display = entity.type === 'group' ? 'block' : 'none';
     if(entity.type === 'group'){
-      // Garantir dados carregados e usar setTimeout para DOM estar pronto
-      loadData();
-      const membrosAtuais = (entity.membros||[]).map(Number);
-      setTimeout(() => {
-        populateGroupMembersList('es-alunos-list', 'es-members-count', membrosAtuais);
-      }, 50);
+      populateGroupMembersList('es-alunos-list', 'es-members-count', entity.membros||[]);
     }
   }
   // Carregar horários existentes
