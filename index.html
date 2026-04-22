@@ -5280,9 +5280,14 @@ function openEditStudentModal(id) {
   if(faixaSel) faixaSel.value = entity.faixa_programa || 'adulto';
   const grpRow = document.getElementById('es-grp-row');
   if(grpRow) {
-    grpRow.style.display = entity.type === 'group' ? 'block' : 'none';
-    if(entity.type === 'group'){
+    if(entity.type === 'group') {
+      grpRow.style.display = 'block';
+      // Limpar lista antes de popular
+      const listEl2 = document.getElementById('es-alunos-list');
+      if(listEl2) listEl2.innerHTML = '';
       populateGroupMembersList('es-alunos-list', 'es-members-count', entity.membros||[]);
+    } else {
+      grpRow.style.display = 'none';
     }
   }
   // Carregar horários existentes
@@ -5317,16 +5322,19 @@ function saveEditStudent() {
   }
   students[idx].horarios = hs.map(h=>({...h}));
   if(students[idx].type === 'group'){
-    // Leitura direta dos checkboxes marcados — mais robusta
     const listEl = document.getElementById('es-alunos-list');
-    const membros = listEl
-      ? [...listEl.querySelectorAll('input[type=checkbox]:checked')]
+    let membros = students[idx].membros || [];
+    if(listEl) {
+      const cbs = listEl.querySelectorAll('input[type=checkbox]');
+      if(cbs.length > 0) {
+        // Lista foi renderizada — ler estado atual dos checkboxes
+        membros = [...cbs]
+          .filter(cb => cb.checked)
           .map(cb => parseInt(cb.value))
-          .filter(mid => {
-            const st = (students||[]).find(s => Number(s.id) === mid);
-            return st && st.type === 'student';
-          })
-      : (students[idx].membros || []);
+          .filter(mid => !isNaN(mid));
+      }
+      // Se cbs.length === 0, lista não foi renderizada — manter membros atuais
+    }
     students[idx].membros = membros;
     students[idx].num     = membros.length;
   }
