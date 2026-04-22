@@ -2107,9 +2107,15 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
     <div id="ag-panel-existente">
       <div class="fg">
         <label class="fl">Aluno / Turma</label>
-        <select class="fc" id="ag-sel-entity">
+        <select class="fc" id="ag-sel-entity" onchange="agOnEntityChange()">
           <option value="">— Nenhum (liberar slot) —</option>
         </select>
+      </div>
+      <div id="ag-edit-membros-btn" style="display:none;margin-bottom:10px">
+        <button onclick="agEditMembrosTurma()"
+          style="width:100%;background:rgba(155,114,208,0.12);border:1px solid rgba(155,114,208,0.3);color:var(--purple);font-size:12px;font-weight:600;padding:8px;border-radius:8px;cursor:pointer;font-family:var(--font)">
+          ✏️ Editar membros da turma
+        </button>
       </div>
       <div class="fg">
         <label class="fl">Professor</label>
@@ -2647,13 +2653,19 @@ function renderP7Turmas() {
       return m?m.nome.split(' ')[0]:null;
     }).filter(Boolean);
     const hs = (g.horarios||[]).length;
-    return `<div class="card2" style="cursor:pointer;transition:background .12s" onclick="openEditStudentModal(${g.id})"
+    return `<div class="card2" style="transition:background .12s"
       onmouseover="this.style.background='var(--card3)'" onmouseout="this.style.background=''">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <div style="width:32px;height:32px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-shrink:0">👥</div>
-        <div style="min-width:0">
+        <div style="flex:1;min-width:0">
           <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.nome||'—'}</div>
           <div style="font-size:10px;color:var(--muted)">${membros.length} membro${membros.length!==1?'s':''} · ${hs} horário${hs!==1?'s':''}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button onclick="event.stopPropagation();openEditStudentModal(${g.id})"
+            style="background:rgba(29,158,117,0.12);border:1px solid rgba(29,158,117,0.3);color:var(--green2);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:var(--font)">✏️ Editar</button>
+          <button onclick="event.stopPropagation();deleteStudent(${g.id})"
+            style="background:rgba(224,92,92,0.1);border:1px solid rgba(224,92,92,0.3);color:var(--red);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:var(--font)">🗑 Excluir</button>
         </div>
       </div>
       ${membros.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${membros.map(n=>`<span style="font-size:9px;background:rgba(155,114,208,0.15);color:var(--purple);border:1px solid rgba(155,114,208,0.3);border-radius:4px;padding:1px 6px">${n}</span>`).join('')}</div>` : ''}
@@ -8926,6 +8938,25 @@ function dispararNotifPendente() {
   document.getElementById('toast-notif')?.remove();
 }
 
+
+// ─── EDITAR MEMBROS DE TURMA PELO SLOT ───────────────────
+function agOnEntityChange() {
+  const selEnt = document.getElementById('ag-sel-entity');
+  const btnDiv = document.getElementById('ag-edit-membros-btn');
+  if(!selEnt || !btnDiv) return;
+  const val = selEnt.value;
+  if(!val) { btnDiv.style.display = 'none'; return; }
+  const entity = (students||[]).find(s=>String(s.id)===String(val));
+  btnDiv.style.display = (entity && entity.type === 'group') ? 'block' : 'none';
+}
+
+function agEditMembrosTurma() {
+  const selEnt = document.getElementById('ag-sel-entity');
+  if(!selEnt || !selEnt.value) return;
+  closeModal('agSlotModal');
+  setTimeout(() => openEditStudentModal(parseInt(selEnt.value)), 100);
+}
+
 // ─── SWITCH UNIDADE (Paulo) ────────────────────
 let agUnidadeAtiva = 0; // 0=Unidade1, 1=Unidade2
 
@@ -9088,6 +9119,7 @@ function openSlotModal(q, d, hora) {
     document.getElementById('ag-sel-dur').value  = slot.durMin||60;
     document.getElementById('ag-sel-obs').value  = slot.obs||'';
     agSetTab('existente');
+    agOnEntityChange(); // mostrar botão de editar membros se for turma
   } else {
     selEnt.value='';
     document.getElementById('ag-sel-dur').value  = defDur;
