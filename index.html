@@ -2279,8 +2279,11 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
       <button onclick="closeModal('profModal')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1">×</button>
     </div>
     <div id="prof-list" style="margin-bottom:14px"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <div class="fg" style="margin:0"><label class="fl">Nome</label><input class="fc" id="np-nome" type="text" placeholder="Ex: João Silva"></div>
+      <div class="fg" style="margin:0"><label class="fl">WhatsApp <span style="color:var(--muted);font-weight:400">(com DDD)</span></label><input class="fc" id="np-whats" type="tel" placeholder="13999990000"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end">
       <div class="fg" style="margin:0"><label class="fl">Cor</label><input type="color" id="np-cor" value="#25c491" style="width:100%;height:36px;border-radius:8px;border:1px solid var(--border2);background:var(--card2);cursor:pointer;padding:2px"></div>
       <button class="btn btn-p btn-sm" onclick="addProf()" style="height:36px">+ Add</button>
     </div>
@@ -6054,12 +6057,26 @@ function saveReposicao() {
 
   // ── Slot de reposição é renderizado dinamicamente via reposSemana (por data)
   // NÃO salva no agendaData para não aparecer em todas as semanas (recorrente)
-  showToast(`✓ Reposição agendada · ${fmtDate(data)} às ${hora}`);
-
   saveStudents();
   closeModal('freqRepModal');
   _renderFreqAll();
   _atualizarFreqBadge();
+
+  // Notificar professor da reposição via WhatsApp
+  const profIdRep = _freqEntity?.horarios?.[0]?.profId || null;
+  if(profIdRep) {
+    const nomeAluno = _freqEntity?.nome || 'Aluno';
+    const diaIdx = _repSlotSel?.d ?? new Date(data).getDay() - 1;
+    const quadraLabel = _repSlotSel ? `Q${(_repSlotSel.q||0)+1}` : '—';
+    const dataFmt = data.split('-').reverse().join('/');
+    const btnNotif = criarBotaoNotif(profIdRep, 'reposicao', {
+      nomeAluno, dia: diaIdx, horaSlot: hora, dataRep: dataFmt, quadra: quadraLabel
+    });
+    if(btnNotif) showToastComBotao(`✓ Reposição agendada · ${fmtDate(data)} às ${hora}`, btnNotif);
+    else showToast(`✓ Reposição agendada · ${fmtDate(data)} às ${hora}`);
+  } else {
+    showToast(`✓ Reposição agendada · ${fmtDate(data)} às ${hora}`);
+  }
 }
 
 // ═══════════════════════════════════════
@@ -8726,6 +8743,110 @@ function renderGrade() {
   }
 }
 
+
+// ═══════════════════════════════════════════════════════
+// NOTIFICAÇÃO WHATSAPP — Opção A
+// Chamada após: saveSlot, reposição agendada, mudança de grade
+// ═══════════════════════════════════════════════════════
+const AG_DIAS_NOTIF = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+
+function notificarProf(profId, tipo, dados) {
+  const prof = professores.find(p => p.id === profId);
+  if(!prof || !prof.whatsapp) return null; // Sem WhatsApp cadastrado
+
+  const num = prof.whatsapp.replace(/[^0-9]/g,'');
+  if(!num) return null;
+
+  // Gerar mensagem conforme o tipo de mudança
+  let msg = '';
+  const academia = 'Tennis by Paulo';
+  const agora = new Date();
+  const hora = `${String(agora.getHours()).padStart(2,'0')}:${String(agora.getMinutes()).padStart(2,'0')}`;
+
+  if(tipo === 'novo_aluno') {
+    const { nomeAluno, dia, horaSlot, quadra } = dados;
+    const diaStr = AG_DIAS_NOTIF[dia] || '';
+    msg = `🎾 *${academia}*
+
+Olá, *${prof.nome.split(' ')[0]}*! A secretaria alocou um novo aluno na sua grade:
+
+👤 *${nomeAluno}*
+📅 ${diaStr} às ${horaSlot}
+🎾 Quadra ${quadra}
+
+_Atualização feita às ${hora}_`;
+  }
+  else if(tipo === 'nova_turma') {
+    const { nomeTurma, dia, horaSlot, quadra, membros } = dados;
+    const diaStr = AG_DIAS_NOTIF[dia] || '';
+    msg = `🎾 *${academia}*
+
+Olá, *${prof.nome.split(' ')[0]}*! Nova turma alocada na sua grade:
+
+👥 *${nomeTurma}*
+📅 ${diaStr} às ${horaSlot}
+🎾 Quadra ${quadra}
+👤 Alunos: ${membros}
+
+_Atualização feita às ${hora}_`;
+  }
+  else if(tipo === 'reposicao') {
+    const { nomeAluno, dia, horaSlot, dataRep, quadra } = dados;
+    const diaStr = AG_DIAS_NOTIF[dia] || '';
+    msg = `🎾 *${academia}*
+
+Olá, *${prof.nome.split(' ')[0]}*! Uma reposição foi agendada na sua quadra:
+
+🔄 *Reposição — ${nomeAluno}*
+📅 ${dataRep} (${diaStr}) às ${horaSlot}
+🎾 Quadra ${quadra}
+
+_Agendado às ${hora} pela secretaria_`;
+  }
+  else if(tipo === 'remocao') {
+    const { nomeAluno, dia, horaSlot, quadra } = dados;
+    const diaStr = AG_DIAS_NOTIF[dia] || '';
+    msg = `🎾 *${academia}*
+
+Olá, *${prof.nome.split(' ')[0]}*! Um aluno foi removido da sua grade:
+
+❌ *${nomeAluno}* saiu do horário
+📅 ${diaStr} às ${horaSlot}
+🎾 Quadra ${quadra}
+
+_Atualização feita às ${hora} pela secretaria_`;
+  }
+
+  if(!msg) return null;
+
+  const url = `https://wa.me/55${num}?text=${encodeURIComponent(msg)}`;
+  return { prof, url, msg };
+}
+
+function abrirWhatsNotif(profId, tipo, dados) {
+  const result = notificarProf(profId, tipo, dados);
+  if(!result) {
+    showToast('⚠ Professor sem WhatsApp cadastrado — acesse Prof para adicionar', true);
+    return;
+  }
+  window.open(result.url, '_blank');
+}
+
+function criarBotaoNotif(profId, tipo, dados) {
+  // Retorna HTML do botão de notificação para inserir após uma ação
+  const prof = professores.find(p => p.id === profId);
+  if(!prof) return '';
+  const temWhats = !!(prof.whatsapp);
+  const dadosJson = JSON.stringify(dados).replace(/'/g, "\'");
+  return `<button onclick="abrirWhatsNotif(${profId},'${tipo}',${dadosJson})"
+    style="display:flex;align-items:center;gap:6px;background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.3);color:#25d366;font-size:11px;font-weight:600;padding:6px 12px;border-radius:8px;cursor:pointer;font-family:var(--font);transition:all .15s;margin-top:8px;width:100%"
+    onmouseover="this.style.background='rgba(37,211,102,0.22)'" onmouseout="this.style.background='rgba(37,211,102,0.12)'"
+    ${!temWhats?"title='Adicionar WhatsApp do professor primeiro'":''}>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.554 4.103 1.523 5.824L.057 23.882a.5.5 0 00.61.61l6.07-1.464A11.942 11.942 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.805 9.805 0 01-5.012-1.374l-.36-.214-3.717.897.929-3.603-.235-.372A9.797 9.797 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+    📲 Notificar ${prof.nome.split(' ')[0]}
+  </button>`;
+}
+
 // ─── SWITCH UNIDADE (Paulo) ────────────────────
 let agUnidadeAtiva = 0; // 0=Unidade1, 1=Unidade2
 
@@ -8771,6 +8892,22 @@ function openSlotAula(entityId, q, d, hora) {
 
 // ─── MODAL SLOT ───────────────────────
 let agTabAtiva = 'existente';
+let _agSlotCtx = null; // contexto do slot atual {q, d, hora}
+
+function showToastComBotao(msg, btnHtml) {
+  // Toast expandido com botão de ação
+  const existing = document.getElementById('toast-notif');
+  if(existing) existing.remove();
+  const el = document.createElement('div');
+  el.id = 'toast-notif';
+  el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid rgba(37,211,102,0.4);border-radius:14px;padding:14px 18px;z-index:9999;min-width:280px;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:fadeIn .3s ease';
+  el.innerHTML = `
+    <div style="font-size:13px;font-weight:600;color:var(--green2);margin-bottom:6px">${msg}</div>
+    ${btnHtml}
+    <button onclick="document.getElementById('toast-notif')?.remove()" style="display:block;width:100%;background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;margin-top:6px;font-family:var(--font)">Dispensar</button>`;
+  document.body.appendChild(el);
+  setTimeout(() => el?.remove(), 15000);
+}
 
 function agSetTab(tab) {
   agTabAtiva = tab;
@@ -8847,6 +8984,7 @@ function openSlotModal(q, d, hora) {
   const quad = `Quadra ${q+1}`;
   document.getElementById('ag-modal-title').textContent = `${quad} · ${dia} · ${hora}`;
   document.getElementById('ag-modal-sub').textContent   = `Q${q+1} · ${dia} · ${hora}`;
+  _agSlotCtx = { q, d, hora }; // salvar contexto para notificação
 
   // Verificar se slot já existe → abrir em modo Existente
   const key  = `q${q}_d${d}_${hora}`;
@@ -8930,6 +9068,28 @@ function saveSlot() {
     const durMin   = parseInt(document.getElementById('ag-sel-dur').value)||60;
     const obs      = document.getElementById('ag-sel-obs').value.trim();
     alocarSlot(entityId, profId, durMin, obs);
+
+    // Notificar professor via WhatsApp
+    if(profId) {
+      const entity = (students||[]).find(s=>String(s.id)===String(entityId));
+      if(entity) {
+        const tipo = entity.type === 'group' ? 'nova_turma' : 'novo_aluno';
+        const membrosNomes = entity.type === 'group'
+          ? (entity.membros||[]).map(mid=>{ const m=students.find(s=>Number(s.id)===Number(mid)); return m?m.nome.split(' ')[0]:null; }).filter(Boolean).join(', ')
+          : '';
+        const dadosNotif = {
+          nomeAluno: entity.nome,
+          nomeTurma: entity.nome,
+          dia: _agSlotCtx?.d ?? 0,
+          horaSlot: _agSlotCtx?.hora ?? '',
+          quadra: `Q${(_agSlotCtx?.q??0)+1}`,
+          membros: membrosNomes
+        };
+        const btnNotif = criarBotaoNotif(profId, tipo, dadosNotif);
+        if(btnNotif) showToastComBotao(`✓ Slot salvo — notifique o professor`, btnNotif);
+        else showToast('✓ Slot salvo');
+      } else { showToast('✓ Slot salvo'); }
+    } else { showToast('✓ Slot salvo'); }
     closeModal('agSlotModal');
     renderGrade(); renderStudentGrid();
     const entity = (students||[]).find(s=>String(s.id)===String(entityId));
@@ -9061,24 +9221,42 @@ function renderProfList() {
   if(!el) return;
   if(!professores.length){ el.innerHTML='<p class="muted small">Nenhum professor cadastrado.</p>'; return; }
   el.innerHTML = professores.map(p => `
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border2)">
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border2)">
       <div style="width:16px;height:16px;border-radius:50%;background:${p.cor};flex-shrink:0;box-shadow:0 0 6px ${p.cor}88"></div>
-      <span style="flex:1;font-size:13px;font-weight:500">${p.nome}</span>
-      <span style="font-size:10px;color:${p.cor};font-weight:700;font-family:monospace">${p.cor.toUpperCase()}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500">${p.nome}</div>
+        <div style="font-size:10px;color:${p.whatsapp?'var(--green2)':'var(--red)'}">
+          ${p.whatsapp ? '📱 '+p.whatsapp : '⚠️ Sem WhatsApp — notificações desativadas'}
+        </div>
+      </div>
+      <button class="btn btn-s btn-sm" style="font-size:10px;padding:3px 8px" onclick="editProfWhats(${p.id})" title="Editar WhatsApp">✏️</button>
       <button class="btn btn-s btn-sm" style="color:var(--red);border-color:rgba(224,92,92,0.25);padding:3px 8px;font-size:10px" onclick="deleteProf(${p.id})">🗑</button>
     </div>`).join('');
 }
 
+function editProfWhats(id) {
+  const prof = professores.find(p=>p.id===id);
+  if(!prof) return;
+  const num = prompt(`WhatsApp do ${prof.nome} (com DDD, só números):`, prof.whatsapp||'');
+  if(num === null) return;
+  prof.whatsapp = num.replace(/\D/g,'');
+  saveProfs();
+  renderProfList();
+  showToast(`✓ WhatsApp de ${prof.nome} atualizado`);
+}
+
 function addProf() {
-  const nome = document.getElementById('np-nome').value.trim();
+  const nome  = document.getElementById('np-nome').value.trim();
   if(!nome){ showToast('⚠ Informe o nome', true); return; }
-  const cor  = document.getElementById('np-cor').value;
-  const id   = Date.now();
-  professores.push({ id, nome, cor });
+  const cor     = document.getElementById('np-cor').value;
+  const whatsRaw = (document.getElementById('np-whats')?.value||'').replace(/[^0-9]/g,'');
+  const id      = Date.now();
+  professores.push({ id, nome, cor, whatsapp: whatsRaw });
   saveProfs();
   renderProfList();
   renderLegenda();
   document.getElementById('np-nome').value = '';
+  if(document.getElementById('np-whats')) document.getElementById('np-whats').value = '';
   showToast(`✓ Professor ${nome} adicionado`);
 }
 
