@@ -2581,6 +2581,7 @@ function saveTrim() {
 const PAULO_NAV_MAP = { 3:'nb-coord', 4:'nb-d3-freq', 5:'nb-stats', 6:'nb-alunos', 7:'nb-turmas' };
 
 function showPane(n) {
+  closeAllModals(); // fechar qualquer modal aberto ao trocar de aba
   document.querySelectorAll('.pane').forEach((p,i)=>p.classList.toggle('on',i===n));
   // Atualizar nav: limpar todos, ativar o correto
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
@@ -5038,10 +5039,11 @@ function openNewGroupModal() {
   document.getElementById('ng-horario-form').style.display = 'none';
   populateProfSelect('ng-h-prof');
   document.getElementById('ng-busca-aluno').value = '';
-  document.getElementById('ng-busca-lista').style.display = 'none';
   document.getElementById('ng-novo-nome').value = '';
   ngRenderMembros();
   document.getElementById('newGroupModal').classList.add('open');
+  // Mostrar lista de alunos imediatamente ao abrir
+  setTimeout(() => ngFiltrarAlunos(), 80);
   setTimeout(()=>document.getElementById('ng-nome').focus(),80);
 }
 
@@ -5071,17 +5073,27 @@ function ngRenderMembros() {
 function ngRemoverMembro(i) {
   ngMembrosTemp.splice(i,1);
   ngRenderMembros();
+  ngFiltrarAlunos(); // atualizar lista de disponíveis
 }
 
 function ngFiltrarAlunos() {
-  const q   = document.getElementById('ng-busca-aluno').value.trim().toLowerCase();
+  const q   = (document.getElementById('ng-busca-aluno')?.value||'').trim().toLowerCase();
   const el  = document.getElementById('ng-busca-lista');
-  if(!q){ el.style.display='none'; return; }
-  const jaIds = ngMembrosTemp.map(m=>m.id).filter(Boolean);
-  const res = (students||[]).filter(s=>s.type==='student' && s.nome.toLowerCase().includes(q) && !jaIds.includes(s.id));
-  if(!res.length){ el.style.display='none'; return; }
+  if(!el) return;
+  const jaIds = new Set(ngMembrosTemp.map(m=>String(m.id)).filter(Boolean));
+  // Mostrar TODOS os alunos disponíveis (não na turma ainda)
+  const res = (students||[]).filter(s=>
+    s.type==='student' &&
+    !jaIds.has(String(s.id)) &&
+    (!q || s.nome.toLowerCase().includes(q))
+  ).sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+  if(!res.length){
+    el.style.display = 'block';
+    el.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:8px 10px">Nenhum aluno disponível</div>';
+    return;
+  }
   el.style.display = 'block';
-  el.innerHTML = res.slice(0,6).map(a=>{
+  el.innerHTML = res.slice(0,20).map(a=>{
     const nc  = Object.keys(NIVEL_COLOR).find(k=>(a.nivel||'').includes(k))||'APJ 1';
     const cor = NIVEL_COLOR[nc]||'var(--green)';
     return `<div onclick="ngSelecionarAluno(${a.id})"
@@ -5093,17 +5105,16 @@ function ngFiltrarAlunos() {
         <div style="font-size:10px;color:${cor}">${(a.nivel||'').split(' — ')[0]}</div>
       </div>
     </div>`;
-  }).join('');
+  }).join('') + (res.length>20?`<div style="font-size:10px;color:var(--muted);padding:6px 10px;text-align:center">${res.length-20} mais — refine a busca</div>`:'');
 }
 
 function ngSelecionarAluno(id) {
   const a = (students||[]).find(s=>Number(s.id)===Number(id));
   if(!a) return;
-  if(ngMembrosTemp.find(m=>m.id===id)){ showToast('Aluno já adicionado',true); return; }
+  if(ngMembrosTemp.find(m=>String(m.id)===String(id))){ showToast('Aluno já adicionado',true); return; }
   ngMembrosTemp.push({id:a.id, nome:a.nome, nivel:a.nivel, isNew:false});
-  document.getElementById('ng-busca-aluno').value = '';
-  document.getElementById('ng-busca-lista').style.display = 'none';
   ngRenderMembros();
+  ngFiltrarAlunos(); // atualizar lista removendo o aluno recém-adicionado
   showToast('✓ '+a.nome.split(' ')[0]+' adicionado à turma');
 }
 
