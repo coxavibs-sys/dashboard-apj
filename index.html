@@ -1835,9 +1835,9 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
         <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;margin-bottom:6px">Aluno já cadastrado</div>
         <div style="display:flex;gap:6px;margin-bottom:6px">
           <input class="fc" id="ng-busca-aluno" type="text" placeholder="Digitar nome para buscar..."
-            oninput="ngFiltrarAlunos()" style="flex:1;font-size:12px">
+            oninput="ngFiltrarAlunos()" onfocus="ngFiltrarAlunos()" style="flex:1;font-size:12px">
         </div>
-        <div id="ng-busca-lista" style="display:none;max-height:110px;overflow-y:auto;background:var(--bg);border:1px solid var(--border2);border-radius:7px;margin-bottom:10px"></div>
+        <div id="ng-busca-lista" style="max-height:150px;overflow-y:auto;background:var(--bg);border:1px solid var(--border2);border-radius:7px;margin-bottom:10px"></div>
 
         <!-- Separador -->
         <div style="display:flex;align-items:center;gap:8px;margin:10px 0 10px">
@@ -5043,7 +5043,7 @@ function openNewGroupModal() {
   ngRenderMembros();
   document.getElementById('newGroupModal').classList.add('open');
   // Mostrar lista de alunos imediatamente ao abrir
-  setTimeout(() => ngFiltrarAlunos(), 80);
+  setTimeout(() => ngFiltrarAlunos(), 200);
   setTimeout(()=>document.getElementById('ng-nome').focus(),80);
 }
 
