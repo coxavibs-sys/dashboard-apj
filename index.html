@@ -2477,27 +2477,27 @@ let professores = [];
 function loadData() {
   // Exercícios
   try {
-    const saved = localStorage.getItem('apj_exercises');
+    const saved = localStorage.getItem('paulo_exercises');
     exercises = saved ? JSON.parse(saved) : [...DEFAULT_EXERCISES];
   } catch(e) { exercises = [...DEFAULT_EXERCISES]; }
   // Trimestre
   try {
-    const saved = localStorage.getItem('apj_trimestre');
+    const saved = localStorage.getItem('paulo_trimestre');
     trimData = saved ? JSON.parse(saved) : {};
   } catch(e) { trimData = {}; }
   // Alunos
   try {
-    const saved = localStorage.getItem('apj_students');
+    const saved = localStorage.getItem('paulo_students');
     students = saved ? JSON.parse(saved) : [];
   } catch(e) { students = []; }
   // Agenda
   try {
-    const saved = localStorage.getItem('apj_agenda');
+    const saved = localStorage.getItem('paulo_agenda');
     agendaData = saved ? JSON.parse(saved) : {};
   } catch(e) { agendaData = {}; }
   // Professores — só usa default se não tiver nada salvo
   try {
-    const saved = localStorage.getItem('apj_profs');
+    const saved = localStorage.getItem('paulo_profs');
     if (saved) {
       professores = JSON.parse(saved);
     } else {
@@ -2559,10 +2559,10 @@ function snapTo15(hora) {
 }
 
 function saveExercises() {
-  try { localStorage.setItem('apj_exercises', JSON.stringify(exercises)); } catch(e){}
+  try { localStorage.setItem('paulo_exercises', JSON.stringify(exercises)); } catch(e){}
 }
 function saveTrim() {
-  try { localStorage.setItem('apj_trimestre', JSON.stringify(trimData)); } catch(e){}
+  try { localStorage.setItem('paulo_trimestre', JSON.stringify(trimData)); } catch(e){}
 }
 
 // ═══════════════════════════════════════
@@ -2894,11 +2894,11 @@ const BLOCO_CONFIG = [
 ];
 
 function loadStudents() {
-  try { students = JSON.parse(localStorage.getItem('apj_students') || '[]'); }
+  try { students = JSON.parse(localStorage.getItem('paulo_students') || '[]'); }
   catch(e){ students = []; }
 }
 function saveStudents() {
-  try { localStorage.setItem('apj_students', JSON.stringify(students)); } catch(e){}
+  try { localStorage.setItem('paulo_students', JSON.stringify(students)); } catch(e){}
 }
 
 // ─── STUDENT LIST ─────────────────────
@@ -6625,7 +6625,7 @@ function renderStats() {
   // ── KPIs ──
   const totalAulas = alunos.reduce((acc,s)=>acc+(s.aulas||[]).length,0);
   const avaliacoes = alunos.filter(s=>{
-    const key = `apj_aval_${s.id}`;
+    const key = `paulo_aval_${s.id}`;
     try { return JSON.parse(localStorage.getItem(key)||'[]').length > 0; } catch(e){ return false; }
   }).length;
 
@@ -6753,7 +6753,7 @@ function renderStats() {
   DIMS.forEach(d=>medias[d.key]=0);
   alunos.forEach(s=>{
     try {
-      const avals = JSON.parse(localStorage.getItem(`apj_aval_${s.id}`)||'[]');
+      const avals = JSON.parse(localStorage.getItem(`paulo_aval_${s.id}`)||'[]');
       if(!avals.length) return;
       const last = avals[avals.length-1];
       if(!last.scores) return;
@@ -7422,10 +7422,10 @@ Essa ação não pode ser desfeita.`)) {
         professores = data.professores || [];
 
         if (data.avaliacoes) {
-          try { localStorage.setItem('apj_avaliacoes', JSON.stringify(data.avaliacoes)); } catch(e){}
+          try { localStorage.setItem('paulo_avaliacoes', JSON.stringify(data.avaliacoes)); } catch(e){}
         }
         if (data.trimStarts) {
-          try { localStorage.setItem('apj_trimStarts', JSON.stringify(data.trimStarts)); } catch(e){}
+          try { localStorage.setItem('paulo_trimStarts', JSON.stringify(data.trimStarts)); } catch(e){}
         }
 
         saveExercises(); saveStudents(); saveTrim(); saveAgenda(); saveProfs();
@@ -8314,9 +8314,9 @@ let agQuadraAtiva = 0;
 let agSlotAtivo   = null; // { q, d, hora }
 
 function loadAgenda() {
-  try { agendaData  = JSON.parse(localStorage.getItem('apj_agenda')||'{}'); } catch(e){ agendaData={}; }
+  try { agendaData  = JSON.parse(localStorage.getItem('paulo_agenda')||'{}'); } catch(e){ agendaData={}; }
   try {
-    const saved = localStorage.getItem('apj_profs');
+    const saved = localStorage.getItem('paulo_profs');
     if (saved) professores = JSON.parse(saved);
     else if (!professores.length) {
       professores = [{ id:1, nome:'Marcos Habenschus', cor:'#1D9E75' }];
@@ -8324,8 +8324,8 @@ function loadAgenda() {
     }
   } catch(e) {}
 }
-function saveAgenda() { try { localStorage.setItem('apj_agenda', JSON.stringify(agendaData)); } catch(e){} }
-function saveProfs()  { try { localStorage.setItem('apj_profs',  JSON.stringify(professores)); } catch(e){} }
+function saveAgenda() { try { localStorage.setItem('paulo_agenda', JSON.stringify(agendaData)); } catch(e){} }
+function saveProfs()  { try { localStorage.setItem('paulo_profs',  JSON.stringify(professores)); } catch(e){} }
 
 // ─── RENDER GRADE ─────────────────────
 function renderAgendaInline() {
@@ -9798,7 +9798,7 @@ function getSugestaoFoco(entity) {
   // Pegar últimas 2 avaliações
   const avals = [];
   try {
-    const saved = JSON.parse(localStorage.getItem(`apj_aval_${entity.id}`)||'[]');
+    const saved = JSON.parse(localStorage.getItem(`paulo_aval_${entity.id}`)||'[]');
     if(saved.length >= 2) {
       const [prev, last] = saved.slice(-2);
       DIMS.forEach(dim => {
