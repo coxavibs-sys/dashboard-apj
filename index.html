@@ -2087,7 +2087,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
         style="padding:8px 4px;border-radius:8px;font-size:10px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s;background:var(--card2);border:1px solid var(--border2);color:var(--muted)">
         + Aluno
       </button>
-      <button id="ag-tab-turma" onclick="openNewGroupFromSlot()"
+      <button id="ag-tab-turma" onclick="agClicarAbaTurma()"
         style="padding:8px 4px;border-radius:8px;font-size:10px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s;background:var(--card2);border:1px solid var(--border2);color:var(--muted)">
         + Turma
       </button>
@@ -2111,12 +2111,7 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
           <option value="">— Nenhum (liberar slot) —</option>
         </select>
       </div>
-      <div id="ag-edit-membros-btn" style="display:none;margin-bottom:10px">
-        <button onclick="agEditMembrosTurma()"
-          style="width:100%;background:rgba(155,114,208,0.12);border:1px solid rgba(155,114,208,0.3);color:var(--purple);font-size:12px;font-weight:600;padding:8px;border-radius:8px;cursor:pointer;font-family:var(--font)">
-          ✏️ Editar membros da turma
-        </button>
-      </div>
+
       <div class="fg">
         <label class="fl">Professor</label>
         <select class="fc" id="ag-sel-prof">
@@ -2182,41 +2177,57 @@ p{font-size:13px;line-height:1.65;color:var(--text)}
 
     <!-- ── PAINEL: NOVA TURMA ── -->
     <div id="ag-panel-turma" style="display:none">
-      <div class="fg">
-        <label class="fl">Nome da Turma</label>
-        <input class="fc" id="ag-ng-nome" type="text" placeholder="Ex: APJ 3 — Terça/Quinta 20h">
-        <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap">
-          <span style="font-size:10px;color:var(--muted);align-self:center">Sugestão:</span>
-          <button type="button" onclick="document.getElementById('ag-ng-nome').value='APJ 1';agNgSincNivel()" style="background:rgba(122,132,153,0.12);border:1px solid rgba(122,132,153,0.25);color:var(--muted);font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:inherit">APJ 1</button>
-          <button type="button" onclick="document.getElementById('ag-ng-nome').value='APJ 2';agNgSincNivel()" style="background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.25);color:var(--blue);font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:inherit">APJ 2</button>
-          <button type="button" onclick="document.getElementById('ag-ng-nome').value='APJ 3';agNgSincNivel()" style="background:rgba(29,158,117,0.12);border:1px solid rgba(29,158,117,0.25);color:var(--green2);font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:inherit">APJ 3</button>
-          <button type="button" onclick="document.getElementById('ag-ng-nome').value='APJ 4';agNgSincNivel()" style="background:rgba(232,160,48,0.12);border:1px solid rgba(232,160,48,0.25);color:var(--amber);font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:inherit">APJ 4</button>
-          <button type="button" onclick="document.getElementById('ag-ng-nome').value='APJ 5';agNgSincNivel()" style="background:rgba(224,92,92,0.12);border:1px solid rgba(224,92,92,0.25);color:var(--red);font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:inherit">APJ 5</button>
-          <button type="button" onclick="document.getElementById('ag-ng-nome').value='Kids';agNgSincNivel()" style="background:rgba(155,114,208,0.12);border:1px solid rgba(155,114,208,0.25);color:var(--purple);font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:inherit">Kids</button>
+      <!-- Modo: criar nova turma ou editar membros de turma existente -->
+      <div id="ag-turma-modo-novo">
+        <div class="fg">
+          <label class="fl">Nome da Turma</label>
+          <input class="fc" id="ag-ng-nome" type="text" placeholder="Ex: APJ 3 — Terça/Quinta 20h">
+          <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap">
+            <span style="font-size:10px;color:var(--muted);align-self:center">Sugestão:</span>
+            <button type="button" onclick="document.getElementById('ag-ng-nome').value='APJ 1';agNgSincNivel()" style="background:rgba(122,132,153,0.12);border:1px solid rgba(122,132,153,0.25);color:var(--muted);font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:inherit">APJ 1</button>
+            <button type="button" onclick="document.getElementById('ag-ng-nome').value='APJ 2';agNgSincNivel()" style="background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.25);color:var(--blue);font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:inherit">APJ 2</button>
+            <button type="button" onclick="document.getElementById('ag-ng-nome').value='APJ 3';agNgSincNivel()" style="background:rgba(29,158,117,0.12);border:1px solid rgba(29,158,117,0.25);color:var(--green2);font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:inherit">APJ 3</button>
+            <button type="button" onclick="document.getElementById('ag-ng-nome').value='APJ 4';agNgSincNivel()" style="background:rgba(232,160,48,0.12);border:1px solid rgba(232,160,48,0.25);color:var(--amber);font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:inherit">APJ 4</button>
+            <button type="button" onclick="document.getElementById('ag-ng-nome').value='APJ 5';agNgSincNivel()" style="background:rgba(224,92,92,0.12);border:1px solid rgba(224,92,92,0.25);color:var(--red);font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:inherit">APJ 5</button>
+            <button type="button" onclick="document.getElementById('ag-ng-nome').value='Kids';agNgSincNivel()" style="background:rgba(155,114,208,0.12);border:1px solid rgba(155,114,208,0.25);color:var(--purple);font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;cursor:pointer;font-family:inherit">Kids</button>
+          </div>
+        </div>
+        <div class="fg"><label class="fl">Nível APJ</label>
+          <select class="fc" id="ag-ng-nivel">
+            <option>APJ 1 — Descoberta</option>
+            <option>APJ 2 — Fundação</option>
+            <option selected>APJ 3 — Construção</option>
+            <option>APJ 4 — Domínio</option>
+            <option>Kids APJ</option>
+            <option>Mini Tennis</option>
+            <option>APJ Sênior</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Professor</label>
+          <select class="fc" id="ag-ng-prof"><option value="">— Selecione —</option></select>
+        </div>
+        <div class="fg"><label class="fl">Duração</label>
+          <select class="fc" id="ag-ng-dur">
+            <option value="30">30 min</option>
+            <option value="45">45 min</option>
+            <option value="60" selected>60 min</option>
+            <option value="90">90 min</option>
+            <option value="120">120 min</option>
+          </select>
         </div>
       </div>
-      <div class="fg"><label class="fl">Nível APJ</label>
-        <select class="fc" id="ag-ng-nivel">
-          <option>APJ 1 — Descoberta</option>
-          <option>APJ 2 — Fundação</option>
-          <option selected>APJ 3 — Construção</option>
-          <option>APJ 4 — Domínio</option>
-          <option>Kids APJ</option>
-          <option>Mini Tennis</option>
-          <option>APJ Sênior</option>
-        </select>
-      </div>
-      <div class="fg"><label class="fl">Professor</label>
-        <select class="fc" id="ag-ng-prof"><option value="">— Selecione —</option></select>
-      </div>
-      <div class="fg"><label class="fl">Duração</label>
-        <select class="fc" id="ag-ng-dur">
-          <option value="30">30 min</option>
-          <option value="45">45 min</option>
-          <option value="60" selected>60 min</option>
-          <option value="90">90 min</option>
-          <option value="120">120 min</option>
-        </select>
+
+      <!-- Modo editar membros de turma existente -->
+      <div id="ag-turma-modo-editar" style="display:none">
+        <div style="font-size:13px;font-weight:600;color:var(--green2);margin-bottom:12px" id="ag-turma-edit-nome"></div>
+
+        <!-- Membros atuais -->
+        <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">Membros da turma</div>
+        <div id="ag-turma-membros-atuais" style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px"></div>
+
+        <!-- Adicionar alunos disponíveis -->
+        <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">Adicionar aluno</div>
+        <div id="ag-turma-disponiveis" style="max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:6px"></div>
       </div>
     </div>
 
@@ -8952,13 +8963,17 @@ function dispararNotifPendente() {
 
 // ─── EDITAR MEMBROS DE TURMA PELO SLOT ───────────────────
 function agOnEntityChange() {
+  // Atualizar label da aba +Turma conforme entidade selecionada
   const selEnt = document.getElementById('ag-sel-entity');
-  const btnDiv = document.getElementById('ag-edit-membros-btn');
-  if(!selEnt || !btnDiv) return;
+  if(!selEnt) return;
   const val = selEnt.value;
-  if(!val) { btnDiv.style.display = 'none'; return; }
-  const entity = (students||[]).find(s=>String(s.id)===String(val));
-  btnDiv.style.display = (entity && entity.type === 'group') ? 'block' : 'none';
+  const entity = val ? (students||[]).find(s=>String(s.id)===String(val)) : null;
+  const tabTurma = document.getElementById('ag-tab-turma');
+  if(tabTurma) {
+    tabTurma.innerHTML = entity && entity.type === 'group'
+      ? '👥 Membros'
+      : '+ Turma';
+  }
 }
 
 function agEditMembrosTurma() {
@@ -8966,6 +8981,121 @@ function agEditMembrosTurma() {
   if(!selEnt || !selEnt.value) return;
   closeModal('agSlotModal');
   setTimeout(() => openEditStudentModal(parseInt(selEnt.value)), 100);
+}
+
+
+// ─── EDIÇÃO DE MEMBROS INLINE NO SLOT MODAL ───────────────────
+let _agEditTurmaId = null; // ID da turma sendo editada no modal do slot
+
+function agClicarAbaTurma() {
+  // Se o slot atual tem turma alocada → modo editar
+  // Senão → modo criar nova turma
+  const selEnt = document.getElementById('ag-sel-entity');
+  const entityId = selEnt?.value;
+  const entity = entityId ? (students||[]).find(s=>String(s.id)===String(entityId)) : null;
+  agSetTab('turma');
+  if(entity && entity.type === 'group') {
+    agAbrirModoTurma(entityId);
+  } else {
+    agAbrirModoTurma(null);
+  }
+}
+
+function agAbrirModoTurma(entityId) {
+  // entityId = ID da turma existente (editar) ou null (criar nova)
+  const modoNovo   = document.getElementById('ag-turma-modo-novo');
+  const modoEditar = document.getElementById('ag-turma-modo-editar');
+  if(!modoNovo || !modoEditar) return;
+
+  if(entityId) {
+    // MODO EDITAR — turma já existe
+    _agEditTurmaId = entityId;
+    const turma = (students||[]).find(s=>String(s.id)===String(entityId));
+    if(!turma) return;
+    modoNovo.style.display   = 'none';
+    modoEditar.style.display = 'block';
+    document.getElementById('ag-turma-edit-nome').textContent = '👥 ' + turma.nome;
+    agRenderMembrosAtuais(turma);
+    agRenderDisponiveis(turma);
+  } else {
+    // MODO CRIAR — nova turma
+    _agEditTurmaId = null;
+    modoNovo.style.display   = 'block';
+    modoEditar.style.display = 'none';
+  }
+}
+
+function agRenderMembrosAtuais(turma) {
+  const el = document.getElementById('ag-turma-membros-atuais');
+  if(!el) return;
+  const membros = (turma.membros||[])
+    .map(mid => (students||[]).find(s=>Number(s.id)===Number(mid)))
+    .filter(Boolean);
+  if(!membros.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:4px">Nenhum membro ainda.</div>';
+    return;
+  }
+  el.innerHTML = membros.map(m => {
+    const nc  = Object.keys(NIVEL_COLOR).find(k=>(m.nivel||'').includes(k))||'APJ 1';
+    const cor = NIVEL_COLOR[nc]||'var(--green)';
+    return `<div style="display:flex;align-items:center;gap:8px;background:var(--card2);border:1px solid var(--border2);border-radius:7px;padding:6px 10px">
+      <div style="width:24px;height:24px;border-radius:50%;background:${cor};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:10px;flex-shrink:0">${m.nome.charAt(0).toUpperCase()}</div>
+      <div style="flex:1;font-size:12px;font-weight:500;color:var(--text)">${m.nome}</div>
+      <button onclick="agRemoverMembroTurma(${turma.id},${m.id})"
+        style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;line-height:1;padding:0 4px" title="Remover">×</button>
+    </div>`;
+  }).join('');
+}
+
+function agRenderDisponiveis(turma) {
+  const el = document.getElementById('ag-turma-disponiveis');
+  if(!el) return;
+  const membroIds = new Set((turma.membros||[]).map(x=>String(x)));
+  const disponiveis = (students||[])
+    .filter(s => s.type==='student' && !membroIds.has(String(s.id)))
+    .sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+  if(!disponiveis.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:6px 4px">Todos os alunos já estão na turma.</div>';
+    return;
+  }
+  el.innerHTML = disponiveis.map(a => {
+    const nc  = Object.keys(NIVEL_COLOR).find(k=>(a.nivel||'').includes(k))||'APJ 1';
+    const cor = NIVEL_COLOR[nc]||'var(--green)';
+    return `<div onclick="agAdicionarMembroTurma(${turma.id},${a.id})"
+      style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:background .1s"
+      onmouseover="this.style.background='rgba(29,158,117,0.1)'" onmouseout="this.style.background=''">
+      <div style="width:24px;height:24px;border-radius:50%;background:${cor};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:10px;flex-shrink:0">${a.nome.charAt(0).toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.nome}</div>
+        <div style="font-size:10px;color:${cor}">${(a.nivel||'').split(' — ')[0]}</div>
+      </div>
+      <span style="font-size:18px;color:var(--green2);line-height:1">+</span>
+    </div>`;
+  }).join('');
+}
+
+function agAdicionarMembroTurma(turmaId, alunoId) {
+  const idx = students.findIndex(s=>Number(s.id)===Number(turmaId));
+  if(idx===-1) return;
+  if(!students[idx].membros) students[idx].membros = [];
+  if(students[idx].membros.find(m=>Number(m)===Number(alunoId))) return;
+  students[idx].membros.push(alunoId);
+  students[idx].num = students[idx].membros.length;
+  saveStudents();
+  agRenderMembrosAtuais(students[idx]);
+  agRenderDisponiveis(students[idx]);
+  showToast('✓ Aluno adicionado à turma');
+}
+
+function agRemoverMembroTurma(turmaId, alunoId) {
+  const idx = students.findIndex(s=>Number(s.id)===Number(turmaId));
+  if(idx===-1) return;
+  students[idx].membros = (students[idx].membros||[]).filter(m=>Number(m)!==Number(alunoId));
+  students[idx].num = students[idx].membros.length;
+  saveStudents();
+  agRenderMembrosAtuais(students[idx]);
+  agRenderDisponiveis(students[idx]);
+  showToast('✓ Aluno removido da turma');
 }
 
 // ─── SWITCH UNIDADE (Paulo) ────────────────────
@@ -9240,23 +9370,30 @@ function saveSlot() {
     showToast(`✓ Aluno "${nome}" criado e alocado`);
 
   } else if(agTabAtiva === 'turma') {
-    const nome = document.getElementById('ag-ng-nome').value.trim();
-    if(!nome){ showToast('⚠ Informe o nome da turma',true); return; }
-    const profId = parseInt(document.getElementById('ag-ng-prof').value)||null;
-    const durMin = parseInt(document.getElementById('ag-ng-dur').value)||60;
-    const id     = Date.now();
-    const horario = { dia:d, hora: snapTo15(hora), quadra:q, profId, durMin };
-    students.push({
-      id, type:'group', nome,
-      nivel:   document.getElementById('ag-ng-nivel').value,
-      num:0, membros:[], aulas:[], horarios:[horario]
-    });
-    saveStudents();
-    alocarSlot(id, profId, durMin, '');
-    closeModal('agSlotModal');
-    renderGrade(); renderStudentGrid();
-    showToast(`✓ Turma "${nome}" criada e alocada`);
-
+    if(_agEditTurmaId) {
+      // Modo editar: alterações já foram salvas em tempo real
+      closeModal('agSlotModal');
+      renderGrade(); renderStudentGrid(); renderP7Turmas();
+      showToast('✓ Turma atualizada');
+    } else {
+      // Modo criar nova turma
+      const nome = document.getElementById('ag-ng-nome').value.trim();
+      if(!nome){ showToast('⚠ Informe o nome da turma',true); return; }
+      const profId = parseInt(document.getElementById('ag-ng-prof').value)||null;
+      const durMin = parseInt(document.getElementById('ag-ng-dur').value)||60;
+      const id     = Date.now();
+      const horario = { dia:d, hora: snapTo15(hora), quadra:q, profId, durMin };
+      students.push({
+        id, type:'group', nome,
+        nivel:   document.getElementById('ag-ng-nivel').value,
+        num:0, membros:[], aulas:[], horarios:[horario]
+      });
+      saveStudents();
+      alocarSlot(id, profId, durMin, '');
+      closeModal('agSlotModal');
+      renderGrade(); renderStudentGrid();
+      showToast(`✓ Turma "${nome}" criada e alocada`);
+    }
   } else if(agTabAtiva === 'reserva') {
     const motivo = document.getElementById('ag-rv-motivo').value.trim()||'Reserva';
     const durMin = parseInt(document.getElementById('ag-rv-dur').value)||60;
